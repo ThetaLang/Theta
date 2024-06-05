@@ -179,8 +179,8 @@ Pattern matching allows for intuitive matching of data structures.
 
 ```theta
 match value {
-  pattern1 => result1
-  pattern2 => result2
+  pattern1 >> result1
+  pattern2 >> result2
   ...
   _ => defaultResult
 }
@@ -190,8 +190,8 @@ Example:
 ```theta
 matchStatus<String> = status<Enum> -> {
   match status {
-    :SUCCESS => 'Operation was successful'
-    :FAILURE => 'Operation failed'
+    :SUCCESS >> 'Operation was successful'
+    :FAILURE >> 'Operation failed'
     _ => 'Unknown status'
   }
 }
