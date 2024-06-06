@@ -17,75 +17,43 @@ class ThetaLexer {
                 char currentChar = source[i];
                 char nextChar = source[i + 1];
 
-                if (currentChar == '\'') {
-                    tokens.push_back(accumulateUntilAnyOf("'", source, i, Token(currentLine, currentColumn, "string", "'"), "'"));
-                } else if (currentChar == '<') {
-                    tokens.push_back(accumulateUntilAnyOf(">", source, i, Token(currentLine, currentColumn, "type", "<"), ">"));
-                } else if (currentChar == '/' && nextChar == '/') {
-                    tokens.push_back(accumulateUntilAnyOf("\n", source, i, Token(currentLine, currentColumn, "comment", "/"), "", false));
-                } else if (currentChar == '/' && nextChar == '-') {
-                    tokens.push_back(accumulateUntilNext("-/", source, i, Token(currentLine, currentColumn, "comment", "/-"), "-/"));
-                    i++;
-                    currentColumn++;
-                } else if (currentChar == '=' && nextChar == '=') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "=="));
-                    i++;
-                    currentColumn++;
-                } else if (currentChar == '=' && nextChar == '>') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "=>"));
-                    i++;
-                    currentColumn++;
-                } else if (currentChar == '=') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "="));
-                } else if (currentChar == '+' && nextChar == '=') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "+="));
-                    i++;
-                    currentColumn++;
-                } else if (currentChar == '+') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "+"));
-                } else if (currentChar == '-' && nextChar == '=') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "-="));
-                    i++;
-                    currentColumn++;
-                } else if (currentChar == '-' && nextChar == '>') {
-                    tokens.push_back(Token(currentLine, currentColumn, "keyword", "->"));
-                    i++;
-                    currentColumn++;
-                } else if (currentChar == '-') {
-                    tokens.push_back(Token(currentLine, currentColumn, "operator", "-"));
-                } else if (currentChar == '{') {
-                    tokens.push_back(Token(currentLine, currentColumn, "brace", "{"));
-                } else if (currentChar == '}') {
-                    tokens.push_back(Token(currentLine, currentColumn, "brace", "}"));
-                } else if (currentChar == ',') {
-                    tokens.push_back(Token(currentLine, currentColumn, "comma", ","));
-                } else if (currentChar == ':') {
-                    tokens.push_back(Token(currentLine, currentColumn, "colon", ":"));
-                } else if (currentChar == '\n') {
-                    currentLine += 1;
-                    currentColumn = 0;
-                } else if (!isspace(currentChar)) {
-                    // We default this to an identifier, but then change it later if we discover its actually a keyword or bool
-                    Token genericToken = accumulateUntilAnyOf(
-                        " <>=/\\!?@#$%^&*()~`|,.-+{}[]'\";:\n\r",
-                        source,
-                        i,
-                        Token(currentLine, currentColumn, "identifier", { currentChar }),
-                        "",
-                        false
-                    );
+                // We want the line and column numbers for the beginning of the token, not the end. If we were to use
+                // currentLine and currentColumn, it would give us the values for the end of the token, since some of
+                // the makeToken function calls actually update currentLine and currentColumn while they iterate over
+                // the token contents
+                int lineAtLexStart = currentLine;
+                int columnAtLexStart = currentColumn;
 
-                    if (isLanguageKeyword(genericToken.getText())) {
-                        genericToken.setType("keyword");
-                    } else if (genericToken.getText() == "true" || genericToken.getText() == "false") {
-                        genericToken.setType("boolean");
-                    }
+                Token newToken = makeToken(currentChar, nextChar, source, i);
 
-                    tokens.push_back(genericToken);
+                // We don't actually want to keep any whitespace related tokens
+                if (newToken.getType() != "newline" && newToken.getType() != "whitespace") {
+                    newToken.setStartLine(lineAtLexStart);
+                    newToken.setStartColumn(columnAtLexStart);
+                    tokens.push_back(newToken);
                 }
-                   
-                i++;
-                currentColumn++;
+
+                // Some tokens are more than one character. We want to advance the iterator and currentLine by however many
+                // characters long the token was. We really only want to do this for any token that was not created by an
+                // accumulateUntil function, since those already update the index internally.
+                if (
+                    newToken.getType() != "identifier" &&
+                    newToken.getType() != "keyword" &&
+                    newToken.getType() != "boolean" &&
+                    newToken.getType() != "comment" &&
+                    newToken.getType() != "multiline_comment" &&
+                    newToken.getType() != "string" &&
+                    newToken.getType() != "type"
+                ) {
+                    i += newToken.getText().length();
+                    currentColumn += newToken.getText().length();
+                } else if (newToken.getType() == "multiline_comment") {
+                    i += 2;
+                    currentColumn += 2;
+                } else {
+                    i++;
+                    currentColumn++;
+                }
             }
 
             return tokens;
@@ -94,6 +62,55 @@ class ThetaLexer {
     private:
         int currentLine = 1;
         int currentColumn = 1;
+
+        Token makeToken(char currentChar, char nextChar, string source, int &i) {
+            if (currentChar == '\'') return accumulateUntilAnyOf("'", source, i, Token("string", "'"), "'");
+            else if (currentChar == '<') return accumulateUntilAnyOf(">", source, i, Token("type", "<"), ">");
+            else if (currentChar == '/' && nextChar == '/') return accumulateUntilAnyOf("\n", source, i, Token("comment", "/"), "", false);
+            else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token("multiline_comment", "/-"), "-/");
+            else if (currentChar == '=' && nextChar == '=')  return Token("operator", "==");
+            else if (currentChar == '=' && nextChar == '>') return Token("operator", "=>");
+            else if (currentChar == '=') return Token("operator", "=");
+            else if (currentChar == '+' && nextChar == '=') return Token("operator", "+=");
+            else if (currentChar == '+') return Token("operator", "+");
+            else if (currentChar == '-' && nextChar == '=') return Token("operator", "-=");
+            else if (currentChar == '-' && nextChar == '>') return Token("keyword", "->");
+            else if (currentChar == '-') return Token("operator", "-");
+            else if (currentChar == '*' && nextChar == '=') return Token("operator", "*=");
+            else if (currentChar == '*') return Token("operator", "*");
+            else if (currentChar == '{') return Token("brace", "{");
+            else if (currentChar == '}') return Token("brace", "}");
+            else if (currentChar == ',') return Token("comma", ",");
+            else if (currentChar == ':') return Token("colon", ":");
+            else if (currentChar == '\n') {
+                currentLine += 1;
+                currentColumn = 0;
+                return Token("newline", "\n");
+            } else if (!isspace(currentChar)) {
+                // We default this to an identifier, but then change it later if we discover its actually a keyword or bool
+                Token token = accumulateUntilAnyOf(
+                    " <>=/\\!?@#$%^&*()~`|,.-+{}[]'\";:\n\r",
+                    source,
+                    i,
+                    Token("identifier", { currentChar }),
+                    "",
+                    false
+                );
+
+                if (isLanguageKeyword(token.getText())) {
+                    token.setType("keyword");
+                } else if (token.getText() == "true" || token.getText() == "false") {
+                    token.setType("boolean");
+                }
+
+                return token;
+            } else if (isspace(currentChar)) {
+                return Token("whitespace", { currentChar });
+            } else {
+                cout << "UNHANDLED CHAR: " << currentChar << " \n";
+                return Token("unhandled", { currentChar });
+            }
+        }
 
         Token accumulateUntilNext(string endChars, string source, int &i, Token token, string append = "", bool incrementAfter = true) {
             return accumulateUntilCondition(
@@ -122,7 +139,7 @@ class ThetaLexer {
             i++;
             currentColumn++;
 
-            // Just collect characters until we hit an endChar
+            // Just collect characters until we hit our end condition
             for (; i < source.length() && shouldContinue(i); i++) {
                 token.appendText(source[i]);
 
@@ -139,7 +156,7 @@ class ThetaLexer {
 
             // If incrementAfter is false, that means we want to roll back the index to the point right before we hit an endChar.
             // This is probably because the token we're parsing isn't a token thats enclosed in delimiters, so we want to
-            // go back to processing the encChar we just stopped on, because it's going to be part of another token.
+            // go back to processing the endChar we just stopped on, because it's going to be part of another token.
             if (!incrementAfter) {
                 i--;
                 currentColumn--;

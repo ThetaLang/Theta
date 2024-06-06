@@ -11,10 +11,8 @@ class Token {
         string type;
 
     public:
-        Token(int startLine, int startColumn, string tokenType, string tokenText) {
+        Token(string tokenType, string tokenText) {
             text = tokenText;
-            line = startLine;
-            column = startColumn;
             type = tokenType;
         }
 
@@ -31,4 +29,8 @@ class Token {
         void appendText(string appendableText) { text += appendableText; }
 
         vector<int> getStartLocation() { return { line, column }; }
+
+        void setStartLine(int start) { line = start; }
+
+        void setStartColumn(int start) { column = start; }
 };

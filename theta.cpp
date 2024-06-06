@@ -12,6 +12,8 @@ int main() {
     std::stringstream buffer;
     buffer << t.rdbuf();
 
+    cout << "WAT";
+
     vector<Token> tokens = lexer.lex(buffer.str());
 
     cout << "\n========== LEXED TOKENS ==========\n";
