@@ -64,9 +64,9 @@ class ThetaLexer {
         int currentColumn = 1;
 
         Token makeToken(char currentChar, char nextChar, string source, int &i) {
-            if (currentChar == '\'') return accumulateUntilAnyOf("'", source, i, Token("string", "'"), "'");
-            else if (currentChar == '<') return accumulateUntilAnyOf(">", source, i, Token("type", "<"), ">");
-            else if (currentChar == '/' && nextChar == '/') return accumulateUntilAnyOf("\n", source, i, Token("comment", "/"), "", false);
+            if (currentChar == '\'') return accumulateUntilNext("'", source, i, Token("string", "'"), "'");
+            else if (currentChar == '<') return accumulateUntilNext(">", source, i, Token("type", "<"), ">");
+            else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token("comment", "/"), "", false);
             else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token("multiline_comment", "/-"), "-/");
             else if (currentChar == '=' && nextChar == '=')  return Token("operator", "==");
             else if (currentChar == '=' && nextChar == '>') return Token("operator", "=>");
@@ -80,6 +80,8 @@ class ThetaLexer {
             else if (currentChar == '*') return Token("operator", "*");
             else if (currentChar == '{') return Token("brace", "{");
             else if (currentChar == '}') return Token("brace", "}");
+            else if (currentChar == '(') return Token("paren", "(");
+            else if (currentChar == ')') return Token("paren", ")");
             else if (currentChar == ',') return Token("comma", ",");
             else if (currentChar == ':') return Token("colon", ":");
             else if (currentChar == '\n') {

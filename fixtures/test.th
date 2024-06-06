@@ -10,6 +10,12 @@ capsule Math {
         it spans multiple lines
     -/
 
+    greet<String> = () -> {
+        greeting<String> = 'Hello, world!' + 'my names mike'
+
+        10 ^ 6
+    }
+
     distance<Number> = point1<Point>, point2<Point> -> {
         // Calculate distance...
     }
