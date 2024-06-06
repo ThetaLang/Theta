@@ -1,0 +1,3 @@
+capsule ExampleCapsule {
+    greeting<String> = 'Hello, world!'+'i am mike'
+}
