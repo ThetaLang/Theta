@@ -22,7 +22,7 @@ class ThetaLexer {
                 } else if (currentChar == '<') {
                     tokens.push_back(accumulateUntilAnyOf(">", source, i, Token(currentLine, currentColumn, "type", "<"), ">"));
                 } else if (currentChar == '/' && nextChar == '/') {
-                    tokens.push_back(accumulateUntilAnyOf("\n", source, i, Token(currentLine, currentColumn, "comment", "/")));
+                    tokens.push_back(accumulateUntilAnyOf("\n", source, i, Token(currentLine, currentColumn, "comment", "/"), "", false));
                 } else if (currentChar == '/' && nextChar == '-') {
                     tokens.push_back(accumulateUntilNext("-/", source, i, Token(currentLine, currentColumn, "comment", "/-"), "-/"));
                     i++;

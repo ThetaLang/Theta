@@ -1,3 +1,5 @@
+link Vectors
+
 capsule Math {
     struct Point {
         x<Number>
