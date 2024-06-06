@@ -1,17 +1,20 @@
 #import <string>
+#import <vector>
 
 using namespace std;
 
 class Token {
     private:
         string text;
-        int startLocation;
+        int line;
+        int column;
         string type;
 
     public:
-        Token(int tokenStartLocation, string tokenType, string tokenText) {
+        Token(int startLine, int startColumn, string tokenType, string tokenText) {
             text = tokenText;
-            startLocation = tokenStartLocation;
+            line = startLine;
+            column = startColumn;
             type = tokenType;
         }
 
@@ -27,7 +30,5 @@ class Token {
 
         void appendText(string appendableText) { text += appendableText; }
 
-        int getStartLocation() { return startLocation; }
-
-        void setStartLocation(int tokenStartLocation) { startLocation = tokenStartLocation; }
+        vector<int> getStartLocation() { return { line, column }; }
 };

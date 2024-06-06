@@ -16,7 +16,7 @@ int main() {
 
     cout << "\n========== LEXED TOKENS ==========\n";
     for (int i = 0; i < tokens.size(); i++) {
-        cout << "{ type: " + tokens[i].getType() + ", text: " + tokens[i].getText() + ", location: " + to_string(tokens[i].getStartLocation()) + "}\n";
+        cout << "{ type: " + tokens[i].getType() + ", text: " + tokens[i].getText() + ", location: line " + to_string(tokens[i].getStartLocation()[0]) + ", column " + to_string(tokens[i].getStartLocation()[1]) + "}\n";
     }
 
     return 0;
