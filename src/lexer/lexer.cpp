@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include "token.cpp"
+#include "token.hpp"
 
 using namespace std;
 
@@ -43,7 +43,8 @@ class ThetaLexer {
                     newToken.getType() != "comment" &&
                     newToken.getType() != "multiline_comment" &&
                     newToken.getType() != "string" &&
-                    newToken.getType() != "type"
+                    newToken.getType() != "type" &&
+                    newToken.getType() != "number"
                 ) {
                     i += newToken.getText().length();
                     currentColumn += newToken.getText().length();
@@ -68,15 +69,17 @@ class ThetaLexer {
             else if (currentChar == '<') return accumulateUntilNext(">", source, i, Token("type", "<"), ">");
             else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token("comment", "/"), "", false);
             else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token("multiline_comment", "/-"), "-/");
+            else if (currentChar == '/') return Token("operator", "/");
             else if (currentChar == '=' && nextChar == '=')  return Token("operator", "==");
             else if (currentChar == '=' && nextChar == '>') return Token("operator", "=>");
             else if (currentChar == '=') return Token("operator", "=");
             else if (currentChar == '+' && nextChar == '=') return Token("operator", "+=");
             else if (currentChar == '+') return Token("operator", "+");
             else if (currentChar == '-' && nextChar == '=') return Token("operator", "-=");
-            else if (currentChar == '-' && nextChar == '>') return Token("keyword", "->");
+            else if (currentChar == '-' && nextChar == '>') return Token("operator", "->");
             else if (currentChar == '-') return Token("operator", "-");
             else if (currentChar == '*' && nextChar == '=') return Token("operator", "*=");
+            else if (currentChar == '*' && nextChar == '*') return Token("operator", "**");
             else if (currentChar == '*') return Token("operator", "*");
             else if (currentChar == '{') return Token("brace", "{");
             else if (currentChar == '}') return Token("brace", "}");
@@ -88,6 +91,15 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token("newline", "\n");
+            } else if (isdigit(currentChar) && (isdigit(nextChar) || nextChar == '.' || isspace(nextChar))) {
+                return accumulateUntilCondition(
+                    [source](int idx) { return isdigit(source[idx]) || source[idx] == '.'; },
+                    source,
+                    i,
+                    Token("number", { currentChar }),
+                    "",
+                    false
+                );
             } else if (!isspace(currentChar)) {
                 // We default this to an identifier, but then change it later if we discover its actually a keyword or bool
                 Token token = accumulateUntilAnyOf(

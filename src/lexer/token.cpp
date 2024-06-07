@@ -1,36 +1,26 @@
-#import <string>
-#import <vector>
+#include "token.hpp"
 
-using namespace std;
+Token::Token(string tokenType, string tokenText) {
+    text = tokenText;
+    type = tokenType;
+}
 
-class Token {
-    private:
-        string text;
-        int line;
-        int column;
-        string type;
+string Token::getType() { return type; }
 
-    public:
-        Token(string tokenType, string tokenText) {
-            text = tokenText;
-            type = tokenType;
-        }
+void Token::setType(string tokenType) { type = tokenType; }
 
-        string getType() { return type; }
+string Token::getText() { return text; }
 
-        void setType(string tokenType) { type = tokenType; }
+void Token::setText(string tokenText) { text = tokenText;  }
 
-        string getText() { return text; }
+void Token::appendText(char character) { text += character; }
 
-        void setText(string tokenText) { text = tokenText;  }
+void Token::appendText(string appendableText) { text += appendableText; }
 
-        void appendText(char character) { text += character; }
+vector<int> Token::getStartLocation() { return { line, column }; }
 
-        void appendText(string appendableText) { text += appendableText; }
+string Token::getStartLocationString() { return "line " + to_string(line) + ", column " + to_string(column); }
 
-        vector<int> getStartLocation() { return { line, column }; }
+void Token::setStartLine(int start) { line = start; }
 
-        void setStartLine(int start) { line = start; }
-
-        void setStartColumn(int start) { column = start; }
-};
+void Token::setStartColumn(int start) { column = start; }

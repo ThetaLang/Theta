@@ -11,9 +11,9 @@ capsule Math {
     -/
 
     greet<String> = () -> {
-        greeting<String> = 'Hello, world!' + 'my names mike'
+        1greeting<String> = 'Hello, world!' + 'my names mike'
 
-        10 ^ 6
+        10.81   ** 6
     }
 
     distance<Number> = point1<Point>, point2<Point> -> {
