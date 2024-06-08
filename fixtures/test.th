@@ -11,7 +11,7 @@ capsule Math {
     -/
 
     greet<String> = () -> {
-        1greeting<String> = 'Hello, world!' + 'my names mike'
+        greeting<String> = 'Hello, world!' + 'my names mike'
 
         10.81   ** 6
     }

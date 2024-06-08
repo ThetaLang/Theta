@@ -10,7 +10,9 @@ int main(int argc, char* argv[]) {
     ThetaLexer lexer;
 
     // For now, always expect the first argument to be a .th file that needs lexing
-    std::ifstream t(argv[1]);
+    string fileName = argv[1];
+
+    std::ifstream t(fileName);
     std::stringstream buffer;
     buffer << t.rdbuf();
 
@@ -25,7 +27,7 @@ int main(int argc, char* argv[]) {
     cout << "====================================\n";
     
     ThetaParser parser;
-    parser.parse(tokens, fileSource);
+    parser.parse(tokens, fileSource, fileName);
 
     return 0;
 }
