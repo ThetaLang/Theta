@@ -18,16 +18,16 @@ int main(int argc, char* argv[]) {
 
     string fileSource = buffer.str();
 
-    vector<Token> tokens = lexer.lex(fileSource);
+    lexer.lex(fileSource);
 
     cout << "\n========== LEXED TOKENS ==========\n";
-    for (int i = 0; i < tokens.size(); i++) {
-        cout << "{ type: " + tokens[i].getType() + ", text: " + tokens[i].getText() + ", location: " + tokens[i].getStartLocationString() + " }\n";
+    for (int i = 0; i < lexer.tokens.size(); i++) {
+        cout << "{ type: " + lexer.tokens[i].getType() + ", text: " + lexer.tokens[i].getText() + ", location: " + lexer.tokens[i].getStartLocationString() + " }\n";
     }
     cout << "====================================\n";
     
     ThetaParser parser;
-    parser.parse(tokens, fileSource, fileName);
+    parser.parse(lexer.tokens, fileSource, fileName);
 
     return 0;
 }

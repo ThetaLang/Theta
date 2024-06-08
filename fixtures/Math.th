@@ -1,0 +1,29 @@
+link Vectors
+
+capsule Math {
+    struct Point {
+        x<Number>
+        y<Number>
+    }
+    /-
+        This is a multiline comment
+        it spans multiple lines
+    -/
+
+    greet<String> = () -> {
+        greeting<String> = 'Hello, world!' + 'my names mike'
+
+        10.81   ** 6
+    }
+
+    distance<Number> = point1<Point>, point2<Point> -> {
+        // Calculate distance...
+    }
+
+    dimensionalDistanceX<Number> = point1<Point>, point2<Point> -> {
+      { x: point1X } = point1
+      { x: point2X } = point2
+
+      return point2X - point1X
+    }
+}

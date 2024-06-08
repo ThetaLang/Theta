@@ -1,4 +1,5 @@
 #include <vector>
+#include <deque>
 #include <string>
 #include <iostream>
 #include "token.hpp"
@@ -7,9 +8,9 @@ using namespace std;
 
 class ThetaLexer {
     public:
-        vector<Token> tokens = {};
+        deque<Token> tokens = {};
         
-        vector<Token> lex(string source) {
+        void lex(string source) {
             int i = 0;
 
             // Iterate over the whole source
@@ -56,8 +57,6 @@ class ThetaLexer {
                     currentColumn++;
                 }
             }
-
-            return tokens;
         }
 
     private:
