@@ -3,16 +3,15 @@
 #include <string>
 #include <sstream>
 #include "ast_node.hpp"
+#include "identifier_node.hpp"
 
 using namespace std;
 
 class AssignmentNode : public ASTNode {
     public:
         string nodeType;
-        string identifier;
-        string type;
 
-        AssignmentNode(string ident, string typ) : identifier(ident), type(typ), nodeType("Assignment") {};
+        AssignmentNode() : nodeType("Assignment") {};
 
         string getNodeType() const override { return nodeType; }
 
@@ -20,10 +19,9 @@ class AssignmentNode : public ASTNode {
             ostringstream oss;
             
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\", ";
-            oss << "\"identifier\": \"" << identifier << "\", ";
-            oss << "\"variableType\": \"" << type << "\"";
-            oss << ", \"value\": " << (value ? value->toJSON() : "null");
+            oss << "\"type\": \"" << nodeType << "\"";
+            oss << ", \"left\": " << (left ? left->toJSON() : "null");
+            oss << ", \"right\": " << (right ? right->toJSON() : "null");
             oss << "}";
 
             return oss.str();

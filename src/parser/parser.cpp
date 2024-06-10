@@ -8,7 +8,9 @@
 #include "ast/assignment_node.hpp"
 #include "ast/binary_operation_node.hpp"
 #include "ast/literal_node.hpp"
+#include "ast/identifier_node.hpp"
 #include "ast/ast_node.hpp"
+#include "ast/type_declaration_node.hpp"
 
 using namespace std;
 
@@ -66,54 +68,125 @@ class ThetaParser {
             Token currentToken = remainingTokens->front();
             remainingTokens->pop_front();
 
-            if (currentToken.getType() == "identifier"){
-                return parseIdentifier(currentToken);
-            } else if (currentToken.getType() == "string") {
-                return parseExpr(currentToken);
+            Token nextToken = remainingTokens->front();
+
+            if (
+                currentToken.getType() == "identifier" && 
+                nextToken.getType() == "angle_bracket_open" && 
+                remainingTokens->at(1).getType() == "identifier" &&
+                (remainingTokens->at(2).getType() == "angle_bracket_close" || remainingTokens->at(2).getType() == "angle_bracket_open")
+            ) {
+                deque<Token> typeDeclarationTokens;
+                typeDeclarationTokens.push_back(nextToken);
+                remainingTokens->pop_front(); // Pops the <
+
+                int typeDeclarationDepth = 1;
+                while (typeDeclarationDepth > 0) {
+                    if (remainingTokens->front().getType() == "angle_bracket_open") {
+                        typeDeclarationDepth++;
+                    } else if (remainingTokens->front().getType() == "angle_bracket_close"){
+                        typeDeclarationDepth--;
+                    }
+
+                    typeDeclarationTokens.push_back(remainingTokens->front());
+                    remainingTokens->pop_front();
+                }
+
+                shared_ptr<ASTNode> typeNode = parseNestedTypeDeclaration(typeDeclarationTokens);
+
+                return parseAssignment(currentToken, remainingTokens->front(), typeNode);
+            } else if (
+                currentToken.getType() == "angle_bracket_open" &&
+                nextToken.getType() == "identifier" &&
+                remainingTokens->at(1).getType() == "angle_bracket_close"
+            ) {
+                return parseTypeDeclaration(currentToken, nextToken);
+            } else if (
+                currentToken.getType() == "angle_bracket_open" &&
+                nextToken.getType() == "identifier" &&
+                remainingTokens->at(1).getType() == "angle_bracket_open"
+            ) {
+                return parseTypeDeclaration(currentToken, nextToken);
+            } else if ((currentToken.getType() == "identifier" || currentToken.getType() == "string" || currentToken.getType() == "number") && nextToken.getType() == "operator") {
+                return parseBinaryOperation(currentToken, nextToken);
+            } else if (currentToken.getType() == "string" || currentToken.getType() == "number" || currentToken.getType() == "boolean") {
+                return parseLiteral(currentToken);
             }
 
             return nullptr;
+        }
+
+        shared_ptr<ASTNode> parseAssignment(Token currentToken, Token nextToken, shared_ptr<ASTNode> typeNode) {
+            shared_ptr<ASTNode> assignmentNode = make_shared<AssignmentNode>();
+
+            shared_ptr<IdentifierNode> identNode = make_shared<IdentifierNode>(currentToken.getText());
+            identNode->setType(typeNode);
+
+            assignmentNode->setLeft(identNode);
+
+            // Pop the =
+            remainingTokens->pop_front();
+
+            cout << remainingTokens->front().toJSON() + "IS IT" << "\n";
+
+            assignmentNode->setRight(consume());
+
+            return assignmentNode;
+        }
+
+        shared_ptr<ASTNode> parseNestedTypeDeclaration(deque<Token> &typeTokens) {
+            // TODO: Recursively parse types from <identifier<identifier<...>>>
+            typeTokens.pop_front(); // Pops the <
+
+            shared_ptr<ASTNode> node = make_shared<TypeDeclarationNode>(typeTokens.front().getText());
+
+            typeTokens.pop_front(); // Pops the type identifier
+
+            if (typeTokens.front().getType() == "angle_bracket_open") {
+                shared_ptr<ASTNode> typeChild = parseNestedTypeDeclaration(typeTokens);
+
+                node->setValue(typeChild);
+            }
+
+            return node;
+        }
+
+        // shared_ptr<ASTNode> parseNestedTypeDeclaration(deque<Token> &typeTokens, shared_ptr<ASTNode> &parentNode) {
+        //     // TODO: Recursively parse types from <identifier<identifier<...>>>
+        // }
+
+        shared_ptr<ASTNode> parseBinaryOperation(Token currentToken, Token nextToken) {
+            remainingTokens->pop_front();
+
+            shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(nextToken.getText());
+
+            node->setLeft(currentToken.getType() == "identifier"
+                ? parseIdentifier(currentToken)
+                : parseLiteral(currentToken)
+            );
+            
+            node->setRight(consume());
+
+            return node;
+        }
+
+        shared_ptr<ASTNode> parseTypeDeclaration(Token currentToken, Token nextToken) {
+            remainingTokens->pop_front();
+
+            shared_ptr<ASTNode> node = make_shared<TypeDeclarationNode>(nextToken.getText());
+
+            if (remainingTokens->front().getType() == "angle_bracket_open") {
+                node->setValue(consume());
+            }
+
+            return node;
         }
 
         shared_ptr<ASTNode> parseIdentifier(Token currentToken) {
-            Token nextToken = remainingTokens->front();
-            remainingTokens->pop_front();
-
-            if (nextToken.getType() == "type" && remainingTokens->front().getType() == "operator" && remainingTokens->front().getText() == "=") {
-                // Pop the assignment token;
-                remainingTokens->pop_front();
-
-                shared_ptr<ASTNode> node = make_shared<AssignmentNode>(currentToken.getText(), nextToken.getText());
-
-                node->setValue(consume());
-                return node;
-            }
-
-            return nullptr;
-        }
-
-        shared_ptr<ASTNode> parseExpr(Token currentToken) {
-            Token nextToken = remainingTokens->front();
-            remainingTokens->pop_front();
-
-            if (currentToken.getType() == "string" && nextToken.getType() == "operator") {
-                shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(currentToken.getText());
-                
-                node->setValue("left", parseLiteral(currentToken));
-                node->setValue("right", parseLiteral(remainingTokens->front()));
-                remainingTokens->pop_front();
-
-                return node;
-            }
-
-            return nullptr;
+            return make_shared<IdentifierNode>(currentToken.getText());
         }
 
         shared_ptr<ASTNode> parseLiteral(Token currentToken) {
-            if (currentToken.getType() == "string") {
-                return make_shared<LiteralNode>(currentToken.getType(), currentToken.getText());
-            }
-
-            return nullptr;
+            return make_shared<LiteralNode>(currentToken.getType(), currentToken.getText());
         }
 };

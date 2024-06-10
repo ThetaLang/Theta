@@ -18,13 +18,9 @@ class ASTNode {
 
         virtual void setValue(shared_ptr<ASTNode> childNode) { value = childNode; }
 
-        virtual void setValue(string side, shared_ptr<ASTNode> childNode) {
-            if (side == "left") {
-                left = childNode;
-            } else {
-                right = childNode;
-            }
-        }
+        virtual void setLeft(shared_ptr<ASTNode> childNode) { left = childNode; }
+
+        virtual void setRight(shared_ptr<ASTNode> childNode) { right = childNode; }
 
         virtual ~ASTNode() = default;
 };

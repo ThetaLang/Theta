@@ -24,3 +24,16 @@ string Token::getStartLocationString() { return "line " + to_string(line) + ", c
 void Token::setStartLine(int start) { line = start; }
 
 void Token::setStartColumn(int start) { column = start; }
+
+string Token::toJSON() {
+    ostringstream oss;
+
+    oss << "{";
+    oss << "\"type\": \"" << type << "\"";
+    oss << ",\"text\": \"" << text << "\"";
+    oss << ",\"location\": \"" << getStartLocationString() << "\"";
+    oss << "}";
+
+    return oss.str();
+    // "{ type: " + lexer.tokens[i].getType() + ", text: " + lexer.tokens[i].getText() + ", location: " + lexer.tokens[i].getStartLocationString() + " }\n";
+}

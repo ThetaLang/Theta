@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     cout << "\n========== LEXED TOKENS ==========\n";
     for (int i = 0; i < lexer.tokens.size(); i++) {
-        cout << "{ type: " + lexer.tokens[i].getType() + ", text: " + lexer.tokens[i].getText() + ", location: " + lexer.tokens[i].getStartLocationString() + " }\n";
+        cout << lexer.tokens[i].toJSON() << "\n";
     }
     cout << "====================================\n";
     

@@ -3,6 +3,7 @@
 
 #import <string>
 #import <vector>
+#import <sstream>
 
 using namespace std;
 
@@ -35,6 +36,8 @@ class Token {
         void setStartLine(int start);
 
         void setStartColumn(int start);
+
+        string toJSON();
 };
 
 #endif

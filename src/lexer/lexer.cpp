@@ -44,7 +44,6 @@ class ThetaLexer {
                     newToken.getType() != "comment" &&
                     newToken.getType() != "multiline_comment" &&
                     newToken.getType() != "string" &&
-                    newToken.getType() != "type" &&
                     newToken.getType() != "number"
                 ) {
                     i += newToken.getText().length();
@@ -65,13 +64,13 @@ class ThetaLexer {
 
         Token makeToken(char currentChar, char nextChar, string source, int &i) {
             if (currentChar == '\'') return accumulateUntilNext("'", source, i, Token("string", "'"), "'");
-            else if (currentChar == '<') return accumulateUntilNext(">", source, i, Token("type", "<"), ">");
+            // else if (currentChar == '<') return accumulateUntilNext(">", source, i, Token("type", "<"), ">");
             else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token("comment", "/"), "", false);
             else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token("multiline_comment", "/-"), "-/");
             else if (currentChar == '/') return Token("operator", "/");
             else if (currentChar == '=' && nextChar == '=')  return Token("operator", "==");
             else if (currentChar == '=' && nextChar == '>') return Token("operator", "=>");
-            else if (currentChar == '=') return Token("operator", "=");
+            else if (currentChar == '=') return Token("assignment", "=");
             else if (currentChar == '+' && nextChar == '=') return Token("operator", "+=");
             else if (currentChar == '+') return Token("operator", "+");
             else if (currentChar == '-' && nextChar == '=') return Token("operator", "-=");
@@ -80,17 +79,21 @@ class ThetaLexer {
             else if (currentChar == '*' && nextChar == '=') return Token("operator", "*=");
             else if (currentChar == '*' && nextChar == '*') return Token("operator", "**");
             else if (currentChar == '*') return Token("operator", "*");
-            else if (currentChar == '{') return Token("brace", "{");
-            else if (currentChar == '}') return Token("brace", "}");
-            else if (currentChar == '(') return Token("paren", "(");
-            else if (currentChar == ')') return Token("paren", ")");
+            else if (currentChar == '{') return Token("brace_open", "{");
+            else if (currentChar == '}') return Token("brace_close", "}");
+            else if (currentChar == '(') return Token("paren_open", "(");
+            else if (currentChar == ')') return Token("paren_close", ")");
+            else if (currentChar == '<') return Token("angle_bracket_open", "<");
+            else if (currentChar == '>') return Token("angle_bracket_close", ">");
+            else if (currentChar == '[') return Token("bracket_open", "[");
+            else if (currentChar == ']') return Token("bracket_close", "]");
             else if (currentChar == ',') return Token("comma", ",");
             else if (currentChar == ':') return Token("colon", ":");
             else if (currentChar == '\n') {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token("newline", "\n");
-            } else if (isdigit(currentChar) && (isdigit(nextChar) || nextChar == '.' || isspace(nextChar))) {
+            } else if (isdigit(currentChar) && (isdigit(nextChar) || nextChar == '.' || isspace(nextChar) || !nextChar)) {
                 return accumulateUntilCondition(
                     [source](int idx) { return isdigit(source[idx]) || source[idx] == '.'; },
                     source,
