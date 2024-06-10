@@ -120,7 +120,7 @@ class ThetaParser {
             shared_ptr<ASTNode> assignmentNode = make_shared<AssignmentNode>();
 
             shared_ptr<IdentifierNode> identNode = make_shared<IdentifierNode>(currentToken.getText());
-            identNode->setType(typeNode);
+            identNode->setValue(typeNode);
 
             assignmentNode->setLeft(identNode);
 

@@ -16,15 +16,13 @@ class IdentifierNode : public ASTNode {
 
         string getNodeType() const override { return nodeType; }
 
-        void setType(shared_ptr<ASTNode> typeNode) { type = typeNode; }
-
         string toJSON() const override {
             ostringstream oss;
             
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
             oss << ", \"value\": \"" << identifier << "\"";
-            oss << ", \"variableType\": " << (type ? type->toJSON() : "null");
+            oss << ", \"variableType\": " << (value ? value->toJSON() : "null");
             oss << "}";
 
             return oss.str();
