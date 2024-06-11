@@ -2,6 +2,7 @@
 #include <deque>
 #include <string>
 #include <iostream>
+#include <algorithm>
 #include "token.hpp"
 
 using namespace std;
@@ -37,15 +38,11 @@ class ThetaLexer {
                 // Some tokens are more than one character. We want to advance the iterator and currentLine by however many
                 // characters long the token was. We really only want to do this for any token that was not created by an
                 // accumulateUntil function, since those already update the index internally.
-                if (
-                    newToken.getType() != "identifier" &&
-                    newToken.getType() != "keyword" &&
-                    newToken.getType() != "boolean" &&
-                    newToken.getType() != "comment" &&
-                    newToken.getType() != "multiline_comment" &&
-                    newToken.getType() != "string" &&
-                    newToken.getType() != "number"
-                ) {
+                vector<string> accumulatedTokens = {
+                    "identifier", "keyword", "boolean", "comment", "multiline_comment", "string", "number"
+                };
+                
+                if (find(accumulatedTokens.begin(), accumulatedTokens.end(), newToken.getType()) == accumulatedTokens.end()) {
                     i += newToken.getText().length();
                     currentColumn += newToken.getText().length();
                 } else if (newToken.getType() == "multiline_comment") {
@@ -64,7 +61,6 @@ class ThetaLexer {
 
         Token makeToken(char currentChar, char nextChar, string source, int &i) {
             if (currentChar == '\'') return accumulateUntilNext("'", source, i, Token("string", "'"), "'");
-            // else if (currentChar == '<') return accumulateUntilNext(">", source, i, Token("type", "<"), ">");
             else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token("comment", "/"), "", false);
             else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token("multiline_comment", "/-"), "-/");
             else if (currentChar == '/') return Token("operator", "/");
