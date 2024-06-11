@@ -70,7 +70,7 @@ class ThetaLexer {
             else if (currentChar == '+' && nextChar == '=') return Token("operator", "+=");
             else if (currentChar == '+') return Token("operator", "+");
             else if (currentChar == '-' && nextChar == '=') return Token("operator", "-=");
-            else if (currentChar == '-' && nextChar == '>') return Token("operator", "->");
+            else if (currentChar == '-' && nextChar == '>') return Token("func_declaration", "->");
             else if (currentChar == '-') return Token("operator", "-");
             else if (currentChar == '*' && nextChar == '=') return Token("operator", "*=");
             else if (currentChar == '*' && nextChar == '*') return Token("operator", "**");
@@ -89,7 +89,7 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token("newline", "\n");
-            } else if (isdigit(currentChar) && (isdigit(nextChar) || nextChar == '.' || isspace(nextChar) || !nextChar)) {
+            } else if (isdigit(currentChar)) {
                 return accumulateUntilCondition(
                     [source](int idx) { return isdigit(source[idx]) || source[idx] == '.'; },
                     source,

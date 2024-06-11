@@ -1,0 +1,11 @@
+
+capsule Greeting {
+    greet<String> = name<String> -> 'hello' + name
+
+    greetMultiple<String> = names<List<String>> -> {
+        words<List<String>> = [ 'this', 'is', 'a', 'word' ]
+
+        x<String> = words[i + 1]
+    }
+}
+

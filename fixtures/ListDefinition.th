@@ -1,1 +1,1 @@
-names<List<String>> = [ 'alex', 'clarinda', 'denis', 'jessica', 'ellis' ]
+names<List<String>> = [ ['alex', 'john', ['jeremy', 'pablo']], ['clarinda'], 'den' + 'is', 'jessica', 'ellis' ]

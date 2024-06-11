@@ -6,22 +6,24 @@
 
 using namespace std;
 
-class IdentifierNode : public ASTNode {
+class SourceNode : public ASTNode {
     public:
         string nodeType;
-        string identifier;
+        vector<shared_ptr<ASTNode>> imports;
 
-        IdentifierNode(string ident) : identifier(ident), nodeType("Identifier") {};
+        SourceNode(string ident) : identifier(ident), nodeType("Source") {};
 
         string getNodeType() const override { return nodeType; }
+
+        void setImports(vector<shared_ptr<ASTNode>> imp) { imports = imp; }
 
         string toJSON() const override {
             ostringstream oss;
             
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
-            oss << ", \"value\": \"" << identifier << "\"";
-            oss << ", \"variableType\": " << (value ? value->toJSON() : "null");
+            oss << ", \"imports\": \"" << identifier << "\"";
+            oss << ", \"value\": " << (value ? value->toJSON() : "null");
             oss << "}";
 
             return oss.str();

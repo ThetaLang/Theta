@@ -6,12 +6,12 @@
 
 using namespace std;
 
-class IdentifierNode : public ASTNode {
+class KeyedAccessNode : public ASTNode {
     public:
         string nodeType;
         string identifier;
 
-        IdentifierNode(string ident) : identifier(ident), nodeType("Identifier") {};
+        KeyedAccessNode() : nodeType("KeyedAccess") {};
 
         string getNodeType() const override { return nodeType; }
 
@@ -20,8 +20,8 @@ class IdentifierNode : public ASTNode {
             
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
-            oss << ", \"value\": \"" << identifier << "\"";
-            oss << ", \"variableType\": " << (value ? value->toJSON() : "null");
+            oss << ", \"left\": " << (left ? left->toJSON() : "null");
+            oss << ", \"right\": " << (right ? right->toJSON() : "null");
             oss << "}";
 
             return oss.str();

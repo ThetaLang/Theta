@@ -11,6 +11,10 @@
 #include "ast/identifier_node.hpp"
 #include "ast/ast_node.hpp"
 #include "ast/type_declaration_node.hpp"
+#include "ast/list_definition_node.hpp"
+#include "ast/capsule_node.hpp"
+#include "ast/function_declaration_node.hpp"
+#include "ast/keyed_access_node.hpp"
 
 using namespace std;
 
@@ -18,18 +22,10 @@ using namespace std;
 
 class ThetaParser {
     public:
-        void parse(deque<Token> &tokens, string source, string fileName) {
+        void parse(deque<Token> &tokens, string &src, string file) {
+            source = src;
+            fileName = file;
             remainingTokens = &tokens;
-
-            for (int i = 0; i <= tokens.size(); i++) {
-                if (tokens[i].getType() == "identifier") {
-                    try {
-                        validateIdentifier(tokens[i]);
-                    } catch (SyntaxError &e) {
-                        ExceptionFormatter::displayFormattedError("SyntaxError", e, source, fileName, tokens[i]);
-                    }
-                }
-            }
 
             shared_ptr<ASTNode> rootASTNode = consume();
 
@@ -41,7 +37,10 @@ class ThetaParser {
         }
 
     private:
+        string source;
+        string fileName;
         deque<Token> *remainingTokens;
+
 
         void validateIdentifier(Token token) {
             string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?.,`~";
@@ -70,72 +69,137 @@ class ThetaParser {
 
             Token nextToken = remainingTokens->front();
 
-            if (
+            if (currentToken.getType() == "keyword" && currentToken.getText() == "capsule") {
+                return parseCapsule(nextToken);
+            } else if (
                 currentToken.getType() == "identifier" && 
                 nextToken.getType() == "angle_bracket_open" && 
                 remainingTokens->at(1).getType() == "identifier" &&
                 (remainingTokens->at(2).getType() == "angle_bracket_close" || remainingTokens->at(2).getType() == "angle_bracket_open")
             ) {
-                deque<Token> typeDeclarationTokens;
-                typeDeclarationTokens.push_back(nextToken);
-                remainingTokens->pop_front(); // Pops the <
+                shared_ptr<ASTNode> identNode = parseIdentifierWithType(currentToken, nextToken);
 
-                int typeDeclarationDepth = 1;
-                while (typeDeclarationDepth > 0) {
-                    if (remainingTokens->front().getType() == "angle_bracket_open") {
-                        typeDeclarationDepth++;
-                    } else if (remainingTokens->front().getType() == "angle_bracket_close"){
-                        typeDeclarationDepth--;
-                    }
-
-                    typeDeclarationTokens.push_back(remainingTokens->front());
-                    remainingTokens->pop_front();
+                if (remainingTokens->front().getType() == "assignment") {
+                    return parseAssignment(identNode);
+                } else if (remainingTokens->front().getType() == "comma" || remainingTokens->front().getType() == "func_declaration") {
+                    return parseFuncDeclaration(identNode);
+                } else {
+                    return identNode;
                 }
-
-                shared_ptr<ASTNode> typeNode = parseNestedTypeDeclaration(typeDeclarationTokens);
-
-                return parseAssignment(currentToken, remainingTokens->front(), typeNode);
-            } else if (
-                currentToken.getType() == "angle_bracket_open" &&
-                nextToken.getType() == "identifier" &&
-                remainingTokens->at(1).getType() == "angle_bracket_close"
-            ) {
-                return parseTypeDeclaration(currentToken, nextToken);
-            } else if (
-                currentToken.getType() == "angle_bracket_open" &&
-                nextToken.getType() == "identifier" &&
-                remainingTokens->at(1).getType() == "angle_bracket_open"
-            ) {
-                return parseTypeDeclaration(currentToken, nextToken);
             } else if ((currentToken.getType() == "identifier" || currentToken.getType() == "string" || currentToken.getType() == "number") && nextToken.getType() == "operator") {
                 return parseBinaryOperation(currentToken, nextToken);
+            } else if (currentToken.getType() == "identifier" && nextToken.getType() == "bracket_open") {
+                return parseKeyedAccess(parseIdentifier(currentToken));
+            } else if (currentToken.getType() == "bracket_open") {
+                shared_ptr<ASTNode> listDefinition = parseListDefinition(currentToken, nextToken);
+                
+                if (remainingTokens->front().getType() == "bracket_open") {
+                    return parseKeyedAccess(listDefinition);
+                } else {
+                    return listDefinition;
+                }
             } else if (currentToken.getType() == "string" || currentToken.getType() == "number" || currentToken.getType() == "boolean") {
                 return parseLiteral(currentToken);
+            } else if (currentToken.getType() == "identifier") {
+                return parseIdentifier(currentToken);
             }
 
             return nullptr;
         }
 
-        shared_ptr<ASTNode> parseAssignment(Token currentToken, Token nextToken, shared_ptr<ASTNode> typeNode) {
+        shared_ptr<ASTNode> parseCapsule(Token nextToken) {
+            remainingTokens->pop_front();
+            remainingTokens->pop_front(); // Pops the {
+
+            shared_ptr<CapsuleNode> capsuleNode = make_shared<CapsuleNode>(nextToken.getText());
+
+            vector<shared_ptr<ASTNode>> definitionNodes;
+
+            while (remainingTokens->front().getType() != "brace_close") {
+                definitionNodes.push_back(consume());
+            }
+
+            capsuleNode->setDefinitions(definitionNodes);
+
+            return capsuleNode;
+        }
+
+        shared_ptr<ASTNode> parseAssignment(shared_ptr<ASTNode> identifier) {
             shared_ptr<ASTNode> assignmentNode = make_shared<AssignmentNode>();
-
-            shared_ptr<IdentifierNode> identNode = make_shared<IdentifierNode>(currentToken.getText());
-            identNode->setValue(typeNode);
-
-            assignmentNode->setLeft(identNode);
+            assignmentNode->setLeft(identifier);
 
             // Pop the =
             remainingTokens->pop_front();
-
-            cout << remainingTokens->front().toJSON() + "IS IT" << "\n";
 
             assignmentNode->setRight(consume());
 
             return assignmentNode;
         }
 
+        shared_ptr<ASTNode> parseFuncDeclaration(shared_ptr<ASTNode> param) {
+            shared_ptr<FunctionDeclarationNode> funcNode = make_shared<FunctionDeclarationNode>();
+
+            vector<shared_ptr<ASTNode>> paramNodes;
+            vector<shared_ptr<ASTNode>> definitionNodes;
+
+            paramNodes.push_back(param);
+
+            while (remainingTokens->front().getType() != "func_declaration") {
+                Token curr = remainingTokens->front();
+                remainingTokens->pop_front();
+
+                paramNodes.push_back(parseIdentifierWithType(curr, remainingTokens->front()));
+            }
+
+            funcNode->setParameters(paramNodes);
+
+            remainingTokens->pop_front(); // Pops the ->
+
+            // If the user inputted a curly brace, then we want to continue reading this function definition until we hit another curly brace.
+            // Otherwise, we know the function will end at the next expression
+            bool hasMultipleExpressions = remainingTokens->front().getType() == "brace_open";
+            
+            if (hasMultipleExpressions) {
+                remainingTokens->pop_front(); // Pops the {
+
+                while (remainingTokens->front().getType() != "brace_close") {
+                    definitionNodes.push_back(consume());
+                }
+
+                remainingTokens->pop_front(); // Pops the }
+            } else {
+                definitionNodes.push_back(consume());
+            }
+
+            funcNode->setDefinition(definitionNodes);
+
+            return funcNode;
+        }
+
+        shared_ptr<ASTNode> parseIdentifierWithType(Token currentToken, Token nextToken) {
+            deque<Token> typeDeclarationTokens;
+            typeDeclarationTokens.push_back(nextToken);
+            remainingTokens->pop_front(); // Pops the <
+
+            int typeDeclarationDepth = 1;
+            while (typeDeclarationDepth > 0) {
+                if (remainingTokens->front().getType() == "angle_bracket_open") {
+                    typeDeclarationDepth++;
+                } else if (remainingTokens->front().getType() == "angle_bracket_close"){
+                    typeDeclarationDepth--;
+                }
+
+                typeDeclarationTokens.push_back(remainingTokens->front());
+                remainingTokens->pop_front();
+            }
+
+            shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(parseIdentifier(currentToken));
+            identNode->setValue(parseNestedTypeDeclaration(typeDeclarationTokens));
+
+            return identNode;
+        }
+
         shared_ptr<ASTNode> parseNestedTypeDeclaration(deque<Token> &typeTokens) {
-            // TODO: Recursively parse types from <identifier<identifier<...>>>
             typeTokens.pop_front(); // Pops the <
 
             shared_ptr<ASTNode> node = make_shared<TypeDeclarationNode>(typeTokens.front().getText());
@@ -151,9 +215,38 @@ class ThetaParser {
             return node;
         }
 
-        // shared_ptr<ASTNode> parseNestedTypeDeclaration(deque<Token> &typeTokens, shared_ptr<ASTNode> &parentNode) {
-        //     // TODO: Recursively parse types from <identifier<identifier<...>>>
-        // }
+        shared_ptr<ASTNode> parseListDefinition(Token currentToken, Token nextToken) {
+            shared_ptr<ListDefinitionNode> listNode = make_shared<ListDefinitionNode>();
+
+            vector<shared_ptr<ASTNode>> listElementNodes;
+
+            while (remainingTokens->front().getType() != "bracket_close") {
+                listElementNodes.push_back(consume());
+
+                // Commas should be skipped
+                if (remainingTokens->front().getType() == "comma") {
+                    remainingTokens->pop_front();
+                }
+            }
+
+            listNode->setElements(listElementNodes);
+
+            remainingTokens->pop_front();  // Pops the ]
+
+            return listNode;
+        }
+
+        shared_ptr<ASTNode> parseKeyedAccess(shared_ptr<ASTNode> left) {
+            remainingTokens->pop_front(); // Pop the [
+
+            shared_ptr<ASTNode> keyedAccessNode = make_shared<KeyedAccessNode>();
+            keyedAccessNode->setLeft(left);
+            keyedAccessNode->setRight(consume());
+
+            remainingTokens->pop_front(); // Pop the ]
+
+            return keyedAccessNode;
+        }
 
         shared_ptr<ASTNode> parseBinaryOperation(Token currentToken, Token nextToken) {
             remainingTokens->pop_front();
@@ -183,7 +276,15 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> parseIdentifier(Token currentToken) {
-            return make_shared<IdentifierNode>(currentToken.getText());
+            try {
+                validateIdentifier(currentToken);
+
+                return make_shared<IdentifierNode>(currentToken.getText());
+            } catch (SyntaxError &e) {
+                ExceptionFormatter::displayFormattedError("SyntaxError", e, source, fileName, currentToken);
+
+                exit(0);
+            }
         }
 
         shared_ptr<ASTNode> parseLiteral(Token currentToken) {

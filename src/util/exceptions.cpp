@@ -27,7 +27,7 @@ void ExceptionFormatter::displayFormattedError(string errorType, ParseError &e, 
         if (source[charIdx] == '\n') line++;
     }
 
-    while (source[charIdx] != '\n') {
+    while (source[charIdx] != '\n' && charIdx <= source.length()) {
         contextErrorLine += source[charIdx];  
         charIdx++;
     }
