@@ -89,7 +89,7 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token("newline", "\n");
-            } else if (isdigit(currentChar)) {
+            } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.')) {
                 return accumulateUntilCondition(
                     [source](int idx) { return isdigit(source[idx]) || source[idx] == '.'; },
                     source,

@@ -6,6 +6,8 @@ capsule Greeting {
         words<List<String>> = [ 'this', 'is', 'a', 'word' ]
 
         x<String> = words[i + 1]
+        y<String> = words[i]
+        z<String> = words[0]
     }
 }
 
