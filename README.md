@@ -1,3 +1,6 @@
+# Theta
+I started this project knowing nothing about C++ and thought it would be fun to learn the language by creating my own programming language, Theta. The language has no real purpose and was built purely for educational purposes.
+
 # Theta Language Specification
 
 ## Introduction
