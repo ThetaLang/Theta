@@ -4,6 +4,7 @@
 #include <map>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 #include "../lexer/token.hpp"
 #include "../util/exceptions.hpp"
 #include "ast/assignment_node.hpp"
@@ -18,6 +19,7 @@
 #include "ast/keyed_access_node.hpp"
 #include "ast/source_node.hpp"
 #include "ast/link_node.hpp"
+#include "../compiler/compiler.hpp"
 
 using namespace std;
 
@@ -25,23 +27,33 @@ using namespace std;
 
 class ThetaParser {
     public:
-        void parse(deque<Token> &tokens, string &src, string file) {
+        shared_ptr<ASTNode> parse(deque<Token> &tokens, string &src, string file, shared_ptr<map<string, string>> filesByCapsuleName) {
             source = src;
             fileName = file;
             remainingTokens = &tokens;
+            filesByCapsule = filesByCapsuleName;
 
             shared_ptr<SourceNode> rootASTNode = make_shared<SourceNode>();
             vector<shared_ptr<ASTNode>> linkNodes;
 
-            cout << remainingTokens->front().getType() << endl;
-
             // Parse out file imports
             while (remainingTokens->front().getType() == "keyword" && remainingTokens->front().getText() != "capsule") {
                 string linkCapsuleName = remainingTokens->front().getText();
-                shared_ptr<LinkNode> parsedLinkAST = dynamic_pointer_cast<LinkNode>(parseLink());
+                shared_ptr<LinkNode> parsedLinkAST;
+
+                auto it = parsedLinkASTs.find(linkCapsuleName);
+
+                if (it != parsedLinkASTs.end()) {
+                    cout << "FOUND PREPARED AST, SKIPPING PARSING OF LINKED CAPSULE" << endl;
+
+                    parsedLinkAST = it->second;
+                } else {
+                    parsedLinkAST = dynamic_pointer_cast<LinkNode>(parseLink());
+                    parsedLinkASTs.insert(make_pair(linkCapsuleName, parsedLinkAST));
+                }
 
                 linkNodes.push_back(parsedLinkAST);
-                parsedLinkASTs.insert(make_pair(linkCapsuleName, parsedLinkAST));
+                
             }
 
             rootASTNode->setLinks(linkNodes);
@@ -52,6 +64,8 @@ class ThetaParser {
             } else {
                 cout << "NO ROOT NODE" << endl;
             }
+
+            return rootASTNode;
         }
 
     private:
@@ -59,7 +73,7 @@ class ThetaParser {
         string fileName;
         deque<Token> *remainingTokens;
         map<string, shared_ptr<LinkNode>> parsedLinkASTs;
-
+        shared_ptr<map<string, string>> filesByCapsule;
 
         void validateIdentifier(Token token) {
             string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?.,`~";
@@ -317,13 +331,18 @@ class ThetaParser {
             Token nextToken = remainingTokens->front();
             remainingTokens->pop_front();
 
-            cout << "PARSING LINK: " + currentToken.getType() + " " + nextToken.getType() << endl;
-
             shared_ptr<LinkNode> linkNode = make_shared<LinkNode>(nextToken.getText());
 
-            // TODO: Recursively run through all files in the current directory and its subdirectories, looking through all files to find
-            // if any contain the line "capsule nextToken.getType()". We can first check if the parsedLinkASTs list already has a parsed
-            // AST for this capsule
+            auto fileContainingLinkedCapsule = filesByCapsule->find(nextToken.getText());
+
+            if (fileContainingLinkedCapsule == filesByCapsule->end()) {
+                cout << "ParseError: Could not find capsule " + nextToken.getText() + " referenced in file " + fileName << endl;
+                exit(0); 
+            }
+
+            shared_ptr<ASTNode> linkedAST = ThetaCompiler::getInstance().buildAST(fileContainingLinkedCapsule->second);
+
+            linkNode->setValue(linkedAST);
 
             return linkNode;
         }

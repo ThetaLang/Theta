@@ -9,6 +9,8 @@ capsule Greeting {
         x<String> = words[i + 1]
         y<String> = words[i]
         z<String> = words[0]
+
+        // Theta.StringUtil.someFunction()
     }
 }
 
