@@ -1,3 +1,4 @@
+link Theta.StringUtil
 
 capsule Greeting {
     greet<String> = name<String> -> 'hello' + name

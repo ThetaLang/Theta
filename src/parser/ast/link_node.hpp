@@ -6,33 +6,21 @@
 
 using namespace std;
 
-class SourceNode : public ASTNode {
+class LinkNode : public ASTNode {
     public:
         string nodeType;
-        vector<shared_ptr<ASTNode>> links;
+        string capsule;
 
-        SourceNode() : nodeType("Source") {};
+        LinkNode(string cap) : capsule(cap), nodeType("Link") {};
 
         string getNodeType() const override { return nodeType; }
-
-        void setLinks(vector<shared_ptr<ASTNode>> ln) { links = ln; }
 
         string toJSON() const override {
             ostringstream oss;
             
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
-            oss << ", \"links\": [";
-            
-            for (int i = 0; i < links.size(); i++) {
-                if (i > 0) {
-                    oss << ", ";
-                }
-
-                oss << (links[i] ? links[i]->toJSON() : "null");
-            }
-
-            oss << "] ";
+            oss << ", \"capsule\": \"" << capsule << "\"";
             oss << ", \"value\": " << (value ? value->toJSON() : "null");
             oss << "}";
 

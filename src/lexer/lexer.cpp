@@ -101,7 +101,7 @@ class ThetaLexer {
             } else if (!isspace(currentChar)) {
                 // We default this to an identifier, but then change it later if we discover its actually a keyword or bool
                 Token token = accumulateUntilAnyOf(
-                    " <>=/\\!?@#$%^&*()~`|,.-+{}[]'\";:\n\r",
+                    " <>=/\\!?@#$%^&*()~`|,-+{}[]'\";:\n\r",
                     source,
                     i,
                     Token("identifier", { currentChar }),
