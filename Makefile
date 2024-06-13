@@ -1,6 +1,6 @@
 # Define the compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++11 -I src
+CXXFLAGS = -std=c++11 -I src -MMD -MP
 
 # Define the source directories
 SRC_DIR = src

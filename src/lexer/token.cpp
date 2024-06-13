@@ -35,5 +35,4 @@ string Token::toJSON() {
     oss << "}";
 
     return oss.str();
-    // "{ type: " + lexer.tokens[i].getType() + ", text: " + lexer.tokens[i].getText() + ", location: " + lexer.tokens[i].getStartLocationString() + " }\n";
 }

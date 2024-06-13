@@ -20,6 +20,7 @@
 #include "ast/source_node.hpp"
 #include "ast/link_node.hpp"
 #include "../compiler/compiler.hpp"
+#include "../util/tokens.hpp"
 
 using namespace std;
 
@@ -37,7 +38,7 @@ class ThetaParser {
             vector<shared_ptr<ASTNode>> linkNodes;
 
             // Parse out file imports
-            while (remainingTokens->front().getType() == "keyword" && remainingTokens->front().getText() != "capsule") {
+            while (remainingTokens->front().getType() == Tokens::KEYWORD && remainingTokens->front().getText() != "capsule") {
                 string linkCapsuleName = remainingTokens->front().getText();
                 shared_ptr<LinkNode> parsedLinkAST;
 
@@ -75,24 +76,6 @@ class ThetaParser {
         map<string, shared_ptr<LinkNode>> parsedLinkASTs;
         shared_ptr<map<string, string>> filesByCapsule;
 
-        void validateIdentifier(Token token) {
-            string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?.,`~";
-            
-            for (int i = 0; i < token.getText().length(); i++) {
-                char identChar = tolower(token.getText()[i]);
-
-                bool isDisallowedChar = find(disallowedIdentifierChars.begin(), disallowedIdentifierChars.end(), identChar) != disallowedIdentifierChars.end();
-                bool isStartsWithDigit = i == 0 && isdigit(identChar);
-
-                if (isStartsWithDigit || isDisallowedChar) {
-                    throw SyntaxError(
-                        "Invalid identifier \"" + token.getText() + "\"",
-                        token.getStartLocation()
-                    );
-                }
-            }
-        }
-
         // Consumes next token from our remaining tokens
         shared_ptr<ASTNode> consume() {
             if (remainingTokens->size() <= 0) return nullptr;
@@ -102,38 +85,48 @@ class ThetaParser {
 
             Token nextToken = remainingTokens->front();
 
-            if (currentToken.getType() == "keyword" && currentToken.getText() == "capsule") {
+            if (currentToken.getType() == Tokens::KEYWORD && currentToken.getText() == "capsule") {
                 return parseCapsule(nextToken);
             } else if (
-                currentToken.getType() == "identifier" && 
-                nextToken.getType() == "angle_bracket_open" && 
-                remainingTokens->at(1).getType() == "identifier" &&
-                (remainingTokens->at(2).getType() == "angle_bracket_close" || remainingTokens->at(2).getType() == "angle_bracket_open")
+                currentToken.getType() == Tokens::IDENTIFIER && 
+                nextToken.getType() == Tokens::ANGLE_BRACKET_OPEN && 
+                remainingTokens->at(1).getType() == Tokens::IDENTIFIER &&
+                (remainingTokens->at(2).getType() == Tokens::ANGLE_BRACKET_CLOSE || remainingTokens->at(2).getType() == Tokens::ANGLE_BRACKET_OPEN)
             ) {
                 shared_ptr<ASTNode> identNode = parseIdentifierWithType(currentToken, nextToken);
 
-                if (remainingTokens->front().getType() == "assignment") {
+                if (remainingTokens->front().getType() == Tokens::ASSIGNMENT) {
                     return parseAssignment(identNode);
-                } else if (remainingTokens->front().getType() == "comma" || remainingTokens->front().getType() == "func_declaration") {
+                } else if (remainingTokens->front().getType() == Tokens::COMMA || remainingTokens->front().getType() == Tokens::FUNC_DECLARATION) {
                     return parseFuncDeclaration(identNode);
                 } else {
                     return identNode;
                 }
-            } else if ((currentToken.getType() == "identifier" || currentToken.getType() == "string" || currentToken.getType() == "number") && nextToken.getType() == "operator") {
+            } else if (
+                nextToken.getType() == "operator" && (
+                    currentToken.getType() == Tokens::IDENTIFIER ||
+                    currentToken.getType() == Tokens::STRING ||
+                    currentToken.getType() == Tokens::NUMBER
+                )
+            ) {
                 return parseBinaryOperation(currentToken, nextToken);
-            } else if (currentToken.getType() == "identifier" && nextToken.getType() == "bracket_open") {
+            } else if (currentToken.getType() == Tokens::IDENTIFIER && nextToken.getType() == Tokens::BRACKET_OPEN) {
                 return parseKeyedAccess(parseIdentifier(currentToken));
-            } else if (currentToken.getType() == "bracket_open") {
+            } else if (currentToken.getType() == Tokens::BRACKET_OPEN) {
                 shared_ptr<ASTNode> listDefinition = parseListDefinition(currentToken, nextToken);
                 
-                if (remainingTokens->front().getType() == "bracket_open") {
+                if (remainingTokens->front().getType() == Tokens::BRACKET_OPEN) {
                     return parseKeyedAccess(listDefinition);
                 } else {
                     return listDefinition;
                 }
-            } else if (currentToken.getType() == "string" || currentToken.getType() == "number" || currentToken.getType() == "boolean") {
+            } else if (
+                currentToken.getType() == Tokens::STRING ||
+                currentToken.getType() == Tokens::NUMBER ||
+                currentToken.getType() == Tokens::BOOLEAN
+            ) {
                 return parseLiteral(currentToken);
-            } else if (currentToken.getType() == "identifier") {
+            } else if (currentToken.getType() == Tokens::IDENTIFIER) {
                 return parseIdentifier(currentToken);
             }
 
@@ -148,7 +141,7 @@ class ThetaParser {
 
             vector<shared_ptr<ASTNode>> definitionNodes;
 
-            while (remainingTokens->front().getType() != "brace_close") {
+            while (remainingTokens->front().getType() != Tokens::BRACE_CLOSE) {
                 definitionNodes.push_back(consume());
             }
 
@@ -177,7 +170,7 @@ class ThetaParser {
 
             paramNodes.push_back(param);
 
-            while (remainingTokens->front().getType() != "func_declaration") {
+            while (remainingTokens->front().getType() != Tokens::FUNC_DECLARATION) {
                 Token curr = remainingTokens->front();
                 remainingTokens->pop_front();
 
@@ -190,12 +183,12 @@ class ThetaParser {
 
             // If the user inputted a curly brace, then we want to continue reading this function definition until we hit another curly brace.
             // Otherwise, we know the function will end at the next expression
-            bool hasMultipleExpressions = remainingTokens->front().getType() == "brace_open";
+            bool hasMultipleExpressions = remainingTokens->front().getType() == Tokens::BRACE_OPEN;
             
             if (hasMultipleExpressions) {
                 remainingTokens->pop_front(); // Pops the {
 
-                while (remainingTokens->front().getType() != "brace_close") {
+                while (remainingTokens->front().getType() != Tokens::BRACE_CLOSE) {
                     definitionNodes.push_back(consume());
                 }
 
@@ -216,9 +209,9 @@ class ThetaParser {
 
             int typeDeclarationDepth = 1;
             while (typeDeclarationDepth > 0) {
-                if (remainingTokens->front().getType() == "angle_bracket_open") {
+                if (remainingTokens->front().getType() == Tokens::ANGLE_BRACKET_OPEN) {
                     typeDeclarationDepth++;
-                } else if (remainingTokens->front().getType() == "angle_bracket_close"){
+                } else if (remainingTokens->front().getType() == Tokens::ANGLE_BRACKET_CLOSE){
                     typeDeclarationDepth--;
                 }
 
@@ -239,7 +232,7 @@ class ThetaParser {
 
             typeTokens.pop_front(); // Pops the type identifier
 
-            if (typeTokens.front().getType() == "angle_bracket_open") {
+            if (typeTokens.front().getType() == Tokens::ANGLE_BRACKET_OPEN) {
                 shared_ptr<ASTNode> typeChild = parseNestedTypeDeclaration(typeTokens);
 
                 node->setValue(typeChild);
@@ -253,11 +246,11 @@ class ThetaParser {
 
             vector<shared_ptr<ASTNode>> listElementNodes;
 
-            while (remainingTokens->front().getType() != "bracket_close") {
+            while (remainingTokens->front().getType() != Tokens::BRACKET_CLOSE) {
                 listElementNodes.push_back(consume());
 
                 // Commas should be skipped
-                if (remainingTokens->front().getType() == "comma") {
+                if (remainingTokens->front().getType() == Tokens::COMMA) {
                     remainingTokens->pop_front();
                 }
             }
@@ -286,24 +279,12 @@ class ThetaParser {
 
             shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(nextToken.getText());
 
-            node->setLeft(currentToken.getType() == "identifier"
+            node->setLeft(currentToken.getType() == Tokens::IDENTIFIER
                 ? parseIdentifier(currentToken)
                 : parseLiteral(currentToken)
             );
             
             node->setRight(consume());
-
-            return node;
-        }
-
-        shared_ptr<ASTNode> parseTypeDeclaration(Token currentToken, Token nextToken) {
-            remainingTokens->pop_front();
-
-            shared_ptr<ASTNode> node = make_shared<TypeDeclarationNode>(nextToken.getText());
-
-            if (remainingTokens->front().getType() == "angle_bracket_open") {
-                node->setValue(consume());
-            }
 
             return node;
         }
@@ -345,5 +326,23 @@ class ThetaParser {
             linkNode->setValue(linkedAST);
 
             return linkNode;
+        }
+
+        void validateIdentifier(Token token) {
+            string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?.,`~";
+            
+            for (int i = 0; i < token.getText().length(); i++) {
+                char identChar = tolower(token.getText()[i]);
+
+                bool isDisallowedChar = find(disallowedIdentifierChars.begin(), disallowedIdentifierChars.end(), identChar) != disallowedIdentifierChars.end();
+                bool isStartsWithDigit = i == 0 && isdigit(identChar);
+
+                if (isStartsWithDigit || isDisallowedChar) {
+                    throw SyntaxError(
+                        "Invalid identifier \"" + token.getText() + "\"",
+                        token.getStartLocation()
+                    );
+                }
+            }
         }
 };

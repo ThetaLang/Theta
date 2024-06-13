@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include "token.hpp"
+#include "../util/tokens.hpp"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ class ThetaLexer {
                 Token newToken = makeToken(currentChar, nextChar, source, i);
 
                 // We don't actually want to keep any whitespace related tokens
-                if (newToken.getType() != "newline" && newToken.getType() != "whitespace") {
+                if (newToken.getType() != Tokens::NEWLINE && newToken.getType() != Tokens::WHITESPACE) {
                     newToken.setStartLine(lineAtLexStart);
                     newToken.setStartColumn(columnAtLexStart);
                     tokens.push_back(newToken);
@@ -39,13 +40,19 @@ class ThetaLexer {
                 // characters long the token was. We really only want to do this for any token that was not created by an
                 // accumulateUntil function, since those already update the index internally.
                 vector<string> accumulatedTokens = {
-                    "identifier", "keyword", "boolean", "comment", "multiline_comment", "string", "number"
+                    Tokens::IDENTIFIER,
+                    Tokens::KEYWORD,
+                    Tokens::BOOLEAN,
+                    Tokens::COMMENT,
+                    Tokens::MULTILINE_COMMENT,
+                    Tokens::STRING,
+                    Tokens::NUMBER
                 };
                 
                 if (find(accumulatedTokens.begin(), accumulatedTokens.end(), newToken.getType()) == accumulatedTokens.end()) {
                     i += newToken.getText().length();
                     currentColumn += newToken.getText().length();
-                } else if (newToken.getType() == "multiline_comment") {
+                } else if (newToken.getType() == Tokens::MULTILINE_COMMENT) {
                     i += 2;
                     currentColumn += 2;
                 } else {
@@ -60,41 +67,41 @@ class ThetaLexer {
         int currentColumn = 1;
 
         Token makeToken(char currentChar, char nextChar, string source, int &i) {
-            if (currentChar == '\'') return accumulateUntilNext("'", source, i, Token("string", "'"), "'");
-            else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token("comment", "/"), "", false);
-            else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token("multiline_comment", "/-"), "-/");
-            else if (currentChar == '/') return Token("operator", "/");
-            else if (currentChar == '=' && nextChar == '=')  return Token("operator", "==");
-            else if (currentChar == '=' && nextChar == '>') return Token("operator", "=>");
-            else if (currentChar == '=') return Token("assignment", "=");
-            else if (currentChar == '+' && nextChar == '=') return Token("operator", "+=");
-            else if (currentChar == '+') return Token("operator", "+");
-            else if (currentChar == '-' && nextChar == '=') return Token("operator", "-=");
-            else if (currentChar == '-' && nextChar == '>') return Token("func_declaration", "->");
-            else if (currentChar == '-') return Token("operator", "-");
-            else if (currentChar == '*' && nextChar == '=') return Token("operator", "*=");
-            else if (currentChar == '*' && nextChar == '*') return Token("operator", "**");
-            else if (currentChar == '*') return Token("operator", "*");
-            else if (currentChar == '{') return Token("brace_open", "{");
-            else if (currentChar == '}') return Token("brace_close", "}");
-            else if (currentChar == '(') return Token("paren_open", "(");
-            else if (currentChar == ')') return Token("paren_close", ")");
-            else if (currentChar == '<') return Token("angle_bracket_open", "<");
-            else if (currentChar == '>') return Token("angle_bracket_close", ">");
-            else if (currentChar == '[') return Token("bracket_open", "[");
-            else if (currentChar == ']') return Token("bracket_close", "]");
-            else if (currentChar == ',') return Token("comma", ",");
-            else if (currentChar == ':') return Token("colon", ":");
+            if (currentChar == '\'') return accumulateUntilNext("'", source, i, Token(Tokens::STRING, Symbols::STRING_DELIMITER), Symbols::STRING_DELIMITER);
+            else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token(Tokens::COMMENT, "/"), "", false);
+            else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token(Tokens::MULTILINE_COMMENT, Symbols::MULTILINE_COMMENT_DELIMITER_START), Symbols::MULTILINE_COMMENT_DELIMITER_END);
+            else if (currentChar == '/') return Token(Tokens::OPERATOR, Symbols::DIVISION);
+            else if (currentChar == '=' && nextChar == '=')  return Token(Tokens::OPERATOR, Symbols::EQUALITY);
+            else if (currentChar == '=' && nextChar == '>') return Token(Tokens::OPERATOR, Symbols::PIPE);
+            else if (currentChar == '=') return Token(Tokens::ASSIGNMENT, Symbols::ASSIGNMENT);
+            else if (currentChar == '+' && nextChar == '=') return Token(Tokens::OPERATOR, Symbols::PLUS_EQUALS);
+            else if (currentChar == '+') return Token(Tokens::OPERATOR, Symbols::PLUS);
+            else if (currentChar == '-' && nextChar == '=') return Token(Tokens::OPERATOR, Symbols::MINUS_EQUALS);
+            else if (currentChar == '-' && nextChar == '>') return Token(Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION);
+            else if (currentChar == '-') return Token(Tokens::OPERATOR, Symbols::MINUS);
+            else if (currentChar == '*' && nextChar == '=') return Token(Tokens::OPERATOR, Symbols::TIMES_EQUALS);
+            else if (currentChar == '*' && nextChar == '*') return Token(Tokens::OPERATOR, Symbols::POWER);
+            else if (currentChar == '*') return Token(Tokens::OPERATOR, Symbols::TIMES);
+            else if (currentChar == '{') return Token(Tokens::BRACE_OPEN, Symbols::BRACE_OPEN);
+            else if (currentChar == '}') return Token(Tokens::BRACE_CLOSE, Symbols::BRACE_CLOSE);
+            else if (currentChar == '(') return Token(Tokens::PAREN_OPEN, Symbols::PAREN_OPEN);
+            else if (currentChar == ')') return Token(Tokens::PAREN_CLOSE, Symbols::PAREN_CLOSE);
+            else if (currentChar == '<') return Token(Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN);
+            else if (currentChar == '>') return Token(Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE);
+            else if (currentChar == '[') return Token(Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN);
+            else if (currentChar == ']') return Token(Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE);
+            else if (currentChar == ',') return Token(Tokens::COMMA, Symbols::COMMA);
+            else if (currentChar == ':') return Token(Tokens::COLON, Symbols::COLON);
             else if (currentChar == '\n') {
                 currentLine += 1;
                 currentColumn = 0;
-                return Token("newline", "\n");
+                return Token(Tokens::NEWLINE, Symbols::NEWLINE);
             } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.')) {
                 return accumulateUntilCondition(
                     [source](int idx) { return isdigit(source[idx]) || source[idx] == '.'; },
                     source,
                     i,
-                    Token("number", { currentChar }),
+                    Token(Tokens::NUMBER, { currentChar }),
                     "",
                     false
                 );
@@ -104,20 +111,20 @@ class ThetaLexer {
                     " <>=/\\!?@#$%^&*()~`|,-+{}[]'\";:\n\r",
                     source,
                     i,
-                    Token("identifier", { currentChar }),
+                    Token(Tokens::IDENTIFIER, { currentChar }),
                     "",
                     false
                 );
 
                 if (isLanguageKeyword(token.getText())) {
-                    token.setType("keyword");
+                    token.setType(Tokens::KEYWORD);
                 } else if (token.getText() == "true" || token.getText() == "false") {
-                    token.setType("boolean");
+                    token.setType(Tokens::BOOLEAN);
                 }
 
                 return token;
             } else if (isspace(currentChar)) {
-                return Token("whitespace", { currentChar });
+                return Token(Tokens::WHITESPACE, { currentChar });
             } else {
                 cout << "UNHANDLED CHAR: " << currentChar << " \n";
                 return Token("unhandled", { currentChar });
