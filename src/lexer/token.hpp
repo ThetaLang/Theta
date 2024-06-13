@@ -15,6 +15,7 @@ class Token {
         string type;
 
     public:
+        Token();
         Token(string tokenType, string tokenText);
 
         string getType();

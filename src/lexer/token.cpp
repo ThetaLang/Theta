@@ -1,5 +1,7 @@
 #include "token.hpp"
 
+Token::Token() {}
+
 Token::Token(string tokenType, string tokenText) {
     text = tokenText;
     type = tokenType;

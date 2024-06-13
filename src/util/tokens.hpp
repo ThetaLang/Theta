@@ -46,6 +46,7 @@ namespace Symbols {
     const string STRING_DELIMITER = "'";
 
     // Comment Delimiters
+    const string COMMENT = "//";
     const string MULTILINE_COMMENT_DELIMITER_START = "/-";
     const string MULTILINE_COMMENT_DELIMITER_END = "-/";
 
@@ -83,4 +84,12 @@ namespace Symbols {
     // Function Declaration
     const string FUNC_DECLARATION = "->";
     const string PIPE = "=>";
+
+    // Language keywords
+    const string LINK = "link";
+    const string CAPSULE = "capsule";
+    const string IF = "if";
+    const string ELSE = "else";
+    const string STRUCT = "struct";
+    const string RETURN = "return";
 }

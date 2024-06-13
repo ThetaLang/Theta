@@ -38,7 +38,7 @@ class ThetaParser {
             vector<shared_ptr<ASTNode>> linkNodes;
 
             // Parse out file imports
-            while (remainingTokens->front().getType() == Tokens::KEYWORD && remainingTokens->front().getText() != "capsule") {
+            while (remainingTokens->front().getType() == Tokens::KEYWORD && remainingTokens->front().getText() != Symbols::CAPSULE) {
                 string linkCapsuleName = remainingTokens->front().getText();
                 shared_ptr<LinkNode> parsedLinkAST;
 
@@ -85,7 +85,7 @@ class ThetaParser {
 
             Token nextToken = remainingTokens->front();
 
-            if (currentToken.getType() == Tokens::KEYWORD && currentToken.getText() == "capsule") {
+            if (currentToken.getType() == Tokens::KEYWORD && currentToken.getText() == Symbols::CAPSULE) {
                 return parseCapsule(nextToken);
             } else if (
                 currentToken.getType() == Tokens::IDENTIFIER && 

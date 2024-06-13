@@ -11,6 +11,11 @@ capsule Greeting {
         z<String> = words[0]
 
         // Theta.StringUtil.someFunction()
+
+        /- This is
+        a multi
+        line comment
+        -/
     }
 }
 

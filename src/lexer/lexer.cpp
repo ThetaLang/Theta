@@ -8,10 +8,18 @@
 
 using namespace std;
 
+/**
+ * @class ThetaLexer
+ * @brief A lexer for the Theta programming language that tokenizes source code into a deque of Token objects.
+ */
 class ThetaLexer {
     public:
         deque<Token> tokens = {};
         
+        /**
+         * @brief Tokenizes the given source code string.
+         * @param source The source code to lex.
+         */
         void lex(string source) {
             int i = 0;
 
@@ -29,8 +37,10 @@ class ThetaLexer {
 
                 Token newToken = makeToken(currentChar, nextChar, source, i);
 
-                // We don't actually want to keep any whitespace related tokens
-                if (newToken.getType() != Tokens::NEWLINE && newToken.getType() != Tokens::WHITESPACE) {
+                // We don't actually want to keep any whitespace related tokens or comments
+                vector<string> garbageTokens = { Tokens::NEWLINE, Tokens::WHITESPACE, Tokens::COMMENT, Tokens::MULTILINE_COMMENT };
+
+                if (find(garbageTokens.begin(), garbageTokens.end(), newToken.getType()) == garbageTokens.end()) {
                     newToken.setStartLine(lineAtLexStart);
                     newToken.setStartColumn(columnAtLexStart);
                     tokens.push_back(newToken);
@@ -66,33 +76,58 @@ class ThetaLexer {
         int currentLine = 1;
         int currentColumn = 1;
 
+        /**
+         * @brief Creates a Token object based on the current and next characters in the source code.
+         * @param currentChar The current character being processed.
+         * @param nextChar The next character to be processed.
+         * @param source The source code string.
+         * @param i The current index in the source string.
+         * @return The generated Token object.
+         */
         Token makeToken(char currentChar, char nextChar, string source, int &i) {
-            if (currentChar == '\'') return accumulateUntilNext("'", source, i, Token(Tokens::STRING, Symbols::STRING_DELIMITER), Symbols::STRING_DELIMITER);
-            else if (currentChar == '/' && nextChar == '/') return accumulateUntilNext("\n", source, i, Token(Tokens::COMMENT, "/"), "", false);
-            else if (currentChar == '/' && nextChar == '-') return accumulateUntilNext("-/", source, i, Token(Tokens::MULTILINE_COMMENT, Symbols::MULTILINE_COMMENT_DELIMITER_START), Symbols::MULTILINE_COMMENT_DELIMITER_END);
-            else if (currentChar == '/') return Token(Tokens::OPERATOR, Symbols::DIVISION);
-            else if (currentChar == '=' && nextChar == '=')  return Token(Tokens::OPERATOR, Symbols::EQUALITY);
-            else if (currentChar == '=' && nextChar == '>') return Token(Tokens::OPERATOR, Symbols::PIPE);
-            else if (currentChar == '=') return Token(Tokens::ASSIGNMENT, Symbols::ASSIGNMENT);
-            else if (currentChar == '+' && nextChar == '=') return Token(Tokens::OPERATOR, Symbols::PLUS_EQUALS);
-            else if (currentChar == '+') return Token(Tokens::OPERATOR, Symbols::PLUS);
-            else if (currentChar == '-' && nextChar == '=') return Token(Tokens::OPERATOR, Symbols::MINUS_EQUALS);
-            else if (currentChar == '-' && nextChar == '>') return Token(Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION);
-            else if (currentChar == '-') return Token(Tokens::OPERATOR, Symbols::MINUS);
-            else if (currentChar == '*' && nextChar == '=') return Token(Tokens::OPERATOR, Symbols::TIMES_EQUALS);
-            else if (currentChar == '*' && nextChar == '*') return Token(Tokens::OPERATOR, Symbols::POWER);
-            else if (currentChar == '*') return Token(Tokens::OPERATOR, Symbols::TIMES);
-            else if (currentChar == '{') return Token(Tokens::BRACE_OPEN, Symbols::BRACE_OPEN);
-            else if (currentChar == '}') return Token(Tokens::BRACE_CLOSE, Symbols::BRACE_CLOSE);
-            else if (currentChar == '(') return Token(Tokens::PAREN_OPEN, Symbols::PAREN_OPEN);
-            else if (currentChar == ')') return Token(Tokens::PAREN_CLOSE, Symbols::PAREN_CLOSE);
-            else if (currentChar == '<') return Token(Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN);
-            else if (currentChar == '>') return Token(Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE);
-            else if (currentChar == '[') return Token(Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN);
-            else if (currentChar == ']') return Token(Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE);
-            else if (currentChar == ',') return Token(Tokens::COMMA, Symbols::COMMA);
-            else if (currentChar == ':') return Token(Tokens::COLON, Symbols::COLON);
-            else if (currentChar == '\n') {
+            Token token;
+
+            // Order matters here to ensure correct tokenization precedence.
+            // We attempt to lex each potential token type in a specific order of priority.
+            // Each attemptLex function call checks if the current and possibly next character
+            // match the expected symbol(s) for the token type. If a match is found, it processes
+            // and returns the corresponding token. If no match is found, it returns false, and
+            // the next attemptLex in the sequence is checked.
+            // 
+            // This sequential checking ensures that tokens with longer symbol representations
+            // (e.g., multi-character operators) are prioritized over shorter ones, preventing
+            // misinterpretations and ensuring correct tokenization of the source code.
+            if (
+                attemptLex(Symbols::STRING_DELIMITER, Tokens::STRING, token, currentChar, nextChar, source, i, Symbols::STRING_DELIMITER) ||
+                attemptLex(Symbols::COMMENT, Tokens::COMMENT, token, currentChar, nextChar, source, i, Symbols::NEWLINE, false, false) ||
+                attemptLex(Symbols::MULTILINE_COMMENT_DELIMITER_START, Tokens::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Symbols::MULTILINE_COMMENT_DELIMITER_END) ||
+                attemptLex(Symbols::DIVISION, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::EQUALITY, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PIPE, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::ASSIGNMENT, Tokens::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PLUS_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PLUS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::MINUS_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::FUNC_DECLARATION, Tokens::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::MINUS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::TIMES_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::POWER, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::TIMES, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACE_OPEN, Tokens::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACE_CLOSE, Tokens::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PAREN_OPEN, Tokens::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PAREN_CLOSE, Tokens::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::ANGLE_BRACKET_OPEN, Tokens::ANGLE_BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::ANGLE_BRACKET_CLOSE, Tokens::ANGLE_BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACKET_OPEN, Tokens::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACKET_CLOSE, Tokens::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::COMMA, Tokens::COMMA, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::COLON, Tokens::COLON, token, currentChar, nextChar, source, i)
+            ) {
+                return token;
+            }
+
+            if (currentChar == '\n') {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token(Tokens::NEWLINE, Symbols::NEWLINE);
@@ -131,6 +166,67 @@ class ThetaLexer {
             }
         }
 
+        /**
+         * @brief Attempts to lex a token from the source code based on the given symbol and token type.
+         * @param symbol The symbol representing the token.
+         * @param tokenType The type of token to create.
+         * @param token The token object to update.
+         * @param currentChar The current character being processed.
+         * @param nextChar The next character to be processed.
+         * @param source The source code string.
+         * @param i The current index in the source string.
+         * @param terminal The terminal character string to stop at (default is an empty string).
+         * @param appendSymbol Whether to append the symbol to the token text (default is true).
+         * @param incrementAfter Whether to increment the index after lexing (default is true).
+         * @return True if the token was successfully lexed, false otherwise.
+         */
+        bool attemptLex(
+            const string& symbol,
+            const string& tokenType,
+            Token& token, 
+            char currentChar,
+            char nextChar,
+            const string& source,
+            int& i,
+            string terminal = "",
+            bool appendSymbol = true,
+            bool incrementAfter = true
+        ) {
+            if (currentChar == symbol[0] && (symbol.length() == 1 || nextChar == symbol[1])) {
+                if (terminal != "") {
+                    // With tokens like comment and multiline_comment, this will format them weirdly
+                    // in the token text field, because the combination of an accumulator and a symbol
+                    // that is different from the prefix we start at causes some weird insertion to happen.
+                    // We could add extra logic to fix it, but we throw out comments anyway right after they are lexed,
+                    // so its probably not worth the extra code to do so. Our line numbers and columns are still correct
+                    // and the lexing otherwise succeeds. However, if we ever come across a token that is *not* a
+                    // comment in the future that follows the same weird capture logic, we'll need to fix it.
+                    token = accumulateUntilNext(
+                        terminal,
+                        source,
+                        i,
+                        Token(tokenType, symbol),
+                        appendSymbol ? symbol : "",
+                        incrementAfter
+                    );
+                } else {
+                    token = Token(tokenType, symbol);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * @brief Accumulates characters from the source until all of the specified end characters are encountered as a substring.
+         * @param endChars A string containing characters that mark the end of accumulation.
+         * @param source The source code string to lex.
+         * @param i The current index in the source string.
+         * @param token The Token object to update with accumulated characters.
+         * @param append Additional text to append to the accumulated token text (default is an empty string).
+         * @param incrementAfter Whether to increment the index after accumulation (default is true).
+         * @return The updated Token object after accumulation.
+         */
         Token accumulateUntilNext(string endChars, string source, int &i, Token token, string append = "", bool incrementAfter = true) {
             return accumulateUntilCondition(
                 [endChars, source](int i) { return source.substr(i, endChars.length()) != endChars; },
@@ -142,6 +238,16 @@ class ThetaLexer {
             );
         }
 
+        /**
+         * @brief Accumulates characters from the source until any character from the specified endChars string is encountered.
+         * @param endChars A string containing characters that mark the end of accumulation.
+         * @param source The source code string to lex.
+         * @param i The current index in the source string.
+         * @param token The Token object to update with accumulated characters.
+         * @param append Additional text to append to the accumulated token text (default is an empty string).
+         * @param incrementAfter Whether to increment the index after accumulation (default is true).
+         * @return The updated Token object after accumulation.
+         */
         Token accumulateUntilAnyOf(string endChars, string source, int &i, Token token, string append = "", bool incrementAfter = true) {
             return accumulateUntilCondition(
                 [endChars, source](int i) { return find(endChars.begin(), endChars.end(), source[i]) == endChars.end(); },
@@ -153,6 +259,16 @@ class ThetaLexer {
             );
         }
 
+        /**
+         * @brief Generalized accumulation function that continues accumulating characters as long as the provided condition function returns true.
+         * @param shouldContinue A function that takes an integer index and returns true if accumulation should continue.
+         * @param source The source code string to lex.
+         * @param i The current index in the source string.
+         * @param token The Token object to update with accumulated characters.
+         * @param append Additional text to append to the accumulated token text (default is an empty string).
+         * @param incrementAfter Whether to increment the index after accumulation (default is true).
+         * @return The updated Token object after accumulation.
+         */
         Token accumulateUntilCondition(function<bool(int)> shouldContinue, string source, int &i, Token token, string append = "", bool incrementAfter = true) {
             // We need to jump forward one index because we're already on the start char
             i++;
@@ -184,9 +300,19 @@ class ThetaLexer {
             return token;
         }
 
+        /**
+         * @brief Checks if a given text is a keyword in the Theta programming language.
+         * @param text The text to check.
+         * @return True if the text is a keyword, false otherwise.
+         */
         bool isLanguageKeyword(string text) {
             vector<string> keywords = {
-                "link", "capsule", "if", "else", "struct", "return"
+                Symbols::LINK,
+                Symbols::CAPSULE, 
+                Symbols::IF,
+                Symbols::ELSE,
+                Symbols::STRUCT,
+                Symbols::RETURN
             };
 
             return find(keywords.begin(), keywords.end(), text) != keywords.end();
