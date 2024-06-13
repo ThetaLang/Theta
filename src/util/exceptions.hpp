@@ -27,6 +27,20 @@ class SyntaxError : public ParseError {
         vector<int> contextLocation() override { return sourceLocation; }
 };
 
+class LinkageError : public ParseError {
+    private:
+        string message;
+        vector<int> sourceLocation;
+    public:
+        LinkageError(string msg, vector<int> loc) : message(msg), sourceLocation(loc) {}
+        
+        string what() override {
+            return message + " at line " + to_string(sourceLocation[0]) + ", column " + to_string(sourceLocation[1]);
+        }
+
+        vector<int> contextLocation() override { return sourceLocation; }
+};
+
 class ExceptionFormatter {
     public:
         static void displayFormattedError(string errorType, ParseError &e, string source, string fileName, Token token);
