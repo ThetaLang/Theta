@@ -3,16 +3,17 @@
 #include <string>
 #include <sstream>
 #include "ast_node.hpp"
+#include "../../util/tokens.hpp"
 
 using namespace std;
 
 class LiteralNode : public ASTNode {
     public:
         string nodeType;
-        string type;
+        Tokens type;
         string literalValue;
 
-        LiteralNode(string typ, string val) : type(typ), literalValue(val), nodeType("Literal") {};
+        LiteralNode(Tokens typ, string val) : type(typ), literalValue(val), nodeType("Literal") {};
 
         string getNodeType() const override { return nodeType; }
 
@@ -20,7 +21,7 @@ class LiteralNode : public ASTNode {
             ostringstream oss;
             
             oss << "{";
-            oss << "\"type\": \"" << type << nodeType << "\", ";
+            oss << "\"type\": \"" << tokenTypeToString(type) << nodeType << "\", ";
             oss << "\"value\": \"" << literalValue << "\" ";
             oss << "}";
 

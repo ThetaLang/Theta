@@ -38,7 +38,7 @@ class ThetaLexer {
                 Token newToken = makeToken(currentChar, nextChar, source, i);
 
                 // We don't actually want to keep any whitespace related tokens or comments
-                vector<string> garbageTokens = { Tokens::NEWLINE, Tokens::WHITESPACE, Tokens::COMMENT, Tokens::MULTILINE_COMMENT };
+                vector<Tokens> garbageTokens = { Tokens::NEWLINE, Tokens::WHITESPACE, Tokens::COMMENT, Tokens::MULTILINE_COMMENT };
 
                 if (find(garbageTokens.begin(), garbageTokens.end(), newToken.getType()) == garbageTokens.end()) {
                     newToken.setStartLine(lineAtLexStart);
@@ -49,7 +49,7 @@ class ThetaLexer {
                 // Some tokens are more than one character. We want to advance the iterator and currentLine by however many
                 // characters long the token was. We really only want to do this for any token that was not created by an
                 // accumulateUntil function, since those already update the index internally.
-                vector<string> accumulatedTokens = {
+                vector<Tokens> accumulatedTokens = {
                     Tokens::IDENTIFIER,
                     Tokens::KEYWORD,
                     Tokens::BOOLEAN,
@@ -103,6 +103,9 @@ class ThetaLexer {
                 attemptLex(Symbols::MULTILINE_COMMENT_DELIMITER_START, Tokens::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Symbols::MULTILINE_COMMENT_DELIMITER_END) ||
                 attemptLex(Symbols::DIVISION, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::EQUALITY, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::AND, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::OR, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::NOT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::PIPE, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::ASSIGNMENT, Tokens::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::PLUS_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
@@ -131,9 +134,16 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token(Tokens::NEWLINE, Symbols::NEWLINE);
-            } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.')) {
+            } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0')) {
+                int countDecimals = 0;
                 return accumulateUntilCondition(
-                    [source](int idx) { return isdigit(source[idx]) || source[idx] == '.'; },
+                    [source, &countDecimals](int idx) { 
+                        if (source[idx] == '.') {
+                            countDecimals++;
+                        }
+
+                        return isdigit(source[idx]) || (countDecimals <= 1 && source[idx] == '.'); 
+                    },
                     source,
                     i,
                     Token(Tokens::NUMBER, { currentChar }),
@@ -162,7 +172,7 @@ class ThetaLexer {
                 return Token(Tokens::WHITESPACE, { currentChar });
             } else {
                 cout << "UNHANDLED CHAR: " << currentChar << " \n";
-                return Token("unhandled", { currentChar });
+                return Token(Tokens::UNHANDLED, { currentChar });
             }
         }
 
@@ -181,12 +191,12 @@ class ThetaLexer {
          * @return True if the token was successfully lexed, false otherwise.
          */
         bool attemptLex(
-            const string& symbol,
-            const string& tokenType,
-            Token& token, 
+            const string &symbol,
+            Tokens tokenType,
+            Token &token, 
             char currentChar,
             char nextChar,
-            const string& source,
+            const string &source,
             int& i,
             string terminal = "",
             bool appendSymbol = true,

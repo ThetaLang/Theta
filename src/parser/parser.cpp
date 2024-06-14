@@ -134,7 +134,7 @@ class ThetaParser {
                     return identNode;
                 }
             } else if (
-                nextToken.getType() == "operator" && (
+                nextToken.getType() == Tokens::OPERATOR && (
                     currentToken.getType() == Tokens::IDENTIFIER ||
                     currentToken.getType() == Tokens::STRING ||
                     currentToken.getType() == Tokens::NUMBER

@@ -1,44 +1,82 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 using namespace std;
 
 // Token types
-namespace Tokens {
+enum class Tokens {
     // Literal Types
-    const string STRING = "string";
-    const string NUMBER = "number";
-    const string BOOLEAN = "boolean";
+    STRING,
+    NUMBER,
+    BOOLEAN,
 
     // Identifiers and Keywords
-    const string KEYWORD = "keyword";
-    const string IDENTIFIER = "identifier";
+    KEYWORD,
+    IDENTIFIER,
 
     // Comments
-    const string COMMENT = "comment";
-    const string MULTILINE_COMMENT = "multiline_comment";
+    COMMENT,
+    MULTILINE_COMMENT,
 
     // Operators and Assignments
-    const string OPERATOR = "operator";
-    const string ASSIGNMENT = "assignment";
-    const string FUNC_DECLARATION = "func_declaration";
+    OPERATOR,
+    ASSIGNMENT,
+    FUNC_DECLARATION,
 
     // Delimiters
-    const string BRACE_OPEN = "brace_open";
-    const string BRACE_CLOSE = "brace_close";
-    const string PAREN_OPEN = "paren_open";
-    const string PAREN_CLOSE = "paren_close";
-    const string ANGLE_BRACKET_OPEN = "angle_bracket_open";
-    const string ANGLE_BRACKET_CLOSE = "angle_bracket_close";
-    const string BRACKET_OPEN = "bracket_open";
-    const string BRACKET_CLOSE = "bracket_close";
-    const string COMMA = "comma";
-    const string COLON = "colon";
+    BRACE_OPEN,
+    BRACE_CLOSE,
+    PAREN_OPEN,
+    PAREN_CLOSE,
+    ANGLE_BRACKET_OPEN,
+    ANGLE_BRACKET_CLOSE,
+    BRACKET_OPEN,
+    BRACKET_CLOSE,
+    COMMA,
+    COLON,
 
     // Whitespace
-    const string NEWLINE = "newline";
-    const string WHITESPACE = "whitespace";
+    NEWLINE,
+    WHITESPACE,
+
+    UNHANDLED
+};
+
+inline string tokenTypeToString(Tokens token) {
+    static map<Tokens, string> tokensMap = {
+        { Tokens::STRING, "STRING" },
+        { Tokens::NUMBER, "NUMBER" },
+        { Tokens::BOOLEAN, "BOOLEAN" },
+        { Tokens::KEYWORD, "KEYWORD" },
+        { Tokens::IDENTIFIER, "IDENTIFIER" },
+        { Tokens::COMMENT, "COMMENT" },
+        { Tokens::MULTILINE_COMMENT, "MULTILINE_COMMENT" },
+        { Tokens::OPERATOR, "OPERATOR" },
+        { Tokens::ASSIGNMENT, "ASSIGNMENT" },
+        { Tokens::FUNC_DECLARATION, "FUNC_DECLARATION" },
+        { Tokens::BRACE_OPEN, "BRACE_OPEN" },
+        { Tokens::BRACE_CLOSE, "BRACE_CLOSE" },
+        { Tokens::PAREN_OPEN, "PAREN_OPEN" },
+        { Tokens::PAREN_CLOSE, "PAREN_CLOSE" },
+        { Tokens::ANGLE_BRACKET_OPEN, "ANGLE_BRACKET_OPEN" },
+        { Tokens::ANGLE_BRACKET_CLOSE, "ANGLE_BRACKET_CLOSE" },
+        { Tokens::BRACKET_OPEN, "BRACKET_OPEN" },
+        { Tokens::BRACKET_CLOSE, "BRACKET_CLOSE" },
+        { Tokens::COMMA, "COMMA" },
+        { Tokens::COLON, "COLON" },
+        { Tokens::NEWLINE, "NEWLINE" },
+        { Tokens::WHITESPACE, "WHITESPACE" },
+        { Tokens::UNHANDLED, "UNHANDLED" }
+    };
+
+    auto it = tokensMap.find(token);
+    if (it != tokensMap.end()) {
+        return it->second;
+    } else {
+        return "UNKNOWN";
+    }
 }
 
 namespace Symbols {
@@ -72,6 +110,11 @@ namespace Symbols {
     const string TIMES = "*";
     const string POWER = "**";
 
+    // Boolean Operators
+    const string AND = "&&";
+    const string OR = "||";
+    const string NOT = "!";
+
     // Assignment Operators
     const string ASSIGNMENT = "=";
     const string PLUS_EQUALS = "+=";
@@ -92,4 +135,6 @@ namespace Symbols {
     const string ELSE = "else";
     const string STRUCT = "struct";
     const string RETURN = "return";
+    const string TRUE = "true";
+    const string FALSE = "false";
 }

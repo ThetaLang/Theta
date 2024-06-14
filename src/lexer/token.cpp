@@ -2,14 +2,14 @@
 
 Token::Token() {}
 
-Token::Token(string tokenType, string tokenText) {
+Token::Token(Tokens tokenType, string tokenText) {
     text = tokenText;
     type = tokenType;
 }
 
-string Token::getType() { return type; }
+Tokens Token::getType() { return type; }
 
-void Token::setType(string tokenType) { type = tokenType; }
+void Token::setType(Tokens tokenType) { type = tokenType; }
 
 string Token::getText() { return text; }
 
@@ -31,7 +31,7 @@ string Token::toJSON() {
     ostringstream oss;
 
     oss << "{";
-    oss << "\"type\": \"" << type << "\"";
+    oss << "\"type\": \"" << tokenTypeToString(type) << "\"";
     oss << ",\"text\": \"" << text << "\"";
     oss << ",\"location\": \"" << getStartLocationString() << "\"";
     oss << "}";

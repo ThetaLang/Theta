@@ -4,6 +4,7 @@
 #import <string>
 #import <vector>
 #import <sstream>
+#import "../util/tokens.hpp"
 
 using namespace std;
 
@@ -12,15 +13,15 @@ class Token {
         string text;
         int line;
         int column;
-        string type;
+        Tokens type;
 
     public:
         Token();
-        Token(string tokenType, string tokenText);
+        Token(Tokens tokenType, string tokenText);
 
-        string getType();
+        Tokens getType();
 
-        void setType(string tokenType);
+        void setType(Tokens tokenType);
 
         string getText();
 
