@@ -15,6 +15,8 @@ class BinaryOperationNode : public ASTNode {
 
         string getNodeType() const override { return nodeType; }
 
+        string getOperator() { return operatorSymbol; }
+
         string toJSON() const override {
             std::ostringstream oss;
             oss << "{";

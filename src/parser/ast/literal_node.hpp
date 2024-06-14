@@ -13,15 +13,25 @@ class LiteralNode : public ASTNode {
         Tokens type;
         string literalValue;
 
-        LiteralNode(Tokens typ, string val) : type(typ), literalValue(val), nodeType("Literal") {};
+        LiteralNode(Tokens typ, string val) : type(typ), literalValue(val){
+            string formattedType = tokenTypeToString(typ);
+
+            for (int i = 1; i < formattedType.length(); ++i) {
+                formattedType[i] = tolower(formattedType[i]);
+            }
+
+            nodeType = formattedType + "Literal";
+        };
 
         string getNodeType() const override { return nodeType; }
+
+        string getLiteralValue() { return literalValue; }
 
         string toJSON() const override {
             ostringstream oss;
             
             oss << "{";
-            oss << "\"type\": \"" << tokenTypeToString(type) << nodeType << "\", ";
+            oss << "\"type\": \"" << nodeType << "\", ";
             oss << "\"value\": \"" << literalValue << "\" ";
             oss << "}";
 

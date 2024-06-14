@@ -52,6 +52,13 @@ CATCH2_DIR = $(TEST_DIR)/catch2
 CATCH2_SRC_FILES = $(CATCH2_DIR)/catch_amalgamated.cpp
 CATCH2_OBJ_FILES = $(patsubst $(CATCH2_DIR)/%.cpp,$(BUILD_TEST_DIR)/%.o,$(CATCH2_SRC_FILES))
 
+TARGET_EXECUTABLE = $(PWD)/$(TARGET)
+SYMLINK_PATH = /usr/local/bin/theta
+
+install: all
+	@echo "Creating symlink $(SYMLINK_PATH) -> $(TARGET_EXECUTABLE)"
+	ln -sf $(TARGET_EXECUTABLE) $(SYMLINK_PATH)
+
 # Default target
 all: $(TARGET)
 

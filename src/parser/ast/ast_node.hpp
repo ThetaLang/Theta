@@ -18,9 +18,15 @@ class ASTNode {
 
         virtual void setValue(shared_ptr<ASTNode> childNode) { value = childNode; }
 
+        virtual shared_ptr<ASTNode> getValue() { return value; }
+
         virtual void setLeft(shared_ptr<ASTNode> childNode) { left = childNode; }
 
+        virtual shared_ptr<ASTNode> getLeft() { return left; }
+
         virtual void setRight(shared_ptr<ASTNode> childNode) { right = childNode; }
+
+        virtual shared_ptr<ASTNode> getRight() { return right; }
 
         virtual ~ASTNode() = default;
 };

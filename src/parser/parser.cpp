@@ -82,13 +82,7 @@ class ThetaParser {
 
             rootASTNode->setLinks(linkNodes);
             rootASTNode->setValue(consume());
-
-            if (rootASTNode) {
-                cout << rootASTNode->toJSON() << endl;
-            } else {
-                cout << "NO ROOT NODE" << endl;
-            }
-
+            
             return rootASTNode;
         }
 

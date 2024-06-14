@@ -40,7 +40,15 @@ shared_ptr<ASTNode> ThetaCompiler::buildAST(string file) {
     cout << "====================================\n";
     
     ThetaParser parser;
-    return parser.parse(lexer.tokens, fileSource, file, filesByCapsuleName);
+    shared_ptr<ASTNode> parsedAST = parser.parse(lexer.tokens, fileSource, file, filesByCapsuleName);
+
+    if (parsedAST) {
+        cout << parsedAST->toJSON() << endl;
+    } else {
+        cout << "COULD NOT PARSE AST" << endl;
+    }
+
+    return parsedAST;
 }
 
 void ThetaCompiler::discoverCapsules() {

@@ -17,6 +17,8 @@ class SourceNode : public ASTNode {
 
         void setLinks(vector<shared_ptr<ASTNode>> ln) { links = ln; }
 
+        vector<shared_ptr<ASTNode>> getLinks() { return links; }
+
         string toJSON() const override {
             ostringstream oss;
             
