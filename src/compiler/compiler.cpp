@@ -2,7 +2,7 @@
 #include <deque>
 #include <string>
 #include <map>
-#include <fstream> 
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <filesystem>
@@ -18,8 +18,11 @@ ThetaCompiler& ThetaCompiler::getInstance() {
     return instance;
 }
 
-void ThetaCompiler::compile(string entrypoint) {
-    buildAST(entrypoint);
+void ThetaCompiler::compile(string entrypoint, string outputFile, bool emitTokens, bool emitAST) {
+    isEmitTokens = emitTokens;
+    isEmitAST = emitAST;
+
+    shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 }
 
 shared_ptr<ASTNode> ThetaCompiler::buildAST(string file) {
@@ -33,19 +36,23 @@ shared_ptr<ASTNode> ThetaCompiler::buildAST(string file) {
 
     lexer.lex(fileSource);
 
-    cout << "\n========== LEXED TOKENS ==========\n";
-    for (int i = 0; i < lexer.tokens.size(); i++) {
-        cout << lexer.tokens[i].toJSON() << "\n";
+    if (isEmitTokens) {
+        cout << "Lexed Tokens for \"" + file + "\":" << endl;
+        for (int i = 0; i < lexer.tokens.size(); i++) {
+            cout << lexer.tokens[i].toJSON() << endl;
+        }
+        cout << endl;
     }
-    cout << "====================================\n";
-    
+
     ThetaParser parser;
     shared_ptr<ASTNode> parsedAST = parser.parse(lexer.tokens, fileSource, file, filesByCapsuleName);
 
-    if (parsedAST) {
+    if (parsedAST && isEmitAST) {
+        cout << "Generated AST for \"" + file + "\":" << endl;
         cout << parsedAST->toJSON() << endl;
-    } else {
-        cout << "COULD NOT PARSE AST" << endl;
+        cout << endl;
+    } else if (!parsedAST) {
+        cout << "Could not parse AST for file " + file << endl;
     }
 
     return parsedAST;
@@ -55,7 +62,7 @@ void ThetaCompiler::discoverCapsules() {
     for (const auto& entry : std::__fs::filesystem::recursive_directory_iterator(".")) {
         if (entry.is_regular_file() && entry.path().extension() == ".th") {
             string capsuleName = findCapsuleName(entry.path().string());
-            
+
             filesByCapsuleName->insert(make_pair(capsuleName, entry.path().string()));
         }
     }

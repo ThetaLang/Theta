@@ -1,10 +1,9 @@
-#include "src/compiler/compiler.hpp"
+#include "src/cli/cli.cpp"
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    // For now, always expect the first argument to be a .th file that needs lexing
-    ThetaCompiler::getInstance().compile(argv[1]);
+    ThetaCLI::parseCommand(argc, argv);
 
     return 0;
 }
