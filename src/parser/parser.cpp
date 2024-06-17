@@ -8,6 +8,7 @@
 #include "../lexer/token.hpp"
 #include "../util/exceptions.hpp"
 #include "ast/assignment_node.hpp"
+#include "ast/unary_operation_node.hpp"
 #include "ast/binary_operation_node.hpp"
 #include "ast/literal_node.hpp"
 #include "ast/identifier_node.hpp"
@@ -77,12 +78,28 @@ class ThetaParser {
                 }
 
                 linkNodes.push_back(parsedLinkAST);
-                
             }
 
             rootASTNode->setLinks(linkNodes);
-            rootASTNode->setValue(consume());
             
+            shared_ptr<ASTNode> rootASTValue = consume();
+
+            // If we have any tokens after consuming and creating the rootASTValue, we probably just built a left hand side
+            // of an AST, so we'll try to consume again with the assumption that the next token should be an operator of some sort
+            if (tokens.size() > 0) {
+                rootASTValue = parseBinaryOperation(rootASTValue);
+            }
+
+            rootASTNode->setValue(rootASTValue);
+
+            // Throw parse errors for any remaining tokens after we've finished our parser run
+            for (int i = 0; i < tokens.size(); i++) {
+                throw ParseError(
+                    "Unparsed token " + tokens[i].getText(),
+                    tokens[i].getStartLocation()
+                );
+            }
+
             return rootASTNode;
         }
 
@@ -106,15 +123,20 @@ class ThetaParser {
             if (remainingTokens->size() <= 0) return nullptr;
 
             Token currentToken = remainingTokens->front();
+            Token nextToken;
             remainingTokens->pop_front();
 
-            Token nextToken = remainingTokens->front();
+            bool hasNextToken = !remainingTokens->empty();
+
+            if (hasNextToken) {
+                nextToken = remainingTokens->front();
+            }
 
             if (currentToken.getType() == Tokens::KEYWORD && currentToken.getText() == Symbols::CAPSULE) {
                 return parseCapsule(nextToken);
             } else if (
                 currentToken.getType() == Tokens::IDENTIFIER && 
-                nextToken.getType() == Tokens::ANGLE_BRACKET_OPEN && 
+                hasNextToken && nextToken.getType() == Tokens::ANGLE_BRACKET_OPEN && 
                 remainingTokens->at(1).getType() == Tokens::IDENTIFIER &&
                 (remainingTokens->at(2).getType() == Tokens::ANGLE_BRACKET_CLOSE || remainingTokens->at(2).getType() == Tokens::ANGLE_BRACKET_OPEN)
             ) {
@@ -128,14 +150,21 @@ class ThetaParser {
                     return identNode;
                 }
             } else if (
-                nextToken.getType() == Tokens::OPERATOR && (
+                currentToken.getType() == Tokens::OPERATOR && 
+                (currentToken.getText() == Symbols::NOT || currentToken.getText() == Symbols::MINUS) 
+                && hasNextToken
+            ) {
+                return parseUnaryOperation(currentToken, nextToken);
+            } else if (
+                hasNextToken && nextToken.getType() == Tokens::OPERATOR && (
                     currentToken.getType() == Tokens::IDENTIFIER ||
                     currentToken.getType() == Tokens::STRING ||
-                    currentToken.getType() == Tokens::NUMBER
+                    currentToken.getType() == Tokens::NUMBER ||
+                    currentToken.getType() == Tokens::BOOLEAN
                 )
             ) {
                 return parseBinaryOperation(currentToken, nextToken);
-            } else if (currentToken.getType() == Tokens::IDENTIFIER && nextToken.getType() == Tokens::BRACKET_OPEN) {
+            } else if (currentToken.getType() == Tokens::IDENTIFIER && hasNextToken && nextToken.getType() == Tokens::BRACKET_OPEN) {
                 return parseKeyedAccess(parseIdentifier(currentToken));
             } else if (currentToken.getType() == Tokens::BRACKET_OPEN) {
                 shared_ptr<ASTNode> listDefinition = parseListDefinition(currentToken, nextToken);
@@ -369,6 +398,33 @@ class ThetaParser {
         }
 
         /**
+         * @brief Parses a unary operation node, handling unary operators before an expression
+         * 
+         * This method constructs a UnaryOperationNode by parsing the operator
+         * with the right-hand side expression.
+         * 
+         * @param currentToken The token representing the operator.
+         * @return A shared pointer to the UnaryOperationNode representing the parsed unary operation.
+         */
+        shared_ptr<ASTNode> parseUnaryOperation(Token currentToken, Token nextToken) {
+            remainingTokens->pop_front(); // Pop the right hand of unary
+
+            shared_ptr<ASTNode> node = make_shared<UnaryOperationNode>(currentToken.getText());
+            
+            node->setValue(nextToken.getType() == Tokens::IDENTIFIER
+                ? parseIdentifier(nextToken)
+                : parseLiteral(nextToken)
+            );
+
+            // For cases with multiple chained operations, we assume this is the left hand side
+            if (remainingTokens->front().getType() == Tokens::OPERATOR) {
+                node = parseBinaryOperation(node);
+            }
+
+            return node;
+        }
+
+        /**
          * @brief Parses a binary operation node, handling binary operators between two expressions.
          * 
          * This method constructs a BinaryOperationNode by parsing the left-hand side and the operator
@@ -388,6 +444,37 @@ class ThetaParser {
                 : parseLiteral(currentToken)
             );
             
+            node->setRight(consume());
+
+            // For cases with multiple chained operations, we assume this is the left hand side
+            if (remainingTokens->front().getType() == Tokens::OPERATOR) {
+                node = parseBinaryOperation(node);
+            }
+
+            return node;
+        }
+
+        /**
+         * @brief Parses a binary operation node, handling binary operators between two expressions.
+         * 
+         * This method constructs a BinaryOperationNode by accepting a parsed left-hand side, and 
+         * parsing the operator with the right-hand side expression.
+         * 
+         * @param leftHandSide The AST representing the parsed left-hand side expression.
+         * @return A shared pointer to the BinaryOperationNode representing the parsed binary operation.
+         */
+        shared_ptr<ASTNode> parseBinaryOperation(shared_ptr<ASTNode> leftHandSide) {
+            Token currentToken = remainingTokens->front();
+        
+            if (currentToken.getType() != Tokens::OPERATOR) {
+                cout << "Could not parse binary operation, token is not operator: " + currentToken.toJSON() << endl;
+                return nullptr;
+            }
+
+            remainingTokens->pop_front(); // Pops the operator
+
+            shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(currentToken.getText());
+            node->setLeft(leftHandSide);
             node->setRight(consume());
 
             return node;

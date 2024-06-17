@@ -15,6 +15,8 @@ class IdentifierNode : public ASTNode {
 
         string getNodeType() const override { return nodeType; }
 
+        string getIdentifier() { return identifier; }
+
         string toJSON() const override {
             ostringstream oss;
             

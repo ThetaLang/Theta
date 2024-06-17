@@ -1,6 +1,6 @@
 #include "exceptions.hpp"
 
-void ExceptionFormatter::displayFormattedError(string errorType, ParseError &e, string source, string fileName, Token token) {
+void ExceptionFormatter::displayFormattedError(string errorType, ThetaCompilationError &e, string source, string fileName, Token token) {
     cout << "\n" + fileName << endl;
     cout << "  \033[1;31m" + errorType + "\033[0m: " << e.what() << ':' << endl;
     

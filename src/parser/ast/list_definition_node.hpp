@@ -17,6 +17,8 @@ class ListDefinitionNode : public ASTNode {
 
         void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 
+        vector<shared_ptr<ASTNode>> getElements() { return elements; }
+
         string toJSON() const override {
             ostringstream oss;
             

@@ -15,6 +15,8 @@ class TypeDeclarationNode : public ASTNode {
 
         string getNodeType() const override { return nodeType; }
 
+        string getType() { return type; }
+
         string toJSON() const override {
             ostringstream oss;
             
