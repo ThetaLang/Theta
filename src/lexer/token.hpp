@@ -10,26 +10,26 @@ using namespace std;
 
 class Token {
     private:
-        string text;
+        string lexeme;
         int line;
         int column;
         Tokens type;
 
     public:
         Token();
-        Token(Tokens tokenType, string tokenText);
+        Token(Tokens tokenType, string tokenLexeme);
 
         Tokens getType();
 
         void setType(Tokens tokenType);
 
-        string getText();
+        string getLexeme();
 
-        void setText(string tokenText);
+        void setLexeme(string tokenText);
 
-        void appendText(char character);
+        void appendLexeme(char character);
 
-        void appendText(string appendableText);
+        void appendLexeme(string appendableText);
 
         vector<int> getStartLocation();
 

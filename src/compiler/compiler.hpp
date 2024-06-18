@@ -9,6 +9,7 @@
 #include <memory>
 #include <filesystem>
 #include "../parser/ast/ast_node.hpp"
+#include "../util/exceptions.hpp"
 
 using namespace std;
 
@@ -27,11 +28,26 @@ class ThetaCompiler {
         void compile(string entrypoint, string outputFile, bool isEmitTokens = false, bool isEmitAST = false);
 
         /**
+         * @brief Compiles the Theta source code starting from the specified entry point.
+         * @param source The source code to compile.
+         * @return A shared pointer to the root node of the constructed AST
+         */
+        shared_ptr<ASTNode> compileDirect(string source);
+
+        /**
          * @brief Builds the Abstract Syntax Tree (AST) for the Theta source code starting from the specified file.
-         * @param file The file name of the Theta source code.
+         * @param fileName The file name of the Theta source code.
          * @return A shared pointer to the root node of the constructed AST.
          */
-        shared_ptr<ASTNode> buildAST(string entrypoint);
+        shared_ptr<ASTNode> buildAST(string fileName);
+
+        /**
+         * @brief Builds the Abstract Syntax Tree (AST) for the Theta source code provided.
+         * @param source The source code to compile.
+         * @param fileName The file name of the Theta source code.
+         * @return A shared pointer to the root node of the constructed AST.
+         */
+        shared_ptr<ASTNode> buildAST(string source, string fileName);
 
         /**
          * @brief Gets the singleton instance of the ThetaCompiler.
@@ -39,6 +55,22 @@ class ThetaCompiler {
          */
         static ThetaCompiler& getInstance();
 
+        /**
+         * @brief Adds an encountered exception to the list of exceptions to display later
+         * @param e The exception to add
+         */
+        void addException(ThetaCompilationError e);
+
+        /**
+         * @brief Returns all the exceptions we encountered during the compilation process
+         * @return A vector of compilation errors
+         */
+        vector<ThetaCompilationError> getEncounteredExceptions();
+
+        /**
+         * @brief Clears the list of compilation errors
+         */
+        void clearExceptions();
     private:
         /**
          * @brief Private constructor for ThetaCompiler. Initializes the compiler and discovers all capsules in the source files.
@@ -55,6 +87,7 @@ class ThetaCompiler {
         shared_ptr<map<string, string>> filesByCapsuleName;
         bool isEmitTokens = false;
         bool isEmitAST = false;
+        vector<ThetaCompilationError> encounteredExceptions;
 
         /**
          * @brief Discovers all capsules in the Theta source code.

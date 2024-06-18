@@ -9,7 +9,7 @@ void verifyTokens(deque<Token> &resultTokens, vector<pair<Tokens, string>> &expe
 
     for (int i = 0; i < expectedTokens.size(); i++) {
         REQUIRE(resultTokens[i].getType() == expectedTokens[i].first);
-        REQUIRE(resultTokens[i].getText() == expectedTokens[i].second);
+        REQUIRE(resultTokens[i].getLexeme() == expectedTokens[i].second);
     }
 }
 
@@ -356,9 +356,9 @@ TEST_CASE("ThetaLexer") {
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
-    
+
     SECTION("Can tokenize multiline function definition") {
-        string source = 
+        string source =
             "greet<String> = names<List<String>> -> { "
             "    'hello' + concat_strings(names, ', ')"
             "}";

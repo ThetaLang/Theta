@@ -15,7 +15,7 @@ using namespace std;
 class ThetaLexer {
     public:
         deque<Token> tokens = {};
-        
+
         /**
          * @brief Tokenizes the given source code string.
          * @param source The source code to lex.
@@ -58,10 +58,10 @@ class ThetaLexer {
                     Tokens::STRING,
                     Tokens::NUMBER
                 };
-                
+
                 if (find(accumulatedTokens.begin(), accumulatedTokens.end(), newToken.getType()) == accumulatedTokens.end()) {
-                    i += newToken.getText().length();
-                    currentColumn += newToken.getText().length();
+                    i += newToken.getLexeme().length();
+                    currentColumn += newToken.getLexeme().length();
                 } else if (newToken.getType() == Tokens::MULTILINE_COMMENT) {
                     i += 2;
                     currentColumn += 2;
@@ -93,7 +93,7 @@ class ThetaLexer {
             // match the expected symbol(s) for the token type. If a match is found, it processes
             // and returns the corresponding token. If no match is found, it returns false, and
             // the next attemptLex in the sequence is checked.
-            // 
+            //
             // This sequential checking ensures that tokens with longer symbol representations
             // (e.g., multi-character operators) are prioritized over shorter ones, preventing
             // misinterpretations and ensuring correct tokenization of the source code.
@@ -137,12 +137,12 @@ class ThetaLexer {
             } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0')) {
                 int countDecimals = 0;
                 return accumulateUntilCondition(
-                    [source, &countDecimals](int idx) { 
+                    [source, &countDecimals](int idx) {
                         if (source[idx] == '.') {
                             countDecimals++;
                         }
 
-                        return isdigit(source[idx]) || (countDecimals <= 1 && source[idx] == '.'); 
+                        return isdigit(source[idx]) || (countDecimals <= 1 && source[idx] == '.');
                     },
                     source,
                     i,
@@ -161,9 +161,9 @@ class ThetaLexer {
                     false
                 );
 
-                if (isLanguageKeyword(token.getText())) {
+                if (isLanguageKeyword(token.getLexeme())) {
                     token.setType(Tokens::KEYWORD);
-                } else if (token.getText() == "true" || token.getText() == "false") {
+                } else if (token.getLexeme() == "true" || token.getLexeme() == "false") {
                     token.setType(Tokens::BOOLEAN);
                 }
 
@@ -193,7 +193,7 @@ class ThetaLexer {
         bool attemptLex(
             const string &symbol,
             Tokens tokenType,
-            Token &token, 
+            Token &token,
             char currentChar,
             char nextChar,
             const string &source,
@@ -286,7 +286,7 @@ class ThetaLexer {
 
             // Just collect characters until we hit our end condition
             for (; i < source.length() && shouldContinue(i); i++) {
-                token.appendText(source[i]);
+                token.appendLexeme(source[i]);
 
                 // We might hit newlines in multiline comments and strings. We need to keep line and column numbers correct
                 if (source[i] == '\n') {
@@ -297,7 +297,7 @@ class ThetaLexer {
                 currentColumn++;
             }
 
-            token.appendText(append);
+            token.appendLexeme(append);
 
             // If incrementAfter is false, that means we want to roll back the index to the point right before we hit an endChar.
             // This is probably because the token we're parsing isn't a token thats enclosed in delimiters, so we want to
@@ -318,7 +318,7 @@ class ThetaLexer {
         bool isLanguageKeyword(string text) {
             vector<string> keywords = {
                 Symbols::LINK,
-                Symbols::CAPSULE, 
+                Symbols::CAPSULE,
                 Symbols::IF,
                 Symbols::ELSE,
                 Symbols::STRUCT,

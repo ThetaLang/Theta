@@ -61,9 +61,9 @@ class ThetaParser {
             vector<shared_ptr<ASTNode>> linkNodes;
 
             // Parse out file imports
-            while (remainingTokens->front().getType() == Tokens::KEYWORD && remainingTokens->front().getText() != Symbols::CAPSULE) {
+            while (remainingTokens->front().getType() == Tokens::KEYWORD && remainingTokens->front().getLexeme() != Symbols::CAPSULE) {
                 remainingTokens->pop_front();
-                string linkCapsuleName = remainingTokens->front().getText();
+                string linkCapsuleName = remainingTokens->front().getLexeme();
                 shared_ptr<LinkNode> parsedLinkAST;
 
                 auto it = parsedLinkASTs.find(linkCapsuleName);
@@ -94,9 +94,14 @@ class ThetaParser {
 
             // Throw parse errors for any remaining tokens after we've finished our parser run
             for (int i = 0; i < tokens.size(); i++) {
-                throw ParseError(
-                    "Unparsed token " + tokens[i].getText(),
-                    tokens[i].getStartLocation()
+                ThetaCompiler::getInstance().addException(
+                    ThetaCompilationError(
+                        "ParseError",
+                        "Unparsed token " + tokens[i].getLexeme(),
+                        tokens[i],
+                        source,
+                        fileName
+                    )
                 );
             }
 
@@ -132,7 +137,7 @@ class ThetaParser {
                 nextToken = remainingTokens->front();
             }
 
-            if (currentToken.getType() == Tokens::KEYWORD && currentToken.getText() == Symbols::CAPSULE) {
+            if (currentToken.getType() == Tokens::KEYWORD && currentToken.getLexeme() == Symbols::CAPSULE) {
                 return parseCapsule(nextToken);
             } else if (
                 currentToken.getType() == Tokens::IDENTIFIER &&
@@ -151,7 +156,7 @@ class ThetaParser {
                 }
             } else if (
                 currentToken.getType() == Tokens::OPERATOR &&
-                (currentToken.getText() == Symbols::NOT || currentToken.getText() == Symbols::MINUS)
+                (currentToken.getLexeme() == Symbols::NOT || currentToken.getLexeme() == Symbols::MINUS)
                 && hasNextToken
             ) {
                 return parseUnaryOperation(currentToken, nextToken);
@@ -200,7 +205,7 @@ class ThetaParser {
             remainingTokens->pop_front();
             remainingTokens->pop_front(); // Pops the {
 
-            shared_ptr<CapsuleNode> capsuleNode = make_shared<CapsuleNode>(nextToken.getText());
+            shared_ptr<CapsuleNode> capsuleNode = make_shared<CapsuleNode>(nextToken.getLexeme());
 
             vector<shared_ptr<ASTNode>> definitionNodes;
 
@@ -334,7 +339,7 @@ class ThetaParser {
         shared_ptr<ASTNode> parseNestedTypeDeclaration(deque<Token> &typeTokens) {
             typeTokens.pop_front(); // Pops the <
 
-            shared_ptr<ASTNode> node = make_shared<TypeDeclarationNode>(typeTokens.front().getText());
+            shared_ptr<ASTNode> node = make_shared<TypeDeclarationNode>(typeTokens.front().getLexeme());
 
             typeTokens.pop_front(); // Pops the type identifier
 
@@ -411,7 +416,7 @@ class ThetaParser {
         shared_ptr<ASTNode> parseUnaryOperation(Token currentToken, Token nextToken) {
             remainingTokens->pop_front(); // Pop the right hand of unary
 
-            shared_ptr<ASTNode> node = make_shared<UnaryOperationNode>(currentToken.getText());
+            shared_ptr<ASTNode> node = make_shared<UnaryOperationNode>(currentToken.getLexeme());
 
             node->setValue(nextToken.getType() == Tokens::IDENTIFIER
                 ? parseIdentifier(nextToken)
@@ -439,7 +444,7 @@ class ThetaParser {
         shared_ptr<ASTNode> parseBinaryOperation(Token currentToken, Token nextToken) {
             remainingTokens->pop_front();
 
-            shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(nextToken.getText());
+            shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(nextToken.getLexeme());
 
             node->setLeft(currentToken.getType() == Tokens::IDENTIFIER
                 ? parseIdentifier(currentToken)
@@ -467,15 +472,23 @@ class ThetaParser {
          */
         shared_ptr<ASTNode> parseBinaryOperation(shared_ptr<ASTNode> leftHandSide) {
             Token currentToken = remainingTokens->front();
+            remainingTokens->pop_front(); // Pops the operator
 
             if (currentToken.getType() != Tokens::OPERATOR) {
-                cout << "Could not parse binary operation, token is not operator: " + currentToken.toJSON() << endl;
+                ThetaCompiler::getInstance().addException(
+                    ThetaCompilationError(
+                        "ParseError",
+                        "Could not parse binary operation, token is not operator: " + currentToken.toJSON(),
+                        currentToken,
+                        source,
+                        fileName
+                    )
+                );
+
                 return nullptr;
             }
 
-            remainingTokens->pop_front(); // Pops the operator
-
-            shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(currentToken.getText());
+            shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(currentToken.getLexeme());
             node->setLeft(leftHandSide);
             node->setRight(consume());
 
@@ -492,15 +505,9 @@ class ThetaParser {
          * @return A shared pointer to the IdentifierNode representing the parsed identifier.
          */
         shared_ptr<ASTNode> parseIdentifier(Token currentToken) {
-            try {
-                validateIdentifier(currentToken);
+            validateIdentifier(currentToken);
 
-                return make_shared<IdentifierNode>(currentToken.getText());
-            } catch (SyntaxError &e) {
-                ExceptionFormatter::displayFormattedError("SyntaxError", e, source, fileName, currentToken);
-
-                exit(0);
-            }
+            return make_shared<IdentifierNode>(currentToken.getLexeme());
         }
 
         /**
@@ -513,7 +520,7 @@ class ThetaParser {
          * @return A shared pointer to the LiteralNode representing the parsed literal.
          */
         shared_ptr<ASTNode> parseLiteral(Token currentToken) {
-            return make_shared<LiteralNode>(currentToken.getType(), currentToken.getText());
+            return make_shared<LiteralNode>(currentToken.getType(), currentToken.getLexeme());
         }
 
         /**
@@ -528,21 +535,20 @@ class ThetaParser {
             Token currentToken = remainingTokens->front();
             remainingTokens->pop_front();
 
-            shared_ptr<LinkNode> linkNode = make_shared<LinkNode>(currentToken.getText());
+            shared_ptr<LinkNode> linkNode = make_shared<LinkNode>(currentToken.getLexeme());
 
-            auto fileContainingLinkedCapsule = filesByCapsule->find(currentToken.getText());
+            auto fileContainingLinkedCapsule = filesByCapsule->find(currentToken.getLexeme());
 
             if (fileContainingLinkedCapsule == filesByCapsule->end()) {
-                LinkageError e = LinkageError(
-                    "Could not find capsule " + currentToken.getText() + " referenced",
-                    currentToken.getStartLocation()
+                ThetaCompiler::getInstance().addException(
+                    ThetaCompilationError(
+                        "LinkageError",
+                        "Could not find capsule " + currentToken.getLexeme() + " referenced",
+                        currentToken,
+                        source,
+                        fileName
+                    )
                 );
-
-                ExceptionFormatter::displayFormattedError("LinkageError", e, source, fileName, currentToken);
-
-                // TODO: Make an errorCount var that gets incremented each time we hit an error, and then exit after parsing,
-                // instead of exiting right away. This will let us show more useful errors to the user at a time
-                // exit(0);
             } else {
                 shared_ptr<ASTNode> linkedAST = ThetaCompiler::getInstance().buildAST(fileContainingLinkedCapsule->second);
 
@@ -565,16 +571,21 @@ class ThetaParser {
         void validateIdentifier(Token token) {
             string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?.,`~";
 
-            for (int i = 0; i < token.getText().length(); i++) {
-                char identChar = tolower(token.getText()[i]);
+            for (int i = 0; i < token.getLexeme().length(); i++) {
+                char identChar = tolower(token.getLexeme()[i]);
 
                 bool isDisallowedChar = find(disallowedIdentifierChars.begin(), disallowedIdentifierChars.end(), identChar) != disallowedIdentifierChars.end();
                 bool isStartsWithDigit = i == 0 && isdigit(identChar);
 
                 if (isStartsWithDigit || isDisallowedChar) {
-                    throw SyntaxError(
-                        "Invalid identifier \"" + token.getText() + "\"",
-                        token.getStartLocation()
+                    ThetaCompiler::getInstance().addException(
+                        ThetaCompilationError(
+                            "SyntaxError",
+                            "Invalid identifier \"" + token.getLexeme() + "\"",
+                            token,
+                            source,
+                            fileName
+                        )
                     );
                 }
             }

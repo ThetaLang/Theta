@@ -40,13 +40,13 @@ TEST_CASE("ThetaParser") {
         lexer.lex(source);
 
         REQUIRE_THROWS_AS(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName), 
-            ParseError
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName),
+            ThetaCompilationError
         );
 
         REQUIRE(lexer.tokens.size() == 1);
         REQUIRE(lexer.tokens[0].getType() == Tokens::IDENTIFIER);
-        REQUIRE(lexer.tokens[0].getText() == ".4.");
+        REQUIRE(lexer.tokens[0].getLexeme() == ".4.");
     }
 
     SECTION("Can parse a string") {
@@ -110,7 +110,7 @@ TEST_CASE("ThetaParser") {
 
         REQUIRE(listNode->getElements().size() == 5);
         REQUIRE(listNode->getElements()[0]->getNodeType() == "ListDefinition");
-        
+
         shared_ptr<ListDefinitionNode> listElement0 = dynamic_pointer_cast<ListDefinitionNode>(listNode->getElements()[0]);
 
         REQUIRE(listElement0->getElements().size() == 3);
@@ -128,7 +128,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[1])->getLiteralValue() == "'pablo'");
 
         REQUIRE(listNode->getElements()[1]->getNodeType() == "ListDefinition");
-        
+
         shared_ptr<ListDefinitionNode> listElement1 = dynamic_pointer_cast<ListDefinitionNode>(listNode->getElements()[1]);
 
         REQUIRE(listElement1->getElements().size() == 1);
@@ -136,7 +136,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement1->getElements()[0])->getLiteralValue() == "'clarinda'");
 
         REQUIRE(listNode->getElements()[2]->getNodeType() == "BinaryOperation");
-        
+
         shared_ptr<BinaryOperationNode> listElement2 = dynamic_pointer_cast<BinaryOperationNode>(listNode->getElements()[2]);
         REQUIRE(listElement2->getOperator() == "+");
         REQUIRE(listElement2->getLeft()->getNodeType() == "StringLiteral");
@@ -503,9 +503,9 @@ TEST_CASE("ThetaParser") {
         lexer.lex(source);
 
     }
-    
+
     SECTION("Can tokenize multiline function definition") {
-        string source = 
+        string source =
             "greet<String> = names<List<String>> -> { "
             "    'hello' + concat_strings(names, ', ')"
             "}";

@@ -2,8 +2,8 @@
 
 Token::Token() {}
 
-Token::Token(Tokens tokenType, string tokenText) {
-    text = tokenText;
+Token::Token(Tokens tokenType, string tokenLexeme) {
+    lexeme = tokenLexeme;
     type = tokenType;
 }
 
@@ -11,13 +11,13 @@ Tokens Token::getType() { return type; }
 
 void Token::setType(Tokens tokenType) { type = tokenType; }
 
-string Token::getText() { return text; }
+string Token::getLexeme() { return lexeme; }
 
-void Token::setText(string tokenText) { text = tokenText;  }
+void Token::setLexeme(string tokenText) { lexeme = tokenText;  }
 
-void Token::appendText(char character) { text += character; }
+void Token::appendLexeme(char character) { lexeme += character; }
 
-void Token::appendText(string appendableText) { text += appendableText; }
+void Token::appendLexeme(string appendableText) { lexeme += appendableText; }
 
 vector<int> Token::getStartLocation() { return { line, column }; }
 
@@ -31,10 +31,10 @@ string Token::toJSON() {
     ostringstream oss;
 
     oss << "{";
-    oss << "\"type\": \"" << tokenTypeToString(type) << "\"";
-    oss << ",\"text\": \"" << text << "\"";
-    oss << ",\"location\": \"" << getStartLocationString() << "\"";
-    oss << "}";
+    oss << " \"type\": \"" << tokenTypeToString(type) << "\"";
+    oss << ", \"lexeme\": \"" << lexeme << "\"";
+    oss << ", \"location\": \"" << getStartLocationString() << "\"";
+    oss << " }";
 
     return oss.str();
 }

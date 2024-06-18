@@ -23,21 +23,38 @@ void ThetaCompiler::compile(string entrypoint, string outputFile, bool emitToken
     isEmitAST = emitAST;
 
     shared_ptr<ASTNode> programAST = buildAST(entrypoint);
+
+    for (int i = 0; i < encounteredExceptions.size(); i++) {
+        encounteredExceptions[i].display();
+    }
+}
+
+shared_ptr<ASTNode> ThetaCompiler::compileDirect(string source) {
+    shared_ptr<ASTNode> ast = buildAST(source, "ith");
+
+    for (int i = 0; i < encounteredExceptions.size(); i++) {
+        encounteredExceptions[i].display();
+    }
+
+    return ast;
 }
 
 shared_ptr<ASTNode> ThetaCompiler::buildAST(string file) {
-    ThetaLexer lexer;
-
     std::ifstream t(file);
     std::stringstream buffer;
     buffer << t.rdbuf();
 
     string fileSource = buffer.str();
 
-    lexer.lex(fileSource);
+    return buildAST(fileSource, file);
+}
+
+shared_ptr<ASTNode> ThetaCompiler::buildAST(string source, string fileName) {
+    ThetaLexer lexer;
+    lexer.lex(source);
 
     if (isEmitTokens) {
-        cout << "Lexed Tokens for \"" + file + "\":" << endl;
+        cout << "Lexed Tokens for \"" + fileName + "\":" << endl;
         for (int i = 0; i < lexer.tokens.size(); i++) {
             cout << lexer.tokens[i].toJSON() << endl;
         }
@@ -45,17 +62,29 @@ shared_ptr<ASTNode> ThetaCompiler::buildAST(string file) {
     }
 
     ThetaParser parser;
-    shared_ptr<ASTNode> parsedAST = parser.parse(lexer.tokens, fileSource, file, filesByCapsuleName);
+    shared_ptr<ASTNode> parsedAST = parser.parse(lexer.tokens, source, fileName, filesByCapsuleName);
 
     if (parsedAST && isEmitAST) {
-        cout << "Generated AST for \"" + file + "\":" << endl;
+        cout << "Generated AST for \"" + fileName + "\":" << endl;
         cout << parsedAST->toJSON() << endl;
         cout << endl;
     } else if (!parsedAST) {
-        cout << "Could not parse AST for file " + file << endl;
+        cout << "Could not parse AST for file " + fileName << endl;
     }
 
     return parsedAST;
+}
+
+void ThetaCompiler::addException(ThetaCompilationError e) {
+    encounteredExceptions.push_back(e);
+}
+
+vector<ThetaCompilationError> ThetaCompiler::getEncounteredExceptions() {
+    return encounteredExceptions;
+}
+
+void ThetaCompiler::clearExceptions() {
+    encounteredExceptions.clear();
 }
 
 void ThetaCompiler::discoverCapsules() {

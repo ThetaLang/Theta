@@ -13,9 +13,7 @@ class ThetaCLI {
             string outFile;
 
             if (argc == 1) {
-                printLanguageVersion();
-                cout << endl;
-                printUsageInstructions();
+                launchInteractiveShell();
             } else if (argc == 2) {
                 string arg1 = argv[1];
 
@@ -91,5 +89,23 @@ class ThetaCLI {
             }
 
             return true;
+        }
+
+        static void launchInteractiveShell() {
+            cout << "Interactive Theta" << endl << endl;
+
+            while (true) {
+                string userIn;
+                cout << "ith $> ";
+
+                getline(cin, userIn);
+
+                // TODO: Change this to get execution result once we get an interpreter built out
+                shared_ptr<ASTNode> compiled = ThetaCompiler::getInstance().compileDirect(userIn);
+
+                cout << "-> " + compiled->toJSON() << endl << endl;
+
+                ThetaCompiler::getInstance().clearExceptions();
+            }
         }
 };
