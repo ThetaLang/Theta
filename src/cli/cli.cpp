@@ -22,7 +22,7 @@ class ThetaCLI {
                 if (arg1 == "--version") return printLanguageVersion();
                 if (arg1 == "--help") return printUsageInstructions();
 
-                sourceFile = argv[1];
+                if (validateOption(arg1)) sourceFile = argv[1];
             } else {
                 int i = 0;
 
@@ -36,6 +36,7 @@ class ThetaCLI {
                     else if (arg == "--emitTokens") isEmitTokens = true;
                     else if (arg == "--emitAST") isEmitAST = true;
                     else if (i == argc - 1) sourceFile = arg;
+                    else validateOption(arg);
 
                     i++;
                 }
@@ -73,5 +74,22 @@ class ThetaCLI {
 
         static void printLanguageVersion() {
             cout << "Theta v" << VERSION_MAJOR << '.' << VERSION_MINOR << '.' << VERSION_PATCH << endl;
+        }
+
+        static bool validateOption(string option) {
+            vector<string> validOptions = {
+                "--version",
+                "--help",
+                "--emitTokens",
+                "--emitAST",
+                "-o"
+            };
+
+            if (find(validOptions.begin(), validOptions.end(), option) == validOptions.end()) {
+                cout << "Invalid option: " + option << endl;
+                return false;
+            }
+
+            return true;
         }
 };

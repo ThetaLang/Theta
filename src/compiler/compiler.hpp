@@ -29,7 +29,6 @@ class ThetaCompiler {
         /**
          * @brief Builds the Abstract Syntax Tree (AST) for the Theta source code starting from the specified file.
          * @param file The file name of the Theta source code.
-         * @param isEmitTokens Toggles whether or not the lexer tokens should be output to the console
          * @return A shared pointer to the root node of the constructed AST.
          */
         shared_ptr<ASTNode> buildAST(string entrypoint);
