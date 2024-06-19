@@ -1,0 +1,74 @@
+; Backus-Naur Format (BNF)
+; ? = 0 or 1 occurrence
+; + = 1 or more occurrences
+; * = 0 or more occurrences
+
+<function-invocation>    ::= <identifier> "(" ((identifier | literal) ","?)* ")" ;
+
+<function-definition>    ::= "(" <identifier-declaration>* ")" "->" (<expression> | <block>)
+                           | <identifier-declaration>* "->" (<expression> | <block>) ;
+
+<if-statement>           ::= "if" <expression> <block> <else-if-statement>* <else-statement>? ;
+
+<else-if-statement>      ::= "else if" <expression> <block> ;
+<else-statement>         ::= "else" <block> ;
+
+<block>                  ::= "{" <expression>* "}" ;
+
+<assignment>             ::= <identifier-declaration> "=" <expression>
+                           | <identifier-declaration> "=" <function-definition>;
+
+<identifier-declaration> ::= <identifier> <type> ;
+
+<enum>                   ::= "enum" <identifier> "{" (<symbol> ","?)* "}" ;
+
+<struct>                 ::= "struct" <identifier> "{" (<identifier> <type> ","?)* "}" ;
+
+<capsule>                ::= "capsule" <identifier> "{" <assignment>* <struct>* <enum>* <function-definition>* "}"
+
+<single-line-comment>    ::= "//" <string> "\n"
+
+<multi-line-comment>     ::= "/-" <string> "\n"* "-/"
+
+<expression>             ::= <identifier>
+                           | <literal>
+                           | "!"+ (<identifier> | <boolean> | <comparative-expression>)
+                           | <numeric-expression>
+                           | "-" (<number> | "(" <numeric-expression> ")")
+                           | <string> "+" <string>
+                           | <comparative-expression>
+                           | <function-invocation>
+                           | <pipeline> ;
+
+<pipeline>               ::= <expression> ("=>" <function-invocation>)+ ;
+
+<comparative-expression> ::= <expression> <comparitive-operator> <expression> ;
+<numeric-expression>     ::= <number>
+                           | <number> <arithmetic-operator> <number>
+                           | <numeric-expression> <arithmetic-operator> <numeric-expression> ;
+
+<type>                   ::= "<" <uppercase-letter>+ <letter>* <type>? ">" ;
+
+<list>                   ::= "[" <expression>? "]"
+                           | "[" (<expression> ","?)+ "]" ;
+
+<dict>                   ::= "{" <key-value-pair>* "}" ;
+<key-value-pair>         ::= <identifier> ":" (<expression> | <function-definition>) ;
+
+<symbol>                 ::= ":" <identifier> ;
+<literal>                ::= <string> | <number> | <boolean> ;
+<identifier>             ::= (<letter> | "_")+ (<letter> | <digit> | "_")* ;
+<arithmetic-operator>    ::= "+" | "-" | "*" | "/" | "%" ;
+<comparitive-operator>   ::= "<=" | ">=" | "==" | "!=" | ">" | "<" ;
+<string>                 ::= "'" <string-character>* "'" ;
+<string-character>       ::= <letter> | <number> | <special-character> | <escape-sequence> ;
+<special-character>      ::= "!" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "(" | ")" | "-" | "_" | "=" | "+" | "[" | "]" | "{" | "}" | "|" | "\"" | ";" | ":" | "?" | "." | "," | "<" | ">" | "`" | "~" ;
+<escape-sequence>        ::= "\" ("n" | "r" | "\'" | "\") ;
+<number>                 ::= <digit>+ | <digit>+ "." <digit>+ ;
+
+<boolean>                ::= "true" | "false" ;
+<digit>                  ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 ;
+
+<letter>                 ::= <lowercase-letter> | <uppercase-letter> ;
+<uppercase-letter>       ::= "A" | "B" | ... | "Z" ;
+<lowercase-letter>       ::= "a" | "b" | ... | "z" ;

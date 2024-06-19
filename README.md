@@ -6,6 +6,8 @@ I started this project knowing nothing about C++ and thought it would be fun to 
 ## Introduction
 Theta is a strongly typed, functional, compiled programming language designed to be data-driven and composable, with built-in support for pattern matching and modular organization through capsules. The language aims to provide a clean and expressive syntax while ensuring type safety and functional programming paradigms.
 
+[Click here to view the formal language grammar in BNF format](doc/theta_grammar.bnf)
+
 ---
 
 ## 1. Basic Concepts
