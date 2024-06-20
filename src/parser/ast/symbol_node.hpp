@@ -6,22 +6,23 @@
 
 using namespace std;
 
-class CapsuleNode : public ASTNode {
+class SymbolNode : public ASTNode {
     public:
         string nodeType;
-        string name;
+        string symbol;
 
-        CapsuleNode(string n) : name(n), nodeType("Capsule") {};
+        SymbolNode(string sym) : symbol(sym), nodeType("Symbol") {};
 
         string getNodeType() const override { return nodeType; }
+
+        string getSymbol() { return symbol; }
 
         string toJSON() const override {
             ostringstream oss;
 
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
-            oss << ", \"name\": \"" << name << "\"";
-            oss << ", \"value\": " << (value ? value->toJSON() : "null");
+            oss << ", \"value\": \":" << symbol << "\"";
             oss << "}";
 
             return oss.str();

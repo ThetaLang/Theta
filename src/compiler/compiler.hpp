@@ -9,6 +9,7 @@
 #include <memory>
 #include <filesystem>
 #include "../parser/ast/ast_node.hpp"
+#include "../parser/ast/link_node.hpp"
 #include "../util/exceptions.hpp"
 
 using namespace std;
@@ -71,6 +72,11 @@ class ThetaCompiler {
          * @brief Clears the list of compilation errors
          */
         void clearExceptions();
+
+
+        shared_ptr<LinkNode> getIfExistsParsedLinkAST(string capsuleName);
+
+        void addParsedLinkAST(string capsuleName, shared_ptr<LinkNode>);
     private:
         /**
          * @brief Private constructor for ThetaCompiler. Initializes the compiler and discovers all capsules in the source files.
@@ -88,6 +94,7 @@ class ThetaCompiler {
         bool isEmitTokens = false;
         bool isEmitAST = false;
         vector<ThetaCompilationError> encounteredExceptions;
+        map<string, shared_ptr<LinkNode>> parsedLinkASTs;
 
         /**
          * @brief Discovers all capsules in the Theta source code.

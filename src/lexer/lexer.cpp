@@ -103,6 +103,7 @@ class ThetaLexer {
                 attemptLex(Symbols::MULTILINE_COMMENT_DELIMITER_START, Tokens::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Symbols::MULTILINE_COMMENT_DELIMITER_END) ||
                 attemptLex(Symbols::DIVISION, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::EQUALITY, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::INEQUALITY, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::AND, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::OR, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::NOT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
@@ -120,8 +121,10 @@ class ThetaLexer {
                 attemptLex(Symbols::BRACE_CLOSE, Tokens::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::PAREN_OPEN, Tokens::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::PAREN_CLOSE, Tokens::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::ANGLE_BRACKET_OPEN, Tokens::ANGLE_BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::ANGLE_BRACKET_CLOSE, Tokens::ANGLE_BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::LTEQ, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::LT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::GTEQ, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::GT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::BRACKET_OPEN, Tokens::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::BRACKET_CLOSE, Tokens::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
                 attemptLex(Symbols::COMMA, Tokens::COMMA, token, currentChar, nextChar, source, i) ||
@@ -134,7 +137,7 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token(Tokens::NEWLINE, Symbols::NEWLINE);
-            } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0')) {
+            } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0' || nextChar == ',')) {
                 int countDecimals = 0;
                 return accumulateUntilCondition(
                     [source, &countDecimals](int idx) {

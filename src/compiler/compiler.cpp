@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <vector>
 #include <deque>
 #include <string>
@@ -85,6 +86,18 @@ vector<ThetaCompilationError> ThetaCompiler::getEncounteredExceptions() {
 
 void ThetaCompiler::clearExceptions() {
     encounteredExceptions.clear();
+}
+
+shared_ptr<LinkNode> ThetaCompiler::getIfExistsParsedLinkAST(string capsuleName) {
+    auto it = parsedLinkASTs.find(capsuleName);
+
+    if (it != parsedLinkASTs.end()) return it->second;
+
+    return nullptr;
+}
+
+void ThetaCompiler::addParsedLinkAST(string capsuleName, shared_ptr<LinkNode> linkNode) {
+    parsedLinkASTs.insert(make_pair(capsuleName, linkNode));
 }
 
 void ThetaCompiler::discoverCapsules() {

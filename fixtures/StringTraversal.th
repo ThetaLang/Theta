@@ -1,0 +1,5 @@
+link Theta.StringUtil
+
+capsule Theta.StringTraversal {
+    someVar<String> = 'some value'
+}

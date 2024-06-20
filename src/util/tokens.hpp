@@ -123,6 +123,11 @@ namespace Symbols {
 
     // Comparison Operators
     const string EQUALITY = "==";
+    const string INEQUALITY = "!=";
+    const string LT = "<";
+    const string GT = ">";
+    const string LTEQ = "<=";
+    const string GTEQ = ">=";
 
     // Function Declaration
     const string FUNC_DECLARATION = "->";

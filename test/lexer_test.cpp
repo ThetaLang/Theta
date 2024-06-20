@@ -219,9 +219,9 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "message" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::STRING, "'Hello, World!'" }
         };
@@ -235,9 +235,9 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "isOpen" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "Boolean" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::BOOLEAN, Symbols::TRUE }
         };
@@ -251,9 +251,9 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "total" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "Number" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::NUMBER, "5" },
             { Tokens::OPERATOR, Symbols::PLUS },
@@ -293,14 +293,14 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "greet" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::IDENTIFIER, "name" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String"},
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
             { Tokens::STRING, "'hello'" },
             { Tokens::OPERATOR, Symbols::PLUS },
@@ -316,19 +316,19 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "greet" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::IDENTIFIER, "greeting" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String"},
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::COMMA, Symbols::COMMA },
             { Tokens::IDENTIFIER, "name" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String"},
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
             { Tokens::STRING, "'hello'" },
             { Tokens::OPERATOR, Symbols::PLUS },
@@ -344,9 +344,9 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "greet" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::PAREN_OPEN, Symbols::PAREN_OPEN },
             { Tokens::PAREN_CLOSE, Symbols::PAREN_CLOSE },
@@ -367,17 +367,17 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "greet" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::IDENTIFIER, "names" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "List"},
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "String" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
             { Tokens::BRACE_OPEN, Symbols::BRACE_OPEN },
             { Tokens::STRING, "'hello'" },
@@ -401,9 +401,9 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "x" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "Number" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::NUMBER, "5" },
             { Tokens::OPERATOR, Symbols::PLUS },
@@ -419,9 +419,9 @@ TEST_CASE("ThetaLexer") {
 
         std::vector<std::pair<Tokens, std::string>> expectedTokens = {
             { Tokens::IDENTIFIER, "x" },
-            { Tokens::ANGLE_BRACKET_OPEN, Symbols::ANGLE_BRACKET_OPEN },
+            { Tokens::OPERATOR, Symbols::LT },
             { Tokens::IDENTIFIER, "Number" },
-            { Tokens::ANGLE_BRACKET_CLOSE, Symbols::ANGLE_BRACKET_CLOSE },
+            { Tokens::OPERATOR, Symbols::GT },
             { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
             { Tokens::NUMBER, "5" },
             { Tokens::OPERATOR, Symbols::MINUS },
