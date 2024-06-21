@@ -15,6 +15,8 @@ class CapsuleNode : public ASTNode {
 
         string getNodeType() const override { return nodeType; }
 
+        string getName() { return name; }
+
         string toJSON() const override {
             ostringstream oss;
 

@@ -13,6 +13,7 @@ AST_DIR = $(PARSER_DIR)/ast
 # Define the build directories
 BUILD_DIR = build
 BUILD_TEST_DIR = $(BUILD_DIR)/test
+BUILD_FIXTURES_DIR = $(BUILD_TEST_DIR)/fixtures
 
 # Define the build subdirectories
 BUILD_LEXER_DIR = $(BUILD_DIR)/$(LEXER_DIR)
@@ -69,6 +70,9 @@ $(BUILD_DIR):
 $(BUILD_TEST_DIR):
 	mkdir -p $(BUILD_TEST_DIR)
 
+$(BUILD_FIXTURES_DIR):
+	mkdir -p $(BUILD_FIXTURES_DIR)
+
 $(BUILD_LEXER_DIR):
 	mkdir -p $(BUILD_LEXER_DIR)
 
@@ -120,11 +124,15 @@ $(BUILD_TEST_DIR)/%: $(BUILD_TEST_DIR)/%.o $(OBJ_FILES) $(CATCH2_OBJ_FILES) | $(
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # Test target depends on all test binaries
-test: $(TEST_BINARIES)
+test: $(TEST_BINARIES) copy-fixtures
+
+# Copy .th files to build/test/fixtures
+copy-fixtures: $(BUILD_FIXTURES_DIR)
+	cp test/fixtures/*.th $(BUILD_FIXTURES_DIR)/
 
 # Clean up object files, executables, and build directories
 clean:
 	rm -rf $(BUILD_DIR) $(BUILD_TEST_DIR)
 
 # Phony targets
-.PHONY: all clean test
+.PHONY: all clean test copy-fixtures

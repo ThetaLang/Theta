@@ -11,7 +11,7 @@ class SymbolNode : public ASTNode {
         string nodeType;
         string symbol;
 
-        SymbolNode(string sym) : symbol(sym), nodeType("Symbol") {};
+        SymbolNode(string sym) : symbol(":" + sym), nodeType("Symbol") {};
 
         string getNodeType() const override { return nodeType; }
 
@@ -22,7 +22,7 @@ class SymbolNode : public ASTNode {
 
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
-            oss << ", \"value\": \":" << symbol << "\"";
+            oss << ", \"value\": \"" << symbol << "\"";
             oss << "}";
 
             return oss.str();

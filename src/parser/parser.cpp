@@ -265,6 +265,10 @@ class ThetaParser {
                 return identifier();
             }
 
+            if (match(Tokens::COLON)) {
+                return symbol();
+            }
+
             if (match(Tokens::BRACKET_OPEN)) {
                 return list();
             }
@@ -285,14 +289,15 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> dict() {
-            shared_ptr<ASTNode> expr = kvPair();
+            pair<string, shared_ptr<ASTNode>> p = kvPair();
+            shared_ptr<ASTNode> expr = p.second;
 
-            if (!match(Tokens::BRACE_CLOSE) && expr->getNodeType() == "Tuple") {
+            if (p.first == "kv" && expr && expr->getNodeType() == "Tuple") {
                vector<shared_ptr<ASTNode>> el;
                 el.push_back(expr);
 
                 while (match(Tokens::COMMA)) {
-                    el.push_back(kvPair());
+                    el.push_back(kvPair().second);
                 }
 
                 expr = make_shared<DictDefinitionNode>();
@@ -304,10 +309,15 @@ class ThetaParser {
             return expr;
         }
 
-        shared_ptr<ASTNode> kvPair() {
-            shared_ptr<ASTNode> expr = expression();
+        pair<string, shared_ptr<ASTNode>> kvPair() {
+            // Because both flows of this function return a tuple, we need a type flag to indicate whether
+            // we generated the tuple with the intention of it being a kvPair or not. Otherwise it would
+            // be ambiguous and we would accidentally convert dicts with a single key-value pair into a tuple
+            string type = "tuple";
+            shared_ptr<ASTNode> expr = tuple();
 
             if (match(Tokens::COLON)) {
+                type = "kv";
                 shared_ptr<ASTNode> left = expr;
 
                 if (left->getNodeType() == "Identifier") {
@@ -317,6 +327,44 @@ class ThetaParser {
                 expr = make_shared<TupleNode>();
                 expr->setLeft(left);
                 expr->setRight(expression());
+            }
+
+            return make_pair(type, expr);
+        }
+
+        shared_ptr<ASTNode> tuple() {
+            shared_ptr<ASTNode> expr;
+
+            try {
+                expr = expression();
+            } catch (ParseError e) {
+                if (e.getErrorParseType() == "symbol") remainingTokens->pop_front();
+            }
+
+            if (match(Tokens::COMMA)) {
+                shared_ptr<ASTNode> first = expr;
+
+                expr = make_shared<TupleNode>();
+                expr->setLeft(first);
+
+                try {
+                    expr->setRight(expression());
+                } catch (ParseError e) {
+                    if (e.getErrorParseType() == "symbol") remainingTokens->pop_front();
+                }
+
+
+                if (!match(Tokens::BRACE_CLOSE)) {
+                    ThetaCompiler::getInstance().addException(
+                        ThetaCompilationError(
+                            "SyntaxError",
+                            "Expected closing brace after tuple definition",
+                            remainingTokens->front(),
+                            source,
+                            fileName
+                        )
+                    );
+                }
             }
 
             return expr;
@@ -367,6 +415,31 @@ class ThetaParser {
             }
 
             return typ;
+        }
+
+        shared_ptr<ASTNode> symbol() {
+            if (match(Tokens::IDENTIFIER) || match(Tokens::NUMBER)) {
+                if (currentToken.getType() == Tokens::IDENTIFIER) validateIdentifier(currentToken);
+
+                return make_shared<SymbolNode>(currentToken.getLexeme());
+            }
+
+            ThetaCompiler::getInstance().addException(
+                ThetaCompilationError(
+                    "SyntaxError",
+                    "Expected identifier as part of symbol declaration",
+                    remainingTokens->front(),
+                    source,
+                    fileName
+                )
+            );
+
+            // TODO: Throw an exception here that gets caught higher up to re-synchronize the parser, so we dont show
+            // the user transient errors
+
+            throw ParseError("symbol");
+
+            return nullptr;
         }
 
         bool match(Tokens type, string lexeme = "") {

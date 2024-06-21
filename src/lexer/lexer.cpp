@@ -137,7 +137,7 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token(Tokens::NEWLINE, Symbols::NEWLINE);
-            } else if (isdigit(currentChar) && (isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0' || nextChar == ',')) {
+            } else if (isdigit(currentChar) && ((isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0' || nextChar == ',') || nextChar == ':')) {
                 int countDecimals = 0;
                 return accumulateUntilCondition(
                     [source, &countDecimals](int idx) {

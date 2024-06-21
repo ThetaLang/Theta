@@ -77,6 +77,8 @@ class ThetaCompiler {
         shared_ptr<LinkNode> getIfExistsParsedLinkAST(string capsuleName);
 
         void addParsedLinkAST(string capsuleName, shared_ptr<LinkNode>);
+
+        shared_ptr<map<string, string>> filesByCapsuleName;
     private:
         /**
          * @brief Private constructor for ThetaCompiler. Initializes the compiler and discovers all capsules in the source files.
@@ -90,7 +92,7 @@ class ThetaCompiler {
         ThetaCompiler(const ThetaCompiler&) = delete;
         ThetaCompiler& operator=(const ThetaCompiler&) = delete;
 
-        shared_ptr<map<string, string>> filesByCapsuleName;
+
         bool isEmitTokens = false;
         bool isEmitAST = false;
         vector<ThetaCompilationError> encounteredExceptions;
