@@ -121,6 +121,20 @@ class ThetaParser {
             return assignment();
         }
 
+        shared_ptr<ASTNode> assignment() {
+            shared_ptr<ASTNode> expr = expression();
+
+            if (match(Tokens::ASSIGNMENT)) {
+                shared_ptr<ASTNode> left = expr;
+
+                expr = make_shared<AssignmentNode>();
+                expr->setLeft(left);
+                expr->setRight(function_declaration());
+            }
+
+            return expr;
+        }
+
         shared_ptr<ASTNode> block() {
             if (match(Tokens::BRACE_OPEN)) {
                 vector<shared_ptr<ASTNode>> blockExpr;
@@ -135,18 +149,29 @@ class ThetaParser {
                 return block;
             }
 
-            return assignment();
+            return function_declaration();
         }
 
-        shared_ptr<ASTNode> assignment() {
-            shared_ptr<ASTNode> expr = expression();
+        shared_ptr<ASTNode> function_declaration() {
+            shared_ptr<ASTNode> expr = assignment();
 
-            if (match(Tokens::ASSIGNMENT)) {
-                shared_ptr<ASTNode> left = expr;
+            if (check(Tokens::COMMA) || match(Tokens::FUNC_DECLARATION) || match(Tokens::PAREN_CLOSE)) {
+                vector<shared_ptr<ASTNode>> params;
+                shared_ptr<FunctionDeclarationNode> func_def = make_shared<FunctionDeclarationNode>();
 
-                expr = make_shared<AssignmentNode>();
-                expr->setLeft(left);
-                expr->setRight(assignment());
+                if (expr) params.push_back(expr);
+
+                while(match(Tokens::COMMA)) {
+                    params.push_back(assignment());
+                }
+
+                match(Tokens::PAREN_CLOSE);
+                match(Tokens::FUNC_DECLARATION);
+
+                func_def->setParameters(params);
+                func_def->setDefinition(block());
+
+                expr = func_def;
             }
 
             return expr;

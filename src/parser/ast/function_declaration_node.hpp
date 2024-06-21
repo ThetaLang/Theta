@@ -10,7 +10,7 @@ class FunctionDeclarationNode : public ASTNode {
     public:
         string nodeType;
         vector<shared_ptr<ASTNode>> parameters;
-        vector<shared_ptr<ASTNode>> definition;
+        shared_ptr<ASTNode> definition;
 
         FunctionDeclarationNode() : nodeType("FunctionDeclaration") {};
 
@@ -18,15 +18,19 @@ class FunctionDeclarationNode : public ASTNode {
 
         void setParameters(vector<shared_ptr<ASTNode>> params) { parameters = params; }
 
-        void setDefinition(vector<shared_ptr<ASTNode>> def) { definition = def; }
+        vector<shared_ptr<ASTNode>> getParameters() { return parameters; }
+
+        void setDefinition(shared_ptr<ASTNode> def) { definition = def; }
+
+        shared_ptr<ASTNode> getDefinition() { return definition; }
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\"";
             oss << ", \"parameters\": [";
-            
+
             for (int i = 0; i < parameters.size(); i++) {
                 if (i > 0) {
                     oss << ", ";
@@ -37,17 +41,7 @@ class FunctionDeclarationNode : public ASTNode {
 
             oss << "] ";
 
-            oss << ", \"definition\": [";
-            
-            for (int i = 0; i < definition.size(); i++) {
-                if (i > 0) {
-                    oss << ", ";
-                }
-
-                oss << (definition[i] ? definition[i]->toJSON() : "null");
-            }
-
-            oss << "] ";
+            oss << ", \"definition\": " + (definition ? definition->toJSON() : "null");
 
             oss << "}";
 
