@@ -38,7 +38,7 @@ class ThetaLexer {
                 Token newToken = makeToken(currentChar, nextChar, source, i);
 
                 // We don't actually want to keep any whitespace related tokens or comments
-                vector<Tokens> garbageTokens = { Tokens::NEWLINE, Tokens::WHITESPACE, Tokens::COMMENT, Tokens::MULTILINE_COMMENT };
+                vector<Token::Types> garbageTokens = { Token::Types::NEWLINE, Token::Types::WHITESPACE, Token::Types::COMMENT, Token::Types::MULTILINE_COMMENT };
 
                 if (find(garbageTokens.begin(), garbageTokens.end(), newToken.getType()) == garbageTokens.end()) {
                     newToken.setStartLine(lineAtLexStart);
@@ -49,20 +49,20 @@ class ThetaLexer {
                 // Some tokens are more than one character. We want to advance the iterator and currentLine by however many
                 // characters long the token was. We really only want to do this for any token that was not created by an
                 // accumulateUntil function, since those already update the index internally.
-                vector<Tokens> accumulatedTokens = {
-                    Tokens::IDENTIFIER,
-                    Tokens::KEYWORD,
-                    Tokens::BOOLEAN,
-                    Tokens::COMMENT,
-                    Tokens::MULTILINE_COMMENT,
-                    Tokens::STRING,
-                    Tokens::NUMBER
+                vector<Token::Types> accumulatedTokens = {
+                    Token::Types::IDENTIFIER,
+                    Token::Types::KEYWORD,
+                    Token::Types::BOOLEAN,
+                    Token::Types::COMMENT,
+                    Token::Types::MULTILINE_COMMENT,
+                    Token::Types::STRING,
+                    Token::Types::NUMBER
                 };
 
                 if (find(accumulatedTokens.begin(), accumulatedTokens.end(), newToken.getType()) == accumulatedTokens.end()) {
                     i += newToken.getLexeme().length();
                     currentColumn += newToken.getLexeme().length();
-                } else if (newToken.getType() == Tokens::MULTILINE_COMMENT) {
+                } else if (newToken.getType() == Token::Types::MULTILINE_COMMENT) {
                     i += 2;
                     currentColumn += 2;
                 } else {
@@ -98,37 +98,37 @@ class ThetaLexer {
             // (e.g., multi-character operators) are prioritized over shorter ones, preventing
             // misinterpretations and ensuring correct tokenization of the source code.
             if (
-                attemptLex(Symbols::STRING_DELIMITER, Tokens::STRING, token, currentChar, nextChar, source, i, Symbols::STRING_DELIMITER) ||
-                attemptLex(Symbols::COMMENT, Tokens::COMMENT, token, currentChar, nextChar, source, i, Symbols::NEWLINE, false, false) ||
-                attemptLex(Symbols::MULTILINE_COMMENT_DELIMITER_START, Tokens::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Symbols::MULTILINE_COMMENT_DELIMITER_END) ||
-                attemptLex(Symbols::DIVISION, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::EQUALITY, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::INEQUALITY, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::AND, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::OR, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::NOT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PIPE, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::ASSIGNMENT, Tokens::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PLUS_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PLUS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::MINUS_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::FUNC_DECLARATION, Tokens::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::MINUS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::TIMES_EQUALS, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::POWER, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::TIMES, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACE_OPEN, Tokens::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACE_CLOSE, Tokens::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PAREN_OPEN, Tokens::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PAREN_CLOSE, Tokens::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::LTEQ, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::LT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::GTEQ, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::GT, Tokens::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACKET_OPEN, Tokens::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACKET_CLOSE, Tokens::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::COMMA, Tokens::COMMA, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::COLON, Tokens::COLON, token, currentChar, nextChar, source, i)
+                attemptLex(Symbols::STRING_DELIMITER, Token::Types::STRING, token, currentChar, nextChar, source, i, Symbols::STRING_DELIMITER) ||
+                attemptLex(Symbols::COMMENT, Token::Types::COMMENT, token, currentChar, nextChar, source, i, Symbols::NEWLINE, false, false) ||
+                attemptLex(Symbols::MULTILINE_COMMENT_DELIMITER_START, Token::Types::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Symbols::MULTILINE_COMMENT_DELIMITER_END) ||
+                attemptLex(Symbols::DIVISION, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::EQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::INEQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::AND, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::OR, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::NOT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PIPE, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::ASSIGNMENT, Token::Types::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PLUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PLUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::MINUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::FUNC_DECLARATION, Token::Types::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::MINUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::TIMES_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::EXPOONENT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::TIMES, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACE_OPEN, Token::Types::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACE_CLOSE, Token::Types::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PAREN_OPEN, Token::Types::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::PAREN_CLOSE, Token::Types::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::LTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::LT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::GTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::GT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACKET_OPEN, Token::Types::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::BRACKET_CLOSE, Token::Types::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::COMMA, Token::Types::COMMA, token, currentChar, nextChar, source, i) ||
+                attemptLex(Symbols::COLON, Token::Types::COLON, token, currentChar, nextChar, source, i)
             ) {
                 return token;
             }
@@ -136,7 +136,7 @@ class ThetaLexer {
             if (currentChar == '\n') {
                 currentLine += 1;
                 currentColumn = 0;
-                return Token(Tokens::NEWLINE, Symbols::NEWLINE);
+                return Token(Token::Types::NEWLINE, Symbols::NEWLINE);
             } else if (isdigit(currentChar) && ((isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0' || nextChar == ',') || nextChar == ':')) {
                 int countDecimals = 0;
                 return accumulateUntilCondition(
@@ -149,7 +149,7 @@ class ThetaLexer {
                     },
                     source,
                     i,
-                    Token(Tokens::NUMBER, { currentChar }),
+                    Token(Token::Types::NUMBER, { currentChar }),
                     "",
                     false
                 );
@@ -159,23 +159,23 @@ class ThetaLexer {
                     " <>=/\\!?@#$%^&*()~`|,-+{}[]'\";:\n\r",
                     source,
                     i,
-                    Token(Tokens::IDENTIFIER, { currentChar }),
+                    Token(Token::Types::IDENTIFIER, { currentChar }),
                     "",
                     false
                 );
 
                 if (isLanguageKeyword(token.getLexeme())) {
-                    token.setType(Tokens::KEYWORD);
+                    token.setType(Token::Types::KEYWORD);
                 } else if (token.getLexeme() == "true" || token.getLexeme() == "false") {
-                    token.setType(Tokens::BOOLEAN);
+                    token.setType(Token::Types::BOOLEAN);
                 }
 
                 return token;
             } else if (isspace(currentChar)) {
-                return Token(Tokens::WHITESPACE, { currentChar });
+                return Token(Token::Types::WHITESPACE, { currentChar });
             } else {
                 cout << "UNHANDLED CHAR: " << currentChar << " \n";
-                return Token(Tokens::UNHANDLED, { currentChar });
+                return Token(Token::Types::UNHANDLED, { currentChar });
             }
         }
 
@@ -195,7 +195,7 @@ class ThetaLexer {
          */
         bool attemptLex(
             const string &symbol,
-            Tokens tokenType,
+            Token::Types tokenType,
             Token &token,
             char currentChar,
             char nextChar,

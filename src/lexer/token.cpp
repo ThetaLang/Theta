@@ -2,14 +2,14 @@
 
 Token::Token() {}
 
-Token::Token(Tokens tokenType, string tokenLexeme) {
+Token::Token(Token::Types tokenType, string tokenLexeme) {
     lexeme = tokenLexeme;
     type = tokenType;
 }
 
-Tokens Token::getType() { return type; }
+Token::Types Token::getType() { return type; }
 
-void Token::setType(Tokens tokenType) { type = tokenType; }
+void Token::setType(Token::Types tokenType) { type = tokenType; }
 
 string Token::getLexeme() { return lexeme; }
 

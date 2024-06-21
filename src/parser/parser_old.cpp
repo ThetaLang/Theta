@@ -61,7 +61,7 @@
 //             vector<shared_ptr<ASTNode>> linkNodes;
 
 //             // Parse out file imports
-//             while (remainingTokens->front().getType() == Tokens::KEYWORD && remainingTokens->front().getLexeme() != Symbols::CAPSULE) {
+//             while (remainingTokens->front().getType() == Token::Types::KEYWORD && remainingTokens->front().getLexeme() != Symbols::CAPSULE) {
 //                 remainingTokens->pop_front();
 //                 string linkCapsuleName = remainingTokens->front().getLexeme();
 //                 shared_ptr<LinkNode> parsedLinkAST;
@@ -137,55 +137,55 @@
 //                 nextToken = remainingTokens->front();
 //             }
 
-//             if (currentToken.getType() == Tokens::KEYWORD && currentToken.getLexeme() == Symbols::CAPSULE) {
+//             if (currentToken.getType() == Token::Types::KEYWORD && currentToken.getLexeme() == Symbols::CAPSULE) {
 //                 return parseCapsule(nextToken);
 //             } else if (
-//                 currentToken.getType() == Tokens::IDENTIFIER &&
-//                 hasNextToken && nextToken.getType() == Tokens::ANGLE_BRACKET_OPEN &&
-//                 remainingTokens->at(1).getType() == Tokens::IDENTIFIER &&
-//                 (remainingTokens->at(2).getType() == Tokens::ANGLE_BRACKET_CLOSE || remainingTokens->at(2).getType() == Tokens::ANGLE_BRACKET_OPEN)
+//                 currentToken.getType() == Token::Types::IDENTIFIER &&
+//                 hasNextToken && nextToken.getType() == Token::Types::ANGLE_BRACKET_OPEN &&
+//                 remainingTokens->at(1).getType() == Token::Types::IDENTIFIER &&
+//                 (remainingTokens->at(2).getType() == Token::Types::ANGLE_BRACKET_CLOSE || remainingTokens->at(2).getType() == Token::Types::ANGLE_BRACKET_OPEN)
 //             ) {
 //                 shared_ptr<ASTNode> identNode = parseIdentifierWithType(currentToken, nextToken);
 
-//                 if (remainingTokens->front().getType() == Tokens::ASSIGNMENT) {
+//                 if (remainingTokens->front().getType() == Token::Types::ASSIGNMENT) {
 //                     return parseAssignment(identNode);
-//                 } else if (remainingTokens->front().getType() == Tokens::COMMA || remainingTokens->front().getType() == Tokens::FUNC_DECLARATION) {
+//                 } else if (remainingTokens->front().getType() == Token::Types::COMMA || remainingTokens->front().getType() == Token::Types::FUNC_DECLARATION) {
 //                     return parseFuncDeclaration(identNode);
 //                 } else {
 //                     return identNode;
 //                 }
 //             } else if (
-//                 currentToken.getType() == Tokens::OPERATOR &&
+//                 currentToken.getType() == Token::Types::OPERATOR &&
 //                 (currentToken.getLexeme() == Symbols::NOT || currentToken.getLexeme() == Symbols::MINUS)
 //                 && hasNextToken
 //             ) {
 //                 return parseUnaryOperation(currentToken, nextToken);
 //             } else if (
-//                 hasNextToken && nextToken.getType() == Tokens::OPERATOR && (
-//                     currentToken.getType() == Tokens::IDENTIFIER ||
-//                     currentToken.getType() == Tokens::STRING ||
-//                     currentToken.getType() == Tokens::NUMBER ||
-//                     currentToken.getType() == Tokens::BOOLEAN
+//                 hasNextToken && nextToken.getType() == Token::Types::OPERATOR && (
+//                     currentToken.getType() == Token::Types::IDENTIFIER ||
+//                     currentToken.getType() == Token::Types::STRING ||
+//                     currentToken.getType() == Token::Types::NUMBER ||
+//                     currentToken.getType() == Token::Types::BOOLEAN
 //                 )
 //             ) {
 //                 return parseBinaryOperation(currentToken, nextToken);
-//             } else if (currentToken.getType() == Tokens::IDENTIFIER && hasNextToken && nextToken.getType() == Tokens::BRACKET_OPEN) {
+//             } else if (currentToken.getType() == Token::Types::IDENTIFIER && hasNextToken && nextToken.getType() == Token::Types::BRACKET_OPEN) {
 //                 return parseKeyedAccess(parseIdentifier(currentToken));
-//             } else if (currentToken.getType() == Tokens::BRACKET_OPEN) {
+//             } else if (currentToken.getType() == Token::Types::BRACKET_OPEN) {
 //                 shared_ptr<ASTNode> listDefinition = parseListDefinition(currentToken, nextToken);
 
-//                 if (remainingTokens->front().getType() == Tokens::BRACKET_OPEN) {
+//                 if (remainingTokens->front().getType() == Token::Types::BRACKET_OPEN) {
 //                     return parseKeyedAccess(listDefinition);
 //                 } else {
 //                     return listDefinition;
 //                 }
 //             } else if (
-//                 currentToken.getType() == Tokens::STRING ||
-//                 currentToken.getType() == Tokens::NUMBER ||
-//                 currentToken.getType() == Tokens::BOOLEAN
+//                 currentToken.getType() == Token::Types::STRING ||
+//                 currentToken.getType() == Token::Types::NUMBER ||
+//                 currentToken.getType() == Token::Types::BOOLEAN
 //             ) {
 //                 return parseLiteral(currentToken);
-//             } else if (currentToken.getType() == Tokens::IDENTIFIER) {
+//             } else if (currentToken.getType() == Token::Types::IDENTIFIER) {
 //                 return parseIdentifier(currentToken);
 //             }
 
@@ -209,7 +209,7 @@
 
 //             vector<shared_ptr<ASTNode>> definitionNodes;
 
-//             while (remainingTokens->front().getType() != Tokens::BRACE_CLOSE) {
+//             while (remainingTokens->front().getType() != Token::Types::BRACE_CLOSE) {
 //                 definitionNodes.push_back(consume());
 //             }
 
@@ -259,7 +259,7 @@
 
 //             paramNodes.push_back(param);
 
-//             while (remainingTokens->front().getType() != Tokens::FUNC_DECLARATION) {
+//             while (remainingTokens->front().getType() != Token::Types::FUNC_DECLARATION) {
 //                 Token curr = remainingTokens->front();
 //                 remainingTokens->pop_front();
 
@@ -272,12 +272,12 @@
 
 //             // If the user inputted a curly brace, then we want to continue reading this function definition until we hit another curly brace.
 //             // Otherwise, we know the function will end at the next expression
-//             bool hasMultipleExpressions = remainingTokens->front().getType() == Tokens::BRACE_OPEN;
+//             bool hasMultipleExpressions = remainingTokens->front().getType() == Token::Types::BRACE_OPEN;
 
 //             if (hasMultipleExpressions) {
 //                 remainingTokens->pop_front(); // Pops the {
 
-//                 while (remainingTokens->front().getType() != Tokens::BRACE_CLOSE) {
+//                 while (remainingTokens->front().getType() != Token::Types::BRACE_CLOSE) {
 //                     definitionNodes.push_back(consume());
 //                 }
 
@@ -309,9 +309,9 @@
 
 //             int typeDeclarationDepth = 1;
 //             while (typeDeclarationDepth > 0) {
-//                 if (remainingTokens->front().getType() == Tokens::ANGLE_BRACKET_OPEN) {
+//                 if (remainingTokens->front().getType() == Token::Types::ANGLE_BRACKET_OPEN) {
 //                     typeDeclarationDepth++;
-//                 } else if (remainingTokens->front().getType() == Tokens::ANGLE_BRACKET_CLOSE){
+//                 } else if (remainingTokens->front().getType() == Token::Types::ANGLE_BRACKET_CLOSE){
 //                     typeDeclarationDepth--;
 //                 }
 
@@ -343,7 +343,7 @@
 
 //             typeTokens.pop_front(); // Pops the type identifier
 
-//             if (typeTokens.front().getType() == Tokens::ANGLE_BRACKET_OPEN) {
+//             if (typeTokens.front().getType() == Token::Types::ANGLE_BRACKET_OPEN) {
 //                 shared_ptr<ASTNode> typeChild = parseNestedTypeDeclaration(typeTokens);
 
 //                 node->setValue(typeChild);
@@ -367,11 +367,11 @@
 
 //             vector<shared_ptr<ASTNode>> listElementNodes;
 
-//             while (remainingTokens->front().getType() != Tokens::BRACKET_CLOSE) {
+//             while (remainingTokens->front().getType() != Token::Types::BRACKET_CLOSE) {
 //                 listElementNodes.push_back(consume());
 
 //                 // Commas should be skipped
-//                 if (remainingTokens->front().getType() == Tokens::COMMA) {
+//                 if (remainingTokens->front().getType() == Token::Types::COMMA) {
 //                     remainingTokens->pop_front();
 //                 }
 //             }
@@ -418,13 +418,13 @@
 
 //             shared_ptr<ASTNode> node = make_shared<UnaryOperationNode>(currentToken.getLexeme());
 
-//             node->setValue(nextToken.getType() == Tokens::IDENTIFIER
+//             node->setValue(nextToken.getType() == Token::Types::IDENTIFIER
 //                 ? parseIdentifier(nextToken)
 //                 : parseLiteral(nextToken)
 //             );
 
 //             // For cases with multiple chained operations, we assume this is the left hand side
-//             if (remainingTokens->front().getType() == Tokens::OPERATOR) {
+//             if (remainingTokens->front().getType() == Token::Types::OPERATOR) {
 //                 node = parseBinaryOperation(node);
 //             }
 
@@ -446,7 +446,7 @@
 
 //             shared_ptr<ASTNode> node = make_shared<BinaryOperationNode>(nextToken.getLexeme());
 
-//             node->setLeft(currentToken.getType() == Tokens::IDENTIFIER
+//             node->setLeft(currentToken.getType() == Token::Types::IDENTIFIER
 //                 ? parseIdentifier(currentToken)
 //                 : parseLiteral(currentToken)
 //             );
@@ -454,7 +454,7 @@
 //             node->setRight(consume());
 
 //             // For cases with multiple chained operations, we assume this is the left hand side
-//             if (remainingTokens->front().getType() == Tokens::OPERATOR) {
+//             if (remainingTokens->front().getType() == Token::Types::OPERATOR) {
 //                 node = parseBinaryOperation(node);
 //             }
 
@@ -474,7 +474,7 @@
 //             Token currentToken = remainingTokens->front();
 //             remainingTokens->pop_front(); // Pops the operator
 
-//             if (currentToken.getType() != Tokens::OPERATOR) {
+//             if (currentToken.getType() != Token::Types::OPERATOR) {
 //                 ThetaCompiler::getInstance().addException(
 //                     ThetaCompilationError(
 //                         "ParseError",

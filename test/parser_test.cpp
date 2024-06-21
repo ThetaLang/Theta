@@ -44,7 +44,7 @@ TEST_CASE("ThetaParser") {
         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName);
 
         REQUIRE(lexer.tokens.size() == 1);
-        REQUIRE(lexer.tokens[0].getType() == Tokens::IDENTIFIER);
+        REQUIRE(lexer.tokens[0].getType() == Token::Types::IDENTIFIER);
         REQUIRE(lexer.tokens[0].getLexeme() == ".4.");
     }
 
@@ -1249,18 +1249,4 @@ TEST_CASE("ThetaParser") {
         shared_ptr<IdentifierNode> mainRightNode = dynamic_pointer_cast<IdentifierNode>(mainAssignmentNode->getRight());
         REQUIRE(mainRightNode->getIdentifier() == "Theta.StringUtil.name");
     }
-
-
-    SECTION("Can tokenize with single line comments") {
-        string source = "x<Number> = 5 + 3 // assignment";
-        lexer.lex(source);
-
-    }
-
-    SECTION("Can tokenize with multi line comments") {
-        string source = "x<Number> = 5 - /- comment -/ 3";
-        lexer.lex(source);
-
-    }
-
 }

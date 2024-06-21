@@ -3,18 +3,18 @@
 #include <string>
 #include <sstream>
 #include "ast_node.hpp"
-#include "../../util/tokens.hpp"
+#include "../../lexer/token.hpp"
 
 using namespace std;
 
 class LiteralNode : public ASTNode {
     public:
         string nodeType;
-        Tokens type;
+        Token::Types type;
         string literalValue;
 
-        LiteralNode(Tokens typ, string val) : type(typ), literalValue(val){
-            string formattedType = tokenTypeToString(typ);
+        LiteralNode(Token::Types typ, string val) : type(typ), literalValue(val){
+            string formattedType = Token::tokenTypeToString(typ);
 
             for (int i = 1; i < formattedType.length(); ++i) {
                 formattedType[i] = tolower(formattedType[i]);
@@ -29,7 +29,7 @@ class LiteralNode : public ASTNode {
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
             oss << "\"type\": \"" << nodeType << "\", ";
             oss << "\"value\": \"" << literalValue << "\" ";

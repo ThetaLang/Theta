@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void verifyTokens(deque<Token> &resultTokens, vector<pair<Tokens, string>> &expectedTokens) {
+void verifyTokens(deque<Token> &resultTokens, vector<pair<Token::Types, string>> &expectedTokens) {
     REQUIRE(resultTokens.size() == expectedTokens.size());
 
     for (int i = 0; i < expectedTokens.size(); i++) {
@@ -21,10 +21,10 @@ TEST_CASE("ThetaLexer") {
         string source = "5 * 12.23";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::NUMBER, "5" },
-            { Tokens::OPERATOR, Symbols::TIMES },
-            { Tokens::NUMBER, "12.23" }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::NUMBER, "5" },
+            { Token::Types::OPERATOR, Symbols::TIMES },
+            { Token::Types::NUMBER, "12.23" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -34,11 +34,11 @@ TEST_CASE("ThetaLexer") {
         string source = "5100 / 10.23.4.";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::NUMBER, "5100" },
-            { Tokens::OPERATOR, Symbols::DIVISION },
-            { Tokens::NUMBER, "10.23" },
-            { Tokens::IDENTIFIER, ".4." }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::NUMBER, "5100" },
+            { Token::Types::OPERATOR, Symbols::DIVISION },
+            { Token::Types::NUMBER, "10.23" },
+            { Token::Types::IDENTIFIER, ".4." }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -48,8 +48,8 @@ TEST_CASE("ThetaLexer") {
         string source = "'And his name is John Cena!'";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::STRING, "'And his name is John Cena!'" }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::STRING, "'And his name is John Cena!'" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -61,16 +61,16 @@ TEST_CASE("ThetaLexer") {
         string source = "['Alex', 'Tony', 'John', 'Denis']";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN },
-            { Tokens::STRING, "'Alex'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'Tony'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'John'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'Denis'" },
-            { Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::BRACKET_OPEN, Symbols::BRACKET_OPEN },
+            { Token::Types::STRING, "'Alex'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'Tony'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'John'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'Denis'" },
+            { Token::Types::BRACKET_CLOSE, Symbols::BRACKET_CLOSE }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -80,32 +80,32 @@ TEST_CASE("ThetaLexer") {
         string source = "[['alex', 'john', ['jeremy', 'pablo']], ['clarinda'], 'den' + 'is', 'jessica', 'ellis']";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN },
-            { Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN },
-            { Tokens::STRING, "'alex'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'john'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN },
-            { Tokens::STRING, "'jeremy'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'pablo'" },
-            { Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE },
-            { Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::BRACKET_OPEN, Symbols::BRACKET_OPEN },
-            { Tokens::STRING, "'clarinda'" },
-            { Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'den'" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::STRING, "'is'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'jessica'" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "'ellis'" },
-            { Tokens::BRACKET_CLOSE, Symbols::BRACKET_CLOSE }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::BRACKET_OPEN, Symbols::BRACKET_OPEN },
+            { Token::Types::BRACKET_OPEN, Symbols::BRACKET_OPEN },
+            { Token::Types::STRING, "'alex'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'john'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::BRACKET_OPEN, Symbols::BRACKET_OPEN },
+            { Token::Types::STRING, "'jeremy'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'pablo'" },
+            { Token::Types::BRACKET_CLOSE, Symbols::BRACKET_CLOSE },
+            { Token::Types::BRACKET_CLOSE, Symbols::BRACKET_CLOSE },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::BRACKET_OPEN, Symbols::BRACKET_OPEN },
+            { Token::Types::STRING, "'clarinda'" },
+            { Token::Types::BRACKET_CLOSE, Symbols::BRACKET_CLOSE },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'den'" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::STRING, "'is'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'jessica'" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "'ellis'" },
+            { Token::Types::BRACKET_CLOSE, Symbols::BRACKET_CLOSE }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -118,10 +118,10 @@ TEST_CASE("ThetaLexer") {
         string source = "100 + 7";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::NUMBER, "100" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::NUMBER, "7" }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::NUMBER, "100" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::NUMBER, "7" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -131,10 +131,10 @@ TEST_CASE("ThetaLexer") {
         string source = "42 - 11";
         lexer.lex(source);
 
-        vector<pair<Tokens, string>> expectedTokens = {
-            { Tokens::NUMBER, "42" },
-            { Tokens::OPERATOR, Symbols::MINUS },
-            { Tokens::NUMBER, "11" }
+        vector<pair<Token::Types, string>> expectedTokens = {
+            { Token::Types::NUMBER, "42" },
+            { Token::Types::OPERATOR, Symbols::MINUS },
+            { Token::Types::NUMBER, "11" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -144,10 +144,10 @@ TEST_CASE("ThetaLexer") {
         string source = "10 * 11";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::NUMBER, "10" },
-            { Tokens::OPERATOR, Symbols::TIMES },
-            { Tokens::NUMBER, "11" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::NUMBER, "10" },
+            { Token::Types::OPERATOR, Symbols::TIMES },
+            { Token::Types::NUMBER, "11" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -157,10 +157,10 @@ TEST_CASE("ThetaLexer") {
         string source = "100/5";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::NUMBER, "100" },
-            { Tokens::OPERATOR, Symbols::DIVISION },
-            { Tokens::NUMBER, "5" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::NUMBER, "100" },
+            { Token::Types::OPERATOR, Symbols::DIVISION },
+            { Token::Types::NUMBER, "5" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -170,10 +170,10 @@ TEST_CASE("ThetaLexer") {
         string source = "2 ** 3";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::NUMBER, "2" },
-            { Tokens::OPERATOR, Symbols::POWER },
-            { Tokens::NUMBER, "3" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::NUMBER, "2" },
+            { Token::Types::OPERATOR, Symbols::EXPOONENT },
+            { Token::Types::NUMBER, "3" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -187,11 +187,11 @@ TEST_CASE("ThetaLexer") {
 
         REQUIRE(lexer.tokens.size() == 4);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::BOOLEAN, Symbols::TRUE },
-            { Tokens::OPERATOR, Symbols::AND },
-            { Tokens::OPERATOR, Symbols::NOT },
-            { Tokens::BOOLEAN, Symbols::FALSE }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::BOOLEAN, Symbols::TRUE },
+            { Token::Types::OPERATOR, Symbols::AND },
+            { Token::Types::OPERATOR, Symbols::NOT },
+            { Token::Types::BOOLEAN, Symbols::FALSE }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -201,11 +201,11 @@ TEST_CASE("ThetaLexer") {
         string source = "!x || y";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::OPERATOR, Symbols::NOT },
-            { Tokens::IDENTIFIER, "x" },
-            { Tokens::OPERATOR, Symbols::OR },
-            { Tokens::IDENTIFIER, "y" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::OPERATOR, Symbols::NOT },
+            { Token::Types::IDENTIFIER, "x" },
+            { Token::Types::OPERATOR, Symbols::OR },
+            { Token::Types::IDENTIFIER, "y" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -217,13 +217,13 @@ TEST_CASE("ThetaLexer") {
         string source = "message<String> = 'Hello, World!'";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "message" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::STRING, "'Hello, World!'" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "message" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::STRING, "'Hello, World!'" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -233,13 +233,13 @@ TEST_CASE("ThetaLexer") {
         string source = "isOpen<Boolean> = true";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "isOpen" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "Boolean" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::BOOLEAN, Symbols::TRUE }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "isOpen" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "Boolean" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::BOOLEAN, Symbols::TRUE }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -249,15 +249,15 @@ TEST_CASE("ThetaLexer") {
         string source = "total<Number> = 5 + 3";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "total" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "Number" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::NUMBER, "5" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::NUMBER, "3" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "total" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "Number" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::NUMBER, "5" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::NUMBER, "3" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -269,17 +269,17 @@ TEST_CASE("ThetaLexer") {
         string source = "if (x == 10) { return true }";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::KEYWORD, Symbols::IF },
-            { Tokens::PAREN_OPEN, Symbols::PAREN_OPEN },
-            { Tokens::IDENTIFIER, "x" },
-            { Tokens::OPERATOR, Symbols::EQUALITY },
-            { Tokens::NUMBER, "10" },
-            { Tokens::PAREN_CLOSE, Symbols::PAREN_CLOSE },
-            { Tokens::BRACE_OPEN, Symbols::BRACE_OPEN },
-            { Tokens::KEYWORD, Symbols::RETURN },
-            { Tokens::BOOLEAN, Symbols::TRUE },
-            { Tokens::BRACE_CLOSE, Symbols::BRACE_CLOSE }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::KEYWORD, Symbols::IF },
+            { Token::Types::PAREN_OPEN, Symbols::PAREN_OPEN },
+            { Token::Types::IDENTIFIER, "x" },
+            { Token::Types::OPERATOR, Symbols::EQUALITY },
+            { Token::Types::NUMBER, "10" },
+            { Token::Types::PAREN_CLOSE, Symbols::PAREN_CLOSE },
+            { Token::Types::BRACE_OPEN, Symbols::BRACE_OPEN },
+            { Token::Types::KEYWORD, Symbols::RETURN },
+            { Token::Types::BOOLEAN, Symbols::TRUE },
+            { Token::Types::BRACE_CLOSE, Symbols::BRACE_CLOSE }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -291,20 +291,20 @@ TEST_CASE("ThetaLexer") {
         string source = "greet<String> = name<String> -> 'hello' + name";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "greet" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::IDENTIFIER, "name" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String"},
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
-            { Tokens::STRING, "'hello'" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::IDENTIFIER, "name" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "greet" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::IDENTIFIER, "name" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String"},
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
+            { Token::Types::STRING, "'hello'" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::IDENTIFIER, "name" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -314,25 +314,25 @@ TEST_CASE("ThetaLexer") {
         string source = "greet<String> = greeting<String>, name<String> -> 'hello' + name";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "greet" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::IDENTIFIER, "greeting" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String"},
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::IDENTIFIER, "name" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String"},
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
-            { Tokens::STRING, "'hello'" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::IDENTIFIER, "name" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "greet" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::IDENTIFIER, "greeting" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String"},
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::IDENTIFIER, "name" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String"},
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
+            { Token::Types::STRING, "'hello'" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::IDENTIFIER, "name" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -342,16 +342,16 @@ TEST_CASE("ThetaLexer") {
         string source = "greet<String> = () -> 'hello there'";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "greet" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::PAREN_OPEN, Symbols::PAREN_OPEN },
-            { Tokens::PAREN_CLOSE, Symbols::PAREN_CLOSE },
-            { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
-            { Tokens::STRING, "'hello there'" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "greet" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::PAREN_OPEN, Symbols::PAREN_OPEN },
+            { Token::Types::PAREN_CLOSE, Symbols::PAREN_CLOSE },
+            { Token::Types::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
+            { Token::Types::STRING, "'hello there'" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -365,30 +365,30 @@ TEST_CASE("ThetaLexer") {
 
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "greet" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::IDENTIFIER, "names" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "List"},
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "String" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
-            { Tokens::BRACE_OPEN, Symbols::BRACE_OPEN },
-            { Tokens::STRING, "'hello'" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::IDENTIFIER, "concat_strings" },
-            { Tokens::PAREN_OPEN, Symbols::PAREN_OPEN },
-            { Tokens::IDENTIFIER, "names" },
-            { Tokens::COMMA, Symbols::COMMA },
-            { Tokens::STRING, "', '" },
-            { Tokens::PAREN_CLOSE, Symbols::PAREN_CLOSE },
-            { Tokens::BRACE_CLOSE, Symbols::BRACE_CLOSE }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "greet" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::IDENTIFIER, "names" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "List"},
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "String" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::FUNC_DECLARATION, Symbols::FUNC_DECLARATION },
+            { Token::Types::BRACE_OPEN, Symbols::BRACE_OPEN },
+            { Token::Types::STRING, "'hello'" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::IDENTIFIER, "concat_strings" },
+            { Token::Types::PAREN_OPEN, Symbols::PAREN_OPEN },
+            { Token::Types::IDENTIFIER, "names" },
+            { Token::Types::COMMA, Symbols::COMMA },
+            { Token::Types::STRING, "', '" },
+            { Token::Types::PAREN_CLOSE, Symbols::PAREN_CLOSE },
+            { Token::Types::BRACE_CLOSE, Symbols::BRACE_CLOSE }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -399,15 +399,15 @@ TEST_CASE("ThetaLexer") {
         string source = "x<Number> = 5 + 3 // assignment";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "x" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "Number" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::NUMBER, "5" },
-            { Tokens::OPERATOR, Symbols::PLUS },
-            { Tokens::NUMBER, "3" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "x" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "Number" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::NUMBER, "5" },
+            { Token::Types::OPERATOR, Symbols::PLUS },
+            { Token::Types::NUMBER, "3" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
@@ -417,15 +417,15 @@ TEST_CASE("ThetaLexer") {
         string source = "x<Number> = 5 - /- comment -/ 3";
         lexer.lex(source);
 
-        std::vector<std::pair<Tokens, std::string>> expectedTokens = {
-            { Tokens::IDENTIFIER, "x" },
-            { Tokens::OPERATOR, Symbols::LT },
-            { Tokens::IDENTIFIER, "Number" },
-            { Tokens::OPERATOR, Symbols::GT },
-            { Tokens::ASSIGNMENT, Symbols::ASSIGNMENT },
-            { Tokens::NUMBER, "5" },
-            { Tokens::OPERATOR, Symbols::MINUS },
-            { Tokens::NUMBER, "3" }
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::Types::IDENTIFIER, "x" },
+            { Token::Types::OPERATOR, Symbols::LT },
+            { Token::Types::IDENTIFIER, "Number" },
+            { Token::Types::OPERATOR, Symbols::GT },
+            { Token::Types::ASSIGNMENT, Symbols::ASSIGNMENT },
+            { Token::Types::NUMBER, "5" },
+            { Token::Types::OPERATOR, Symbols::MINUS },
+            { Token::Types::NUMBER, "3" }
         };
 
         verifyTokens(lexer.tokens, expectedTokens);
