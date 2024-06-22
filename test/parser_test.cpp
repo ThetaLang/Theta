@@ -273,6 +273,27 @@ TEST_CASE("ThetaParser") {
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "3");
     }
 
+    SECTION("Can parse modulo") {
+        string source = "9 % 2";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == "Source");
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == "BinaryOperation");
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
+
+        REQUIRE(binOpNode->getOperator() == "%");
+        REQUIRE(binOpNode->getLeft()->getNodeType() == "NumberLiteral");
+        REQUIRE(binOpNode->getRight()->getNodeType() == "NumberLiteral");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "9");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "2");
+    }
+
     SECTION("Can parse negative numbers") {
         string source = "100.4 - -24";
         lexer.lex(source);

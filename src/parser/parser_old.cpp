@@ -61,7 +61,7 @@
 //             vector<shared_ptr<ASTNode>> linkNodes;
 
 //             // Parse out file imports
-//             while (remainingTokens->front().getType() == Token::Types::KEYWORD && remainingTokens->front().getLexeme() != Symbols::CAPSULE) {
+//             while (remainingTokens->front().getType() == Token::Types::KEYWORD && remainingTokens->front().getLexeme() != Lexemes::CAPSULE) {
 //                 remainingTokens->pop_front();
 //                 string linkCapsuleName = remainingTokens->front().getLexeme();
 //                 shared_ptr<LinkNode> parsedLinkAST;
@@ -137,7 +137,7 @@
 //                 nextToken = remainingTokens->front();
 //             }
 
-//             if (currentToken.getType() == Token::Types::KEYWORD && currentToken.getLexeme() == Symbols::CAPSULE) {
+//             if (currentToken.getType() == Token::Types::KEYWORD && currentToken.getLexeme() == Lexemes::CAPSULE) {
 //                 return parseCapsule(nextToken);
 //             } else if (
 //                 currentToken.getType() == Token::Types::IDENTIFIER &&
@@ -156,7 +156,7 @@
 //                 }
 //             } else if (
 //                 currentToken.getType() == Token::Types::OPERATOR &&
-//                 (currentToken.getLexeme() == Symbols::NOT || currentToken.getLexeme() == Symbols::MINUS)
+//                 (currentToken.getLexeme() == Lexemes::NOT || currentToken.getLexeme() == Lexemes::MINUS)
 //                 && hasNextToken
 //             ) {
 //                 return parseUnaryOperation(currentToken, nextToken);

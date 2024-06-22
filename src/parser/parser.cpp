@@ -25,7 +25,7 @@
 #include "ast/block_node.hpp"
 #include "ast/tuple_node.hpp"
 #include "../compiler/compiler.hpp"
-#include "../util/tokens.hpp"
+#include "../lexer/lexemes.hpp"
 
 using namespace std;
 
@@ -66,7 +66,7 @@ class ThetaParser {
         shared_ptr<ASTNode> parseSource() {
             vector<shared_ptr<ASTNode>> links;
 
-            while (match(Token::Types::KEYWORD, Symbols::LINK)) {
+            while (match(Token::Types::KEYWORD, Lexemes::LINK)) {
                 links.push_back(link());
             }
 
@@ -109,7 +109,7 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> capsule() {
-            if (match(Token::Types::KEYWORD, Symbols::CAPSULE)) {
+            if (match(Token::Types::KEYWORD, Lexemes::CAPSULE)) {
                 match(Token::Types::IDENTIFIER);
 
                 shared_ptr<ASTNode> capsule = make_shared<CapsuleNode>(currentToken.getLexeme());
@@ -184,7 +184,7 @@ class ThetaParser {
         shared_ptr<ASTNode> boolean_comparison() {
             shared_ptr<ASTNode> expr = equality();
 
-            while (match(Token::Types::OPERATOR, Symbols::OR) || match(Token::Types::OPERATOR, Symbols::AND)) {
+            while (match(Token::Types::OPERATOR, Lexemes::OR) || match(Token::Types::OPERATOR, Lexemes::AND)) {
                 shared_ptr<ASTNode> left = expr;
 
                 expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
@@ -198,7 +198,7 @@ class ThetaParser {
         shared_ptr<ASTNode> equality() {
             shared_ptr<ASTNode> expr = comparison();
 
-            while (match(Token::Types::OPERATOR, Symbols::EQUALITY) || match(Token::Types::OPERATOR, Symbols::INEQUALITY)) {
+            while (match(Token::Types::OPERATOR, Lexemes::EQUALITY) || match(Token::Types::OPERATOR, Lexemes::INEQUALITY)) {
                 shared_ptr<ASTNode> left = expr;
 
                 expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
@@ -213,10 +213,10 @@ class ThetaParser {
             shared_ptr<ASTNode> expr = term();
 
             while (
-                match(Token::Types::OPERATOR, Symbols::GT) ||
-                match(Token::Types::OPERATOR, Symbols::GTEQ) ||
-                match(Token::Types::OPERATOR, Symbols::LT) ||
-                match(Token::Types::OPERATOR, Symbols::LTEQ)
+                match(Token::Types::OPERATOR, Lexemes::GT) ||
+                match(Token::Types::OPERATOR, Lexemes::GTEQ) ||
+                match(Token::Types::OPERATOR, Lexemes::LT) ||
+                match(Token::Types::OPERATOR, Lexemes::LTEQ)
             ) {
                 shared_ptr<ASTNode> left = expr;
 
@@ -231,7 +231,7 @@ class ThetaParser {
         shared_ptr<ASTNode> term() {
             shared_ptr<ASTNode> expr = factor();
 
-            while (match(Token::Types::OPERATOR, Symbols::MINUS) || match(Token::Types::OPERATOR, Symbols::PLUS)) {
+            while (match(Token::Types::OPERATOR, Lexemes::MINUS) || match(Token::Types::OPERATOR, Lexemes::PLUS)) {
                 shared_ptr<ASTNode> left = expr;
 
                 expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
@@ -245,7 +245,11 @@ class ThetaParser {
         shared_ptr<ASTNode> factor() {
             shared_ptr<ASTNode> expr = exponent();
 
-            while (match(Token::Types::OPERATOR, Symbols::DIVISION) || match(Token::Types::OPERATOR, Symbols::TIMES)) {
+            while (
+                match(Token::Types::OPERATOR, Lexemes::DIVISION) ||
+                match(Token::Types::OPERATOR, Lexemes::TIMES) ||
+                match(Token::Types::OPERATOR, Lexemes::MODULO)
+            ) {
                 shared_ptr<ASTNode> left = expr;
 
                 expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
@@ -259,7 +263,7 @@ class ThetaParser {
         shared_ptr<ASTNode> exponent() {
             shared_ptr<ASTNode> expr = unary();
 
-            while (match(Token::Types::OPERATOR, Symbols::EXPOONENT)) {
+            while (match(Token::Types::OPERATOR, Lexemes::EXPONENT)) {
                 shared_ptr<ASTNode> left = expr;
 
                 expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
@@ -271,7 +275,7 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> unary() {
-            if (match(Token::Types::OPERATOR, Symbols::NOT) || match(Token::Types::OPERATOR, Symbols::MINUS)) {
+            if (match(Token::Types::OPERATOR, Lexemes::NOT) || match(Token::Types::OPERATOR, Lexemes::MINUS)) {
                 shared_ptr<ASTNode> un = make_shared<UnaryOperationNode>(currentToken.getLexeme());
                 un->setValue(unary());
 
@@ -419,10 +423,10 @@ class ThetaParser {
 
             shared_ptr<ASTNode> ident = make_shared<IdentifierNode>(currentToken.getLexeme());
 
-            if (match(Token::Types::OPERATOR, Symbols::LT)) {
+            if (match(Token::Types::OPERATOR, Lexemes::LT)) {
                 ident->setValue(type());
 
-                match(Token::Types::OPERATOR, Symbols::GT);
+                match(Token::Types::OPERATOR, Lexemes::GT);
             }
 
             return ident;
@@ -433,10 +437,10 @@ class ThetaParser {
 
             shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(currentToken.getLexeme());
 
-            if (match(Token::Types::OPERATOR, Symbols::LT)) {
+            if (match(Token::Types::OPERATOR, Lexemes::LT)) {
                 typ->setValue(type());
 
-                match(Token::Types::OPERATOR, Symbols::GT);
+                match(Token::Types::OPERATOR, Lexemes::GT);
             }
 
             return typ;

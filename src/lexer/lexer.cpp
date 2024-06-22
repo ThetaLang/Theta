@@ -4,7 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include "token.hpp"
-#include "../util/tokens.hpp"
+#include "lexemes.hpp"
 
 using namespace std;
 
@@ -98,37 +98,38 @@ class ThetaLexer {
             // (e.g., multi-character operators) are prioritized over shorter ones, preventing
             // misinterpretations and ensuring correct tokenization of the source code.
             if (
-                attemptLex(Symbols::STRING_DELIMITER, Token::Types::STRING, token, currentChar, nextChar, source, i, Symbols::STRING_DELIMITER) ||
-                attemptLex(Symbols::COMMENT, Token::Types::COMMENT, token, currentChar, nextChar, source, i, Symbols::NEWLINE, false, false) ||
-                attemptLex(Symbols::MULTILINE_COMMENT_DELIMITER_START, Token::Types::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Symbols::MULTILINE_COMMENT_DELIMITER_END) ||
-                attemptLex(Symbols::DIVISION, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::EQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::INEQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::AND, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::OR, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::NOT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PIPE, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::ASSIGNMENT, Token::Types::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PLUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PLUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::MINUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::FUNC_DECLARATION, Token::Types::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::MINUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::TIMES_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::EXPOONENT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::TIMES, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACE_OPEN, Token::Types::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACE_CLOSE, Token::Types::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PAREN_OPEN, Token::Types::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::PAREN_CLOSE, Token::Types::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::LTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::LT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::GTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::GT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACKET_OPEN, Token::Types::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::BRACKET_CLOSE, Token::Types::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::COMMA, Token::Types::COMMA, token, currentChar, nextChar, source, i) ||
-                attemptLex(Symbols::COLON, Token::Types::COLON, token, currentChar, nextChar, source, i)
+                attemptLex(Lexemes::STRING_DELIMITER, Token::Types::STRING, token, currentChar, nextChar, source, i, Lexemes::STRING_DELIMITER) ||
+                attemptLex(Lexemes::COMMENT, Token::Types::COMMENT, token, currentChar, nextChar, source, i, Lexemes::NEWLINE, false, false) ||
+                attemptLex(Lexemes::MULTILINE_COMMENT_DELIMITER_START, Token::Types::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Lexemes::MULTILINE_COMMENT_DELIMITER_END) ||
+                attemptLex(Lexemes::DIVISION, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::EQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::INEQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::AND, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::OR, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::NOT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::PIPE, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::ASSIGNMENT, Token::Types::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::PLUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::PLUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::MINUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::FUNC_DECLARATION, Token::Types::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::MINUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::MODULO, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::TIMES_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::EXPONENT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::TIMES, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::BRACE_OPEN, Token::Types::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::BRACE_CLOSE, Token::Types::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::PAREN_OPEN, Token::Types::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::PAREN_CLOSE, Token::Types::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::LTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::LT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::GTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::GT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::BRACKET_OPEN, Token::Types::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::BRACKET_CLOSE, Token::Types::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::COMMA, Token::Types::COMMA, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::COLON, Token::Types::COLON, token, currentChar, nextChar, source, i)
             ) {
                 return token;
             }
@@ -136,7 +137,7 @@ class ThetaLexer {
             if (currentChar == '\n') {
                 currentLine += 1;
                 currentColumn = 0;
-                return Token(Token::Types::NEWLINE, Symbols::NEWLINE);
+                return Token(Token::Types::NEWLINE, Lexemes::NEWLINE);
             } else if (isdigit(currentChar) && ((isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0' || nextChar == ',') || nextChar == ':')) {
                 int countDecimals = 0;
                 return accumulateUntilCondition(
@@ -320,12 +321,12 @@ class ThetaLexer {
          */
         bool isLanguageKeyword(string text) {
             vector<string> keywords = {
-                Symbols::LINK,
-                Symbols::CAPSULE,
-                Symbols::IF,
-                Symbols::ELSE,
-                Symbols::STRUCT,
-                Symbols::RETURN
+                Lexemes::LINK,
+                Lexemes::CAPSULE,
+                Lexemes::IF,
+                Lexemes::ELSE,
+                Lexemes::STRUCT,
+                Lexemes::RETURN
             };
 
             return find(keywords.begin(), keywords.end(), text) != keywords.end();

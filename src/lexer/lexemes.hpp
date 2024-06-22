@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace Symbols {
+namespace Lexemes {
     // String Delimiters
     const string STRING_DELIMITER = "'";
 
@@ -32,7 +32,7 @@ namespace Symbols {
     const string PLUS = "+";
     const string MINUS = "-";
     const string TIMES = "*";
-    const string EXPOONENT = "**";
+    const string EXPONENT = "**";
     const string MODULO = "%";
 
     // Boolean Operators
