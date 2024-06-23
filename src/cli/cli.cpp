@@ -15,7 +15,7 @@ class ThetaCLI {
             string outFile;
 
             if (argc == 1) {
-                launchInteractiveShell();
+                repl();
             } else if (argc == 2) {
                 string arg1 = argv[1];
 
@@ -93,8 +93,9 @@ class ThetaCLI {
             return true;
         }
 
-        static void launchInteractiveShell() {
-            cout << "Interactive Theta" << endl << endl;
+        static void repl() {
+            cout << "Interactive Theta" << endl;
+            cout << "CTRL+D to exit" << endl << endl;
 
             char* input;
 
@@ -111,6 +112,6 @@ class ThetaCLI {
                 free(input);
             }
 
-            cout << "Exiting ITH..." << endl;
+            cout << endl << endl << "Exiting ITH..." << endl;
         }
 };
