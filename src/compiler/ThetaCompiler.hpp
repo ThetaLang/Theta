@@ -8,9 +8,9 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
-#include "../parser/ast/ast_node.hpp"
-#include "../parser/ast/link_node.hpp"
-#include "../util/exceptions.hpp"
+#include "../parser/ast/ASTNode.hpp"
+#include "../parser/ast/LinkNode.hpp"
+#include "../util/Exceptions.hpp"
 
 using namespace std;
 

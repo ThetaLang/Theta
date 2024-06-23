@@ -2,24 +2,21 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class LinkNode : public ASTNode {
     public:
-        string nodeType;
         string capsule;
 
-        LinkNode(string cap) : capsule(cap), nodeType("Link") {};
-
-        string getNodeType() const override { return nodeType; }
+        LinkNode(string cap) : capsule(cap), ASTNode(ASTNode::Types::LINK) {};
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"capsule\": \"" << capsule << "\"";
             oss << ", \"value\": " << (value ? value->toJSON() : "null");
             oss << "}";

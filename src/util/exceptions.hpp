@@ -4,7 +4,7 @@
 #import <string>
 #import <vector>
 #import <iostream>
-#import "../lexer/token.hpp"
+#import "../lexer/Token.hpp"
 
 using namespace std;
 

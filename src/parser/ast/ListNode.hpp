@@ -2,18 +2,15 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
-class DictDefinitionNode : public ASTNode {
+class ListNode : public ASTNode {
     public:
-        string nodeType;
         vector<shared_ptr<ASTNode>> elements;
 
-        DictDefinitionNode() : nodeType("DictDefinition") {};
-
-        string getNodeType() const override { return nodeType; }
+        ListNode() : ASTNode(ASTNode::Types::LIST) {};
 
         void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 
@@ -23,7 +20,7 @@ class DictDefinitionNode : public ASTNode {
             ostringstream oss;
 
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\", ";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"elements\": [";
 
             for (int i = 0; i < elements.size(); i++) {

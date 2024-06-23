@@ -12,7 +12,7 @@
 // #include "ast/binary_operation_node.hpp"
 // #include "ast/literal_node.hpp"
 // #include "ast/identifier_node.hpp"
-// #include "ast/ast_node.hpp"
+// #include "ast/ASTNode.hpp"
 // #include "ast/type_declaration_node.hpp"
 // #include "ast/list_definition_node.hpp"
 // #include "ast/capsule_node.hpp"
@@ -355,15 +355,15 @@
 //         /**
 //          * @brief Parses a list definition node, handling the elements enclosed in square brackets '[ ]'.
 //          *
-//          * This method constructs a ListDefinitionNode by parsing the elements inside square brackets,
+//          * This method constructs a ListNode by parsing the elements inside square brackets,
 //          * separated by commas ','.
 //          *
 //          * @param currentToken The token representing the opening '[' of the list.
 //          * @param nextToken The token following the opening '['.
-//          * @return A shared pointer to the ListDefinitionNode representing the parsed list definition.
+//          * @return A shared pointer to the ListNode representing the parsed list definition.
 //          */
 //         shared_ptr<ASTNode> parseListDefinition(Token currentToken, Token nextToken) {
-//             shared_ptr<ListDefinitionNode> listNode = make_shared<ListDefinitionNode>();
+//             shared_ptr<ListNode> listNode = make_shared<ListNode>();
 
 //             vector<shared_ptr<ASTNode>> listElementNodes;
 

@@ -2,26 +2,23 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class TypeDeclarationNode : public ASTNode {
     public:
-        string nodeType;
         string type;
 
-        TypeDeclarationNode(string typ) : type(typ), nodeType("TypeDeclaration") {};
-
-        string getNodeType() const override { return nodeType; }
+        TypeDeclarationNode(string typ) : type(typ), ASTNode(ASTNode::Types::TYPE_DECLARATION) {};
 
         string getType() { return type; }
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ",\"declaredType\": \"" << type << "\"";
             oss << ",\"value\": " << (value ? value->toJSON() : "null");
             oss << "}";

@@ -5,27 +5,27 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
-#include "../lexer/token.hpp"
-#include "../util/exceptions.hpp"
-#include "ast/assignment_node.hpp"
-#include "ast/unary_operation_node.hpp"
-#include "ast/binary_operation_node.hpp"
-#include "ast/literal_node.hpp"
-#include "ast/identifier_node.hpp"
-#include "ast/ast_node.hpp"
-#include "ast/type_declaration_node.hpp"
-#include "ast/list_definition_node.hpp"
-#include "ast/capsule_node.hpp"
-#include "ast/function_declaration_node.hpp"
-#include "ast/keyed_access_node.hpp"
-#include "ast/source_node.hpp"
-#include "ast/link_node.hpp"
-#include "ast/symbol_node.hpp"
-#include "ast/dict_definition_node.hpp"
-#include "ast/block_node.hpp"
-#include "ast/tuple_node.hpp"
-#include "../compiler/compiler.hpp"
-#include "../lexer/lexemes.hpp"
+#include "../lexer/Token.hpp"
+#include "../util/Exceptions.hpp"
+#include "ast/AssignmentNode.hpp"
+#include "ast/UnaryOperationNode.hpp"
+#include "ast/BinaryOperationNode.hpp"
+#include "ast/LiteralNode.hpp"
+#include "ast/IdentifierNode.hpp"
+#include "ast/ASTNode.hpp"
+#include "ast/TypeDeclarationNode.hpp"
+#include "ast/ListNode.hpp"
+#include "ast/CapsuleNode.hpp"
+#include "ast/FunctionDeclarationNode.hpp"
+#include "ast/KeyedAccessNode.hpp"
+#include "ast/SourceNode.hpp"
+#include "ast/LinkNode.hpp"
+#include "ast/SymbolNode.hpp"
+#include "ast/DictionaryNode.hpp"
+#include "ast/BlockNode.hpp"
+#include "ast/TupleNode.hpp"
+#include "../compiler/ThetaCompiler.hpp"
+#include "../lexer/Lexemes.hpp"
 
 using namespace std;
 
@@ -178,7 +178,21 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> expression() {
-            return boolean_comparison();
+            return pipeline();
+        }
+
+        shared_ptr<ASTNode> pipeline() {
+            shared_ptr<ASTNode> expr = boolean_comparison();
+
+            while (match(Token::Types::OPERATOR, Lexemes::PIPE)) {
+                shared_ptr<ASTNode> left = expr;
+
+                expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
+                expr->setLeft(left);
+                expr->setRight(boolean_comparison());
+            }
+
+            return expr;
         }
 
         shared_ptr<ASTNode> boolean_comparison() {
@@ -287,7 +301,15 @@ class ThetaParser {
 
         shared_ptr<ASTNode> primary() {
             if (match(Token::Types::BOOLEAN) || match(Token::Types::NUMBER) || match(Token::Types::STRING)) {
-                return make_shared<LiteralNode>(currentToken.getType(), currentToken.getLexeme());
+                map<Token::Types, ASTNode::Types> tokenTypeToAstTypeMap = {
+                    { Token::Types::NUMBER, ASTNode::Types::NUMBER_LITERAL },
+                    { Token::Types::BOOLEAN, ASTNode::Types::BOOLEAN_LITERAL },
+                    { Token::Types::STRING, ASTNode::Types::STRING_LITERAL }
+                };
+
+                auto it = tokenTypeToAstTypeMap.find(currentToken.getType());
+
+                return make_shared<LiteralNode>(it->second, currentToken.getLexeme());
             }
 
             if (match(Token::Types::IDENTIFIER)) {
@@ -321,7 +343,7 @@ class ThetaParser {
             pair<string, shared_ptr<ASTNode>> p = kvPair();
             shared_ptr<ASTNode> expr = p.second;
 
-            if (p.first == "kv" && expr && expr->getNodeType() == "Tuple") {
+            if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::Types::TUPLE) {
                vector<shared_ptr<ASTNode>> el;
                 el.push_back(expr);
 
@@ -329,8 +351,8 @@ class ThetaParser {
                     el.push_back(kvPair().second);
                 }
 
-                expr = make_shared<DictDefinitionNode>();
-                dynamic_pointer_cast<DictDefinitionNode>(expr)->setElements(el);
+                expr = make_shared<DictionaryNode>();
+                dynamic_pointer_cast<DictionaryNode>(expr)->setElements(el);
 
                 match(Token::Types::BRACE_CLOSE);
             }
@@ -349,7 +371,7 @@ class ThetaParser {
                 type = "kv";
                 shared_ptr<ASTNode> left = expr;
 
-                if (left->getNodeType() == "Identifier") {
+                if (left->getNodeType() == ASTNode::Types::IDENTIFIER) {
                     left = make_shared<SymbolNode>(dynamic_pointer_cast<IdentifierNode>(left)->getIdentifier());
                 }
 
@@ -400,7 +422,7 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> list() {
-            shared_ptr<ListDefinitionNode> listNode = make_shared<ListDefinitionNode>();
+            shared_ptr<ListNode> listNode = make_shared<ListNode>();
             vector<shared_ptr<ASTNode>> el;
 
             if (!match(Token::Types::BRACKET_CLOSE)) {

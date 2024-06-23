@@ -2,18 +2,15 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class SymbolNode : public ASTNode {
     public:
-        string nodeType;
         string symbol;
 
-        SymbolNode(string sym) : symbol(":" + sym), nodeType("Symbol") {};
-
-        string getNodeType() const override { return nodeType; }
+        SymbolNode(string sym) : symbol(":" + sym), ASTNode(ASTNode::Types::SYMBOL) {};
 
         string getSymbol() { return symbol; }
 
@@ -21,7 +18,7 @@ class SymbolNode : public ASTNode {
             ostringstream oss;
 
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"value\": \"" << symbol << "\"";
             oss << "}";
 

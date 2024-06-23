@@ -2,19 +2,16 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class FunctionDeclarationNode : public ASTNode {
     public:
-        string nodeType;
         vector<shared_ptr<ASTNode>> parameters;
         shared_ptr<ASTNode> definition;
 
-        FunctionDeclarationNode() : nodeType("FunctionDeclaration") {};
-
-        string getNodeType() const override { return nodeType; }
+        FunctionDeclarationNode() : ASTNode(ASTNode::Types::FUNCTION_DECLARATION) {};
 
         void setParameters(vector<shared_ptr<ASTNode>> params) { parameters = params; }
 
@@ -28,7 +25,7 @@ class FunctionDeclarationNode : public ASTNode {
             ostringstream oss;
 
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"parameters\": [";
 
             for (int i = 0; i < parameters.size(); i++) {

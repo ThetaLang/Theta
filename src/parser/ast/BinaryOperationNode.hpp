@@ -2,25 +2,22 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class BinaryOperationNode : public ASTNode {
     public:
-        string nodeType;
         string operatorSymbol;
 
-        BinaryOperationNode(string op) : operatorSymbol(op), nodeType("BinaryOperation") {};
-
-        string getNodeType() const override { return nodeType; }
+        BinaryOperationNode(string op) : operatorSymbol(op), ASTNode(ASTNode::Types::BINARY_OPERATION) {};
 
         string getOperator() { return operatorSymbol; }
 
         string toJSON() const override {
             std::ostringstream oss;
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\", ";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"operator\": \"" << operatorSymbol << "\", ";
             oss << "\"left\": " << (left ? left->toJSON() : "null") << ", ";
             oss << "\"right\": " << (right ? right->toJSON() : "null");

@@ -2,18 +2,15 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class SourceNode : public ASTNode {
     public:
-        string nodeType;
         vector<shared_ptr<ASTNode>> links;
 
-        SourceNode() : nodeType("Source") {};
-
-        string getNodeType() const override { return nodeType; }
+        SourceNode() : ASTNode(ASTNode::Types::SOURCE) {};
 
         void setLinks(vector<shared_ptr<ASTNode>> ln) { links = ln; }
 
@@ -21,11 +18,11 @@ class SourceNode : public ASTNode {
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"links\": [";
-            
+
             for (int i = 0; i < links.size(); i++) {
                 if (i > 0) {
                     oss << ", ";

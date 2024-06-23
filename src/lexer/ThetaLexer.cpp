@@ -3,8 +3,8 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "token.hpp"
-#include "lexemes.hpp"
+#include "Token.hpp"
+#include "Lexemes.hpp"
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-#include "src/cli/cli.cpp"
+#include "src/cli/CLI.cpp"
 
 using namespace std;
 

@@ -2,25 +2,22 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class UnaryOperationNode : public ASTNode {
     public:
-        string nodeType;
         string operatorSymbol;
 
-        UnaryOperationNode(string op) : operatorSymbol(op), nodeType("UnaryOperation") {};
-
-        string getNodeType() const override { return nodeType; }
+        UnaryOperationNode(string op) : ASTNode(ASTNode::Types::UNARY_OPERATION),  operatorSymbol(op) {};
 
         string getOperator() { return operatorSymbol; }
 
         string toJSON() const override {
             std::ostringstream oss;
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\", ";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"operator\": \"" << operatorSymbol << "\", ";
             oss << "\"value\": " << (value ? value->toJSON() : "null");
             oss << "}";

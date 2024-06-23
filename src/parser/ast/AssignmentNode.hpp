@@ -2,24 +2,19 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
-class KeyedAccessNode : public ASTNode {
+class AssignmentNode : public ASTNode {
     public:
-        string nodeType;
-        string identifier;
-
-        KeyedAccessNode() : nodeType("KeyedAccess") {};
-
-        string getNodeType() const override { return nodeType; }
+        AssignmentNode() : ASTNode(ASTNode::Types::ASSIGNMENT) {};
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"left\": " << (left ? left->toJSON() : "null");
             oss << ", \"right\": " << (right ? right->toJSON() : "null");
             oss << "}";

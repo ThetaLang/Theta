@@ -2,18 +2,15 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class BlockNode : public ASTNode {
     public:
-        string nodeType;
         vector<shared_ptr<ASTNode>> blockExpressions;
 
-        BlockNode() : nodeType("Block") {};
-
-        string getNodeType() const override { return nodeType; }
+        BlockNode() : ASTNode(ASTNode::Types::BLOCK) {};
 
         void setBlockExpressions(vector<shared_ptr<ASTNode>> expr) { blockExpressions = expr; }
 
@@ -23,7 +20,7 @@ class BlockNode : public ASTNode {
             ostringstream oss;
 
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\", ";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"blockExpressions\": [";
 
             for (int i = 0; i < blockExpressions.size(); i++) {

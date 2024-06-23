@@ -2,18 +2,15 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
 class CapsuleNode : public ASTNode {
     public:
-        string nodeType;
         string name;
 
-        CapsuleNode(string n) : name(n), nodeType("Capsule") {};
-
-        string getNodeType() const override { return nodeType; }
+        CapsuleNode(string n) : name(n), ASTNode(ASTNode::Types::CAPSULE) {};
 
         string getName() { return name; }
 
@@ -21,7 +18,7 @@ class CapsuleNode : public ASTNode {
             ostringstream oss;
 
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\"";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"name\": \"" << name << "\"";
             oss << ", \"value\": " << (value ? value->toJSON() : "null");
             oss << "}";

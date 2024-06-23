@@ -7,10 +7,10 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
-#include "compiler.hpp"
-#include "../lexer/lexer.cpp"
-#include "../parser/parser.cpp"
-#include "../parser/ast/ast_node.hpp"
+#include "ThetaCompiler.hpp"
+#include "../lexer/ThetaLexer.cpp"
+#include "../parser/ThetaParser.cpp"
+#include "../parser/ast/ASTNode.hpp"
 
 using namespace std;
 

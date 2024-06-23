@@ -1,6 +1,6 @@
 #include <iostream>
 #include "../../version.h"
-#include "../compiler/compiler.hpp"
+#include "../compiler/ThetaCompiler.hpp"
 
 using namespace std;
 

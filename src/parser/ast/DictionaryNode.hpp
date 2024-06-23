@@ -2,18 +2,15 @@
 
 #include <string>
 #include <sstream>
-#include "ast_node.hpp"
+#include "ASTNode.hpp"
 
 using namespace std;
 
-class ListDefinitionNode : public ASTNode {
+class DictionaryNode : public ASTNode {
     public:
-        string nodeType;
         vector<shared_ptr<ASTNode>> elements;
 
-        ListDefinitionNode() : nodeType("ListDefinition") {};
-
-        string getNodeType() const override { return nodeType; }
+        DictionaryNode() : ASTNode(ASTNode::Types::DICTIONARY) {};
 
         void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 
@@ -21,11 +18,11 @@ class ListDefinitionNode : public ASTNode {
 
         string toJSON() const override {
             ostringstream oss;
-            
+
             oss << "{";
-            oss << "\"type\": \"" << nodeType << "\", ";
+            oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"elements\": [";
-            
+
             for (int i = 0; i < elements.size(); i++) {
                 if (i > 0) {
                     oss << ", ";
