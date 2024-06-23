@@ -1,4 +1,6 @@
 #include <iostream>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "../../version.h"
 #include "../compiler/ThetaCompiler.hpp"
 
@@ -94,18 +96,21 @@ class ThetaCLI {
         static void launchInteractiveShell() {
             cout << "Interactive Theta" << endl << endl;
 
-            while (true) {
-                string userIn;
-                cout << "ith $> ";
+            char* input;
 
-                getline(cin, userIn);
+            while ((input = readline("ith $> ")) != nullptr) {
+                if (*input) add_history(input);
 
                 // TODO: Change this to get execution result once we get an interpreter built out
-                shared_ptr<ASTNode> compiled = ThetaCompiler::getInstance().compileDirect(userIn);
+                shared_ptr<ASTNode> compiled = ThetaCompiler::getInstance().compileDirect(input);
 
                 cout << "-> " + compiled->toJSON() << endl << endl;
 
                 ThetaCompiler::getInstance().clearExceptions();
+
+                free(input);
             }
+
+            cout << "Exiting ITH..." << endl;
         }
 };
