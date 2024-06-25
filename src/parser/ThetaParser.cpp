@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <vector>
 #include <deque>
 #include <string>
@@ -8,6 +9,7 @@
 #include "../lexer/Token.hpp"
 #include "../util/Exceptions.hpp"
 #include "ast/AssignmentNode.hpp"
+#include "ast/ControlFlowNode.hpp"
 #include "ast/UnaryOperationNode.hpp"
 #include "ast/BinaryOperationNode.hpp"
 #include "ast/LiteralNode.hpp"
@@ -140,7 +142,11 @@ class ThetaParser {
                 vector<shared_ptr<ASTNode>> blockExpr;
 
                 while (!match(Token::Types::BRACE_CLOSE)) {
-                    blockExpr.push_back(assignment());
+                    shared_ptr<ASTNode> expr = assignment();
+
+                    if (expr == nullptr) break;
+
+                    blockExpr.push_back(expr);
                 }
 
                 shared_ptr<BlockNode> block = make_shared<BlockNode>();
@@ -178,6 +184,30 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> expression() {
+            return control_flow();
+        }
+
+        shared_ptr<ASTNode> control_flow() {
+            if (match(Token::Types::KEYWORD, Lexemes::IF)) {
+                shared_ptr<ControlFlowNode> cfNode = make_shared<ControlFlowNode>();
+                vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = {
+                    make_pair(expression(), block())
+                };
+
+                while (match(Token::Types::KEYWORD, Lexemes::ELSE) && match(Token::Types::KEYWORD, Lexemes::IF)) {
+                    conditionExpressionPairs.push_back(make_pair(expression(), block()));
+                }
+
+                // If we just matched an else but no if afterwards. This way it only matches one else block per control flow
+                if (currentToken.getType() == Token::Types::KEYWORD && currentToken.getLexeme() == Lexemes::ELSE) {
+                    conditionExpressionPairs.push_back(make_pair(nullptr, block()));
+                }
+
+                cfNode->setConditionExpressionPairs(conditionExpressionPairs);
+
+                return cfNode;
+            }
+
             return pipeline();
         }
 

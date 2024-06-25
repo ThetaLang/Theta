@@ -820,13 +820,411 @@ TEST_CASE("ThetaParser") {
         REQUIRE(thirdPipelineOp->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(thirdPipelineOp->getLeft())->getLiteralValue() == "'hello'");
     }
+
+    SECTION("Can parse control flow assignment") {
+        string source = R"(
+            x<String> = if (name == 'Bob') 'hello' else 'goodbye'
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode != nullptr);
+
+        shared_ptr<ASTNode> leftAssign = assignmentNode->getLeft();
+        shared_ptr<ASTNode> rightAssign = assignmentNode->getRight();
+
+        REQUIRE(leftAssign->getNodeType() == ASTNode::Types::IDENTIFIER);
+        shared_ptr<IdentifierNode> leftAssignIdentifier = dynamic_pointer_cast<IdentifierNode>(leftAssign);
+        REQUIRE(leftAssignIdentifier->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier->getValue())->getType() == "String");
+
+        REQUIRE(rightAssign->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(rightAssign);
+
+        REQUIRE(controlFlowNode != nullptr);
+
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        REQUIRE(conditionExpressionPairs.size() == 2);
+
+        // Check the first condition-expression pair
+        shared_ptr<ASTNode> condition1 = conditionExpressionPairs[0].first;
+        shared_ptr<ASTNode> expression1 = conditionExpressionPairs[0].second;
+
+        REQUIRE(condition1->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> binaryOperationNode1 = dynamic_pointer_cast<BinaryOperationNode>(condition1);
+
+        REQUIRE(binaryOperationNode1->getOperator() == "==");
+
+        shared_ptr<ASTNode> left1 = binaryOperationNode1->getLeft();
+        shared_ptr<ASTNode> right1 = binaryOperationNode1->getRight();
+
+        REQUIRE(left1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(right1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+
+        shared_ptr<IdentifierNode> leftIdentifier1 = dynamic_pointer_cast<IdentifierNode>(left1);
+        shared_ptr<LiteralNode> rightString1 = dynamic_pointer_cast<LiteralNode>(right1);
+
+        REQUIRE(leftIdentifier1->getIdentifier() == "name");
+        REQUIRE(rightString1->getLiteralValue() == "'Bob'");
+
+        REQUIRE(expression1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        shared_ptr<LiteralNode> expressionString1 = dynamic_pointer_cast<LiteralNode>(expression1);
+        REQUIRE(expressionString1->getLiteralValue() == "'hello'");
+
+        // Check the second condition-expression pair
+        shared_ptr<ASTNode> condition2 = conditionExpressionPairs[1].first;
+        shared_ptr<ASTNode> expression2 = conditionExpressionPairs[1].second;
+
+        REQUIRE(condition2 == nullptr);
+
+        REQUIRE(expression2->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        shared_ptr<LiteralNode> expressionString2 = dynamic_pointer_cast<LiteralNode>(expression2);
+        REQUIRE(expressionString2->getLiteralValue() == "'goodbye'");
+    }
     // --------- ASSIGNMENT ----------
 
     // --------- CONTROL FLOW ---------
-    SECTION("Can tokenize if statement") {
-        string source = "if (x == 10) { return true }";
+    SECTION("Can parse if statement with parentheses and block") {
+        string source = R"(
+            if (isOpen) {
+                x == y
+            }
+        )";
         lexer.lex(source);
 
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+
+        shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
+
+        REQUIRE(controlFlowNode != nullptr);
+
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        REQUIRE(conditionExpressionPairs.size() == 1);
+
+        shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
+        shared_ptr<ASTNode> block = conditionExpressionPairs[0].second;
+
+        REQUIRE(condition->getNodeType() == ASTNode::Types::IDENTIFIER);
+        shared_ptr<IdentifierNode> conditionIdentifier = dynamic_pointer_cast<IdentifierNode>(condition);
+        REQUIRE(conditionIdentifier->getIdentifier() == "isOpen");
+
+        REQUIRE(block->getNodeType() == ASTNode::Types::BLOCK);
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(block);
+
+        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getBlockExpressions();
+        REQUIRE(blockExpressions.size() == 1);
+
+        shared_ptr<ASTNode> binaryOperation = blockExpressions[0];
+        REQUIRE(binaryOperation->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(binaryOperation);
+
+        REQUIRE(binaryOperationNode->getOperator() == "==");
+
+        shared_ptr<ASTNode> left = binaryOperationNode->getLeft();
+        shared_ptr<ASTNode> right = binaryOperationNode->getRight();
+
+        REQUIRE(left->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(right->getNodeType() == ASTNode::Types::IDENTIFIER);
+
+        shared_ptr<IdentifierNode> leftIdentifier = dynamic_pointer_cast<IdentifierNode>(left);
+        shared_ptr<IdentifierNode> rightIdentifier = dynamic_pointer_cast<IdentifierNode>(right);
+
+        REQUIRE(leftIdentifier->getIdentifier() == "x");
+        REQUIRE(rightIdentifier->getIdentifier() == "y");
+    }
+
+    SECTION("Can parse if statement without parentheses, with block") {
+        string source = R"(
+            if x == 10 {
+                true
+            }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+
+        shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
+
+        REQUIRE(controlFlowNode != nullptr);
+
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        REQUIRE(conditionExpressionPairs.size() == 1);
+
+        shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
+        shared_ptr<ASTNode> block = conditionExpressionPairs[0].second;
+
+        REQUIRE(condition->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(condition);
+
+        REQUIRE(binaryOperationNode->getOperator() == "==");
+
+        shared_ptr<ASTNode> left = binaryOperationNode->getLeft();
+        shared_ptr<ASTNode> right = binaryOperationNode->getRight();
+
+        REQUIRE(left->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(right->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+
+        shared_ptr<IdentifierNode> leftIdentifier = dynamic_pointer_cast<IdentifierNode>(left);
+        shared_ptr<LiteralNode> rightNumber = dynamic_pointer_cast<LiteralNode>(right);
+
+        REQUIRE(leftIdentifier->getIdentifier() == "x");
+        REQUIRE(rightNumber->getLiteralValue() == "10");
+
+        REQUIRE(block->getNodeType() == ASTNode::Types::BLOCK);
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(block);
+
+        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getBlockExpressions();
+        REQUIRE(blockExpressions.size() == 1);
+
+        shared_ptr<ASTNode> booleanLiteral = blockExpressions[0];
+        REQUIRE(booleanLiteral->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+
+        shared_ptr<LiteralNode> booleanLiteralNode = dynamic_pointer_cast<LiteralNode>(booleanLiteral);
+        REQUIRE(booleanLiteralNode->getLiteralValue() == "true");
+    }
+
+    SECTION("Can parse if statement with parentheses and expression") {
+        string source = R"(
+            if ('hello' == world) false
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+
+        shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
+
+        REQUIRE(controlFlowNode != nullptr);
+
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        REQUIRE(conditionExpressionPairs.size() == 1);
+
+        shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
+        shared_ptr<ASTNode> expression = conditionExpressionPairs[0].second;
+
+        REQUIRE(condition->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(condition);
+
+        REQUIRE(binaryOperationNode->getOperator() == "==");
+
+        shared_ptr<ASTNode> left = binaryOperationNode->getLeft();
+        shared_ptr<ASTNode> right = binaryOperationNode->getRight();
+
+        REQUIRE(left->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(right->getNodeType() == ASTNode::Types::IDENTIFIER);
+
+        shared_ptr<LiteralNode> leftString = dynamic_pointer_cast<LiteralNode>(left);
+        shared_ptr<IdentifierNode> rightIdentifier = dynamic_pointer_cast<IdentifierNode>(right);
+
+        REQUIRE(leftString->getLiteralValue() == "'hello'");
+        REQUIRE(rightIdentifier->getIdentifier() == "world");
+
+        REQUIRE(expression->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        shared_ptr<LiteralNode> booleanLiteralNode = dynamic_pointer_cast<LiteralNode>(expression);
+        REQUIRE(booleanLiteralNode->getLiteralValue() == "false");
+    }
+
+    SECTION("Can parse if statement with no parentheses and expression") {
+        string source = R"(
+            if true false
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+
+        shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
+
+        REQUIRE(controlFlowNode != nullptr);
+
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        REQUIRE(conditionExpressionPairs.size() == 1);
+
+        shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
+        shared_ptr<ASTNode> expression = conditionExpressionPairs[0].second;
+
+        REQUIRE(condition->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        shared_ptr<LiteralNode> conditionBoolean = dynamic_pointer_cast<LiteralNode>(condition);
+        REQUIRE(conditionBoolean->getLiteralValue() == "true");
+
+        REQUIRE(expression->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        shared_ptr<LiteralNode> expressionBoolean = dynamic_pointer_cast<LiteralNode>(expression);
+        REQUIRE(expressionBoolean->getLiteralValue() == "false");
+    }
+
+    SECTION("Can parse if/else-if/else statement with blocks") {
+        string source = R"(
+            if (name == 'Mike') {
+                lastName<String> = 'Wazowski'
+            } else if (name == 'Michael') {
+                lastName<String> = 'Jordan'
+            } else {
+                lastName<String> = 'Unknown'
+            }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+
+        shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
+
+        REQUIRE(controlFlowNode != nullptr);
+
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        REQUIRE(conditionExpressionPairs.size() == 3);
+
+        // Check the first condition-expression pair
+        shared_ptr<ASTNode> condition1 = conditionExpressionPairs[0].first;
+        shared_ptr<ASTNode> block1 = conditionExpressionPairs[0].second;
+
+        REQUIRE(condition1->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> binaryOperationNode1 = dynamic_pointer_cast<BinaryOperationNode>(condition1);
+
+        REQUIRE(binaryOperationNode1->getOperator() == "==");
+
+        shared_ptr<ASTNode> left1 = binaryOperationNode1->getLeft();
+        shared_ptr<ASTNode> right1 = binaryOperationNode1->getRight();
+
+        REQUIRE(left1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(right1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+
+        shared_ptr<IdentifierNode> leftIdentifier1 = dynamic_pointer_cast<IdentifierNode>(left1);
+        shared_ptr<LiteralNode> rightString1 = dynamic_pointer_cast<LiteralNode>(right1);
+
+        REQUIRE(leftIdentifier1->getIdentifier() == "name");
+        REQUIRE(rightString1->getLiteralValue() == "'Mike'");
+
+        REQUIRE(block1->getNodeType() == ASTNode::Types::BLOCK);
+        shared_ptr<BlockNode> blockNode1 = dynamic_pointer_cast<BlockNode>(block1);
+
+        vector<shared_ptr<ASTNode>> blockExpressions1 = blockNode1->getBlockExpressions();
+        REQUIRE(blockExpressions1.size() == 1);
+
+        shared_ptr<ASTNode> assignment1 = blockExpressions1[0];
+        REQUIRE(assignment1->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode1 = dynamic_pointer_cast<AssignmentNode>(assignment1);
+        shared_ptr<ASTNode> leftAssign1 = assignmentNode1->getLeft();
+        shared_ptr<ASTNode> rightAssign1 = assignmentNode1->getRight();
+
+        REQUIRE(leftAssign1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightAssign1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+
+        shared_ptr<IdentifierNode> leftAssignIdentifier1 = dynamic_pointer_cast<IdentifierNode>(leftAssign1);
+        shared_ptr<LiteralNode> rightAssignString1 = dynamic_pointer_cast<LiteralNode>(rightAssign1);
+
+        REQUIRE(leftAssignIdentifier1->getIdentifier() == "lastName");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier1->getValue())->getType() == "String");
+        REQUIRE(rightAssignString1->getLiteralValue() == "'Wazowski'");
+
+        // Check the second condition-expression pair
+        shared_ptr<ASTNode> condition2 = conditionExpressionPairs[1].first;
+        shared_ptr<ASTNode> block2 = conditionExpressionPairs[1].second;
+
+        REQUIRE(condition2->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> binaryOperationNode2 = dynamic_pointer_cast<BinaryOperationNode>(condition2);
+
+        REQUIRE(binaryOperationNode2->getOperator() == "==");
+
+        shared_ptr<ASTNode> left2 = binaryOperationNode2->getLeft();
+        shared_ptr<ASTNode> right2 = binaryOperationNode2->getRight();
+
+        REQUIRE(left2->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(right2->getNodeType() == ASTNode::Types::STRING_LITERAL);
+
+        shared_ptr<IdentifierNode> leftIdentifier2 = dynamic_pointer_cast<IdentifierNode>(left2);
+        shared_ptr<LiteralNode> rightString2 = dynamic_pointer_cast<LiteralNode>(right2);
+
+        REQUIRE(leftIdentifier2->getIdentifier() == "name");
+        REQUIRE(rightString2->getLiteralValue() == "'Michael'");
+
+        REQUIRE(block2->getNodeType() == ASTNode::Types::BLOCK);
+        shared_ptr<BlockNode> blockNode2 = dynamic_pointer_cast<BlockNode>(block2);
+
+        vector<shared_ptr<ASTNode>> blockExpressions2 = blockNode2->getBlockExpressions();
+        REQUIRE(blockExpressions2.size() == 1);
+
+        shared_ptr<ASTNode> assignment2 = blockExpressions2[0];
+        REQUIRE(assignment2->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode2 = dynamic_pointer_cast<AssignmentNode>(assignment2);
+        shared_ptr<ASTNode> leftAssign2 = assignmentNode2->getLeft();
+        shared_ptr<ASTNode> rightAssign2 = assignmentNode2->getRight();
+
+        REQUIRE(leftAssign2->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightAssign2->getNodeType() == ASTNode::Types::STRING_LITERAL);
+
+        shared_ptr<IdentifierNode> leftAssignIdentifier2 = dynamic_pointer_cast<IdentifierNode>(leftAssign2);
+        shared_ptr<LiteralNode> rightAssignString2 = dynamic_pointer_cast<LiteralNode>(rightAssign2);
+
+        REQUIRE(leftAssignIdentifier2->getIdentifier() == "lastName");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier2->getValue())->getType() == "String");
+        REQUIRE(rightAssignString2->getLiteralValue() == "'Jordan'");
+
+        // Check the third condition-expression pair
+        shared_ptr<ASTNode> condition3 = conditionExpressionPairs[2].first;
+        shared_ptr<ASTNode> block3 = conditionExpressionPairs[2].second;
+
+        REQUIRE(condition3 == nullptr);
+
+        REQUIRE(block3->getNodeType() == ASTNode::Types::BLOCK);
+        shared_ptr<BlockNode> blockNode3 = dynamic_pointer_cast<BlockNode>(block3);
+
+        vector<shared_ptr<ASTNode>> blockExpressions3 = blockNode3->getBlockExpressions();
+        REQUIRE(blockExpressions3.size() == 1);
+
+        shared_ptr<ASTNode> assignment3 = blockExpressions3[0];
+        REQUIRE(assignment3->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode3 = dynamic_pointer_cast<AssignmentNode>(assignment3);
+        shared_ptr<ASTNode> leftAssign3 = assignmentNode3->getLeft();
+        shared_ptr<ASTNode> rightAssign3 = assignmentNode3->getRight();
+
+        REQUIRE(leftAssign3->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightAssign3->getNodeType() == ASTNode::Types::STRING_LITERAL);
+
+        shared_ptr<IdentifierNode> leftAssignIdentifier3 = dynamic_pointer_cast<IdentifierNode>(leftAssign3);
+        shared_ptr<LiteralNode> rightAssignString3 = dynamic_pointer_cast<LiteralNode>(rightAssign3);
+
+        REQUIRE(leftAssignIdentifier3->getIdentifier() == "lastName");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier3->getValue())->getType() == "String");
+        REQUIRE(rightAssignString3->getLiteralValue() == "'Unknown'");
     }
     // --------- CONTROL FLOW ---------
 

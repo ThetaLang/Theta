@@ -1,4 +1,5 @@
 #include <vector>
+#include <array>
 #include <deque>
 #include <string>
 #include <iostream>
@@ -38,9 +39,7 @@ class ThetaLexer {
                 Token newToken = makeToken(currentChar, nextChar, source, i);
 
                 // We don't actually want to keep any whitespace related tokens or comments
-                vector<Token::Types> garbageTokens = { Token::Types::NEWLINE, Token::Types::WHITESPACE, Token::Types::COMMENT, Token::Types::MULTILINE_COMMENT };
-
-                if (find(garbageTokens.begin(), garbageTokens.end(), newToken.getType()) == garbageTokens.end()) {
+                if (shouldEmitToken(newToken.getType())) {
                     newToken.setStartLine(lineAtLexStart);
                     newToken.setStartColumn(columnAtLexStart);
                     tokens.push_back(newToken);
@@ -49,17 +48,7 @@ class ThetaLexer {
                 // Some tokens are more than one character. We want to advance the iterator and currentLine by however many
                 // characters long the token was. We really only want to do this for any token that was not created by an
                 // accumulateUntil function, since those already update the index internally.
-                vector<Token::Types> accumulatedTokens = {
-                    Token::Types::IDENTIFIER,
-                    Token::Types::KEYWORD,
-                    Token::Types::BOOLEAN,
-                    Token::Types::COMMENT,
-                    Token::Types::MULTILINE_COMMENT,
-                    Token::Types::STRING,
-                    Token::Types::NUMBER
-                };
-
-                if (find(accumulatedTokens.begin(), accumulatedTokens.end(), newToken.getType()) == accumulatedTokens.end()) {
+                if (!isAccumulatedToken(newToken.getType())) {
                     i += newToken.getLexeme().length();
                     currentColumn += newToken.getLexeme().length();
                 } else if (newToken.getType() == Token::Types::MULTILINE_COMMENT) {
@@ -75,6 +64,32 @@ class ThetaLexer {
     private:
         int currentLine = 1;
         int currentColumn = 1;
+
+        array<Token::Types, 4> NON_EMITTED_TOKENS = {
+            Token::Types::NEWLINE,
+            Token::Types::WHITESPACE,
+            Token::Types::COMMENT,
+            Token::Types::MULTILINE_COMMENT
+        };
+
+        array<Token::Types, 7> ACCUMULATED_TOKENS = {
+            Token::Types::IDENTIFIER,
+            Token::Types::KEYWORD,
+            Token::Types::BOOLEAN,
+            Token::Types::COMMENT,
+            Token::Types::MULTILINE_COMMENT,
+            Token::Types::STRING,
+            Token::Types::NUMBER
+        };
+
+        array<string, 6> LANGUAGE_RESERVED_WORDS = {
+            Lexemes::LINK,
+            Lexemes::CAPSULE,
+            Lexemes::IF,
+            Lexemes::ELSE,
+            Lexemes::STRUCT,
+            Lexemes::RETURN
+        };
 
         /**
          * @brief Creates a Token object based on the current and next characters in the source code.
@@ -138,7 +153,7 @@ class ThetaLexer {
                 currentLine += 1;
                 currentColumn = 0;
                 return Token(Token::Types::NEWLINE, Lexemes::NEWLINE);
-            } else if (isdigit(currentChar) && ((isdigit(nextChar) || isspace(nextChar) || nextChar == ']' || nextChar == ')' || nextChar == '}' || nextChar == '.' || nextChar == '\0' || nextChar == ',') || nextChar == ':')) {
+            } else if (isdigit(currentChar)) {
                 int countDecimals = 0;
                 return accumulateUntilCondition(
                     [source, &countDecimals](int idx) {
@@ -316,19 +331,28 @@ class ThetaLexer {
 
         /**
          * @brief Checks if a given text is a keyword in the Theta programming language.
-         * @param text The text to check.
-         * @return True if the text is a keyword, false otherwise.
+         * @param lexeme The text to check.
+         * @return True if the lexeme is a keyword, false otherwise.
          */
-        bool isLanguageKeyword(string text) {
-            vector<string> keywords = {
-                Lexemes::LINK,
-                Lexemes::CAPSULE,
-                Lexemes::IF,
-                Lexemes::ELSE,
-                Lexemes::STRUCT,
-                Lexemes::RETURN
-            };
+        bool isLanguageKeyword(string lexeme) {
+            return find(LANGUAGE_RESERVED_WORDS.begin(), LANGUAGE_RESERVED_WORDS.end(), lexeme) != LANGUAGE_RESERVED_WORDS.end();
+        }
 
-            return find(keywords.begin(), keywords.end(), text) != keywords.end();
+        /**
+         * @brief Checks if a given token type is one that is made by an accumulator function.
+         * @param type The token type to check.
+         * @return True if the token is made using an accumulator function, false otherwise.
+         */
+        bool isAccumulatedToken(Token::Types type) {
+            return find(ACCUMULATED_TOKENS.begin(), ACCUMULATED_TOKENS.end(), type) != ACCUMULATED_TOKENS.end();
+        }
+
+        /**
+         * @brief Checks if a given token is one that the lexer emits.
+         * @param type The token type to check.
+         * @return True if the token is emitted by the lexer, false otherwise.
+         */
+        bool shouldEmitToken(Token::Types type) {
+            return find(NON_EMITTED_TOKENS.begin(), NON_EMITTED_TOKENS.end(), type) == NON_EMITTED_TOKENS.end();
         }
 };
