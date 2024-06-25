@@ -10,6 +10,7 @@
 #include "../util/Exceptions.hpp"
 #include "ast/AssignmentNode.hpp"
 #include "ast/ControlFlowNode.hpp"
+#include "ast/FunctionInvocationNode.hpp"
 #include "ast/UnaryOperationNode.hpp"
 #include "ast/BinaryOperationNode.hpp"
 #include "ast/LiteralNode.hpp"
@@ -343,7 +344,7 @@ class ThetaParser {
             }
 
             if (match(Token::Types::IDENTIFIER)) {
-                return identifier();
+                return function_invocation();
             }
 
             if (match(Token::Types::COLON)) {
@@ -470,6 +471,59 @@ class ThetaParser {
             return listNode;
         }
 
+        shared_ptr<ASTNode> function_invocation() {
+            shared_ptr<ASTNode> expr = identifier();
+
+            if (match(Token::Types::PAREN_OPEN)) {
+                shared_ptr<FunctionInvocationNode> funcInvNode = make_shared<FunctionInvocationNode>();
+                funcInvNode->setIdentifier(expr);
+
+                vector<shared_ptr<ASTNode>> parameters;
+
+                while (!match(Token::Types::PAREN_CLOSE)) {
+                    if (match(Token::Types::COMMA) && check(Token::Types::PAREN_CLOSE)) {
+                        ThetaCompiler::getInstance().addException(
+                            ThetaCompilationError(
+                                "SyntaxError",
+                                "Expected value after comma in function invocation",
+                                currentToken,
+                                source,
+                                fileName
+                            )
+                        );
+
+                        break;
+                    }
+
+                    shared_ptr<ASTNode> param = function_declaration();
+
+                    if (!param) break;
+
+                    parameters.push_back(param);
+
+                    if (!check(Token::Types::COMMA) && !check(Token::Types::PAREN_CLOSE)) {
+                        ThetaCompiler::getInstance().addException(
+                            ThetaCompilationError(
+                                "SyntaxError",
+                                "Expected comma after function argument",
+                                currentToken,
+                                source,
+                                fileName
+                            )
+                        );
+
+                        break;
+                    }
+                }
+
+                funcInvNode->setParameters(parameters);
+
+                expr = funcInvNode;
+            }
+
+            return expr;
+        }
+
         shared_ptr<ASTNode> identifier() {
             validateIdentifier(currentToken);
 
@@ -514,9 +568,6 @@ class ThetaParser {
                     fileName
                 )
             );
-
-            // TODO: Throw an exception here that gets caught higher up to re-synchronize the parser, so we dont show
-            // the user transient errors
 
             throw ParseError("symbol");
 

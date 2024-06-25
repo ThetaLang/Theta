@@ -8,8 +8,6 @@ using namespace std;
 
 class KeyedAccessNode : public ASTNode {
     public:
-        string identifier;
-
         KeyedAccessNode() : ASTNode(ASTNode::Types::KEYED_ACCESS) {};
 
         string toJSON() const override {
