@@ -3,19 +3,20 @@
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
+#include "ASTNodeList.hpp"
 
 using namespace std;
 
 class FunctionDeclarationNode : public ASTNode {
     public:
-        vector<shared_ptr<ASTNode>> parameters;
+        shared_ptr<ASTNodeList> parameters;
         shared_ptr<ASTNode> definition;
 
         FunctionDeclarationNode() : ASTNode(ASTNode::Types::FUNCTION_DECLARATION) {};
 
-        void setParameters(vector<shared_ptr<ASTNode>> params) { parameters = params; }
+        void setParameters(shared_ptr<ASTNodeList> params) { parameters = params; }
 
-        vector<shared_ptr<ASTNode>> getParameters() { return parameters; }
+        shared_ptr<ASTNodeList> getParameters() { return parameters; }
 
         void setDefinition(shared_ptr<ASTNode> def) { definition = def; }
 
@@ -28,12 +29,12 @@ class FunctionDeclarationNode : public ASTNode {
             oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"parameters\": [";
 
-            for (int i = 0; i < parameters.size(); i++) {
+            for (int i = 0; i < parameters->getExpressions().size(); i++) {
                 if (i > 0) {
                     oss << ", ";
                 }
 
-                oss << (parameters[i] ? parameters[i]->toJSON() : "null");
+                oss << (parameters->getExpressions()[i] ? parameters->getExpressions()[i]->toJSON() : "null");
             }
 
             oss << "] ";

@@ -27,6 +27,7 @@
 #include "ast/DictionaryNode.hpp"
 #include "ast/BlockNode.hpp"
 #include "ast/TupleNode.hpp"
+#include "ast/ASTNodeList.hpp"
 #include "../compiler/ThetaCompiler.hpp"
 #include "../lexer/Lexemes.hpp"
 
@@ -162,20 +163,16 @@ class ThetaParser {
         shared_ptr<ASTNode> function_declaration() {
             shared_ptr<ASTNode> expr = assignment();
 
-            if (check(Token::Types::COMMA) || match(Token::Types::FUNC_DECLARATION) || match(Token::Types::PAREN_CLOSE)) {
-                vector<shared_ptr<ASTNode>> params;
+            if (match(Token::Types::FUNC_DECLARATION)) {
                 shared_ptr<FunctionDeclarationNode> func_def = make_shared<FunctionDeclarationNode>();
 
-                if (expr) params.push_back(expr);
-
-                while(match(Token::Types::COMMA)) {
-                    params.push_back(assignment());
+                if (expr->getNodeType() != ASTNode::Types::AST_NODE_LIST) {
+                    shared_ptr<ASTNodeList> parameters = make_shared<ASTNodeList>();
+                    parameters->setExpressions({ expr });
+                    expr = parameters;
                 }
 
-                match(Token::Types::PAREN_CLOSE);
-                match(Token::Types::FUNC_DECLARATION);
-
-                func_def->setParameters(params);
+                func_def->setParameters(dynamic_pointer_cast<ASTNodeList>(expr));
                 func_def->setDefinition(block());
 
                 expr = func_def;
@@ -360,14 +357,33 @@ class ThetaParser {
             }
 
             if (match(Token::Types::PAREN_OPEN)) {
-                shared_ptr<ASTNode> expr = expression();
-
-                match(Token::Types::PAREN_CLOSE);
-
-                return expr;
+                return expression_list();
             }
 
             return nullptr;
+        }
+
+        shared_ptr<ASTNode> expression_list(bool forceList = false) {
+            shared_ptr<ASTNode> expr = function_declaration();
+
+            if (check(Token::Types::COMMA) || !expr || forceList) {
+                shared_ptr<ASTNodeList> nodeList = make_shared<ASTNodeList>();
+                vector<shared_ptr<ASTNode>> expressions;
+
+                if (expr) expressions.push_back(expr);
+
+                while (match(Token::Types::COMMA)) {
+                    expressions.push_back(function_declaration());
+                }
+
+                nodeList->setExpressions(expressions);
+
+                expr = nodeList;
+            }
+
+            match(Token::Types::PAREN_CLOSE);
+
+            return expr;
         }
 
         shared_ptr<ASTNode> dict() {
@@ -477,46 +493,7 @@ class ThetaParser {
             if (match(Token::Types::PAREN_OPEN)) {
                 shared_ptr<FunctionInvocationNode> funcInvNode = make_shared<FunctionInvocationNode>();
                 funcInvNode->setIdentifier(expr);
-
-                vector<shared_ptr<ASTNode>> parameters;
-
-                while (!match(Token::Types::PAREN_CLOSE)) {
-                    if (match(Token::Types::COMMA) && check(Token::Types::PAREN_CLOSE)) {
-                        ThetaCompiler::getInstance().addException(
-                            ThetaCompilationError(
-                                "SyntaxError",
-                                "Expected value after comma in function invocation",
-                                currentToken,
-                                source,
-                                fileName
-                            )
-                        );
-
-                        break;
-                    }
-
-                    shared_ptr<ASTNode> param = function_declaration();
-
-                    if (!param) break;
-
-                    parameters.push_back(param);
-
-                    if (!check(Token::Types::COMMA) && !check(Token::Types::PAREN_CLOSE)) {
-                        ThetaCompiler::getInstance().addException(
-                            ThetaCompilationError(
-                                "SyntaxError",
-                                "Expected comma after function argument",
-                                currentToken,
-                                source,
-                                fileName
-                            )
-                        );
-
-                        break;
-                    }
-                }
-
-                funcInvNode->setParameters(parameters);
+                funcInvNode->setParameters(dynamic_pointer_cast<ASTNodeList>(expression_list(true)));
 
                 expr = funcInvNode;
             }

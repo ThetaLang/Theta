@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include "ASTNode.hpp"
+#include "ASTNodeList.hpp"
 
 using namespace std;
 
@@ -13,28 +14,28 @@ class FunctionInvocationNode : public ASTNode {
         FunctionInvocationNode() : ASTNode(ASTNode::Types::FUNCTION_INVOCATION) {};
 
         shared_ptr<ASTNode> identifier;
-        vector<shared_ptr<ASTNode>> parameters;
+        shared_ptr<ASTNodeList> arguments;
 
         void setIdentifier(shared_ptr<ASTNode> ident) { identifier = ident; }
 
         shared_ptr<ASTNode> getIdentifier() { return identifier; }
 
-        void setParameters(vector<shared_ptr<ASTNode>> params) { parameters = params; }
+        void setParameters(shared_ptr<ASTNodeList> params) { arguments = params; }
 
-        vector<shared_ptr<ASTNode>> getParameters() { return parameters; }
+        shared_ptr<ASTNodeList> getParameters() { return arguments; }
 
         string toJSON() const override {
             std::ostringstream oss;
             oss << "{";
             oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"function\": " << (identifier ? identifier->toJSON() : "null") << ", ";
-            oss << "\"parameters\": [";
-            for (int i = 0; i < parameters.size(); i++) {
+            oss << "\"arguments\": [";
+            for (int i = 0; i < arguments->getExpressions().size(); i++) {
                 if (i > 0) {
                     oss << ", ";
                 }
 
-                oss << (parameters[i] ? parameters[i]->toJSON() : "null");
+                oss << (arguments->getExpressions()[i] ? arguments->getExpressions()[i]->toJSON() : "null");
             }
 
             oss << "] ";

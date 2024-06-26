@@ -10,6 +10,7 @@ class ASTNode {
     public:
         enum Types {
             ASSIGNMENT,
+            AST_NODE_LIST,
             BINARY_OPERATION,
             BLOCK,
             CAPSULE,
@@ -58,6 +59,7 @@ class ASTNode {
         static string nodeTypeToString(ASTNode::Types nodeType) {
             static map<ASTNode::Types, string> typesMap = {
                 { ASTNode::Types::ASSIGNMENT, "Asignment" },
+                { ASTNode::Types::AST_NODE_LIST, "ASTNodeList" },
                 { ASTNode::Types::BINARY_OPERATION, "BinaryOperation" },
                 { ASTNode::Types::BLOCK, "Block" },
                 { ASTNode::Types::CAPSULE, "Capsule" },
