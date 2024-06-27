@@ -204,7 +204,7 @@ capsule Math {
     y<Number>
   }
 
-  origin<Point> = %Point { x: 0, y: 0 }
+  origin<Point> = @Point { x: 0, y: 0 }
 }
 ```
 
@@ -303,8 +303,8 @@ link Math
 capsule Main {
     import Math
 
-    point1 = %Math.Point { x: 0, y: 0 }
-    point2 = %Math.Point { x: 3, y: 4 }
+    point1 = @Math.Point { x: 0, y: 0 }
+    point2 = @Math.Point { x: 3, y: 4 }
 
     distance = Math.distance(point1, point2)
 }
