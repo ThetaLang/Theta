@@ -2,7 +2,7 @@
 #define VERSION_H
 
 const unsigned int VERSION_MAJOR = 0;
-const unsigned int VERSION_MINOR = 8;
+const unsigned int VERSION_MINOR = 9;
 const unsigned int VERSION_PATCH = 0;
 
 #endif

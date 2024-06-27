@@ -166,10 +166,13 @@ class ThetaParser {
             if (match(Token::Types::FUNC_DECLARATION)) {
                 shared_ptr<FunctionDeclarationNode> func_def = make_shared<FunctionDeclarationNode>();
 
-                if (expr->getNodeType() != ASTNode::Types::AST_NODE_LIST) {
+                if (expr && expr->getNodeType() != ASTNode::Types::AST_NODE_LIST) {
                     shared_ptr<ASTNodeList> parameters = make_shared<ASTNodeList>();
                     parameters->setExpressions({ expr });
+
                     expr = parameters;
+                } else if (!expr) {
+                    expr = make_shared<ASTNodeList>();
                 }
 
                 func_def->setParameters(dynamic_pointer_cast<ASTNodeList>(expr));

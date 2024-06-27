@@ -1229,391 +1229,686 @@ TEST_CASE("ThetaParser") {
     // --------- CONTROL FLOW ---------
 
     // --------- FUNCTIONS ------------
-    // SECTION("Can parse function declaration with no parens, single parameter, and expression definition") {
-    //     string source = R"(
-    //         greet<String> = name<String> -> 'hello' + name
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "greet");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 1);
-
-    //     shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[0]);
-    //     REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param->getIdentifier() == "name");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
-
-    //     shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(binOpNode->getOperator() == "+");
-    //     REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-    //     REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
-
-    //     shared_ptr<LiteralNode> leftNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft());
-    //     REQUIRE(leftNode->getLiteralValue() == "'hello'");
-
-    //     shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
-    //     REQUIRE(rightNode->getIdentifier() == "name");
-    // }
-
-
-    // SECTION("Can parse function declaration with no parens, multiple params, and expression definition") {
-    //     string source = R"(
-    //         greet<String> = greeting<String>, name<String> -> 'hello' + name
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "greet");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 2);
-
-    //     shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[0]);
-    //     REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param1->getIdentifier() == "greeting");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
-
-    //     shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[1]);
-    //     REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param2->getIdentifier() == "name");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
-
-    //     shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(binOpNode->getOperator() == "+");
-    //     REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-    //     REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
-
-    //     shared_ptr<LiteralNode> leftNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft());
-    //     REQUIRE(leftNode->getLiteralValue() == "'hello'");
-
-    //     shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
-    //     REQUIRE(rightNode->getIdentifier() == "name");
-    // }
-
-    // SECTION("Can parse function declaration with no parens, single parameter, and empty block definition") {
-    //     string source = R"(
-    //         x<Boolean> = meow<String> -> {}
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 1);
-
-    //     shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[0]);
-    //     REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param->getIdentifier() == "meow");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 0);
-    // }
-
-    // SECTION("Can parse function declaration with single parameter in parentheses and empty block definition") {
-    //     string source = R"(
-    //         x<Boolean> = (meow<String>) -> {}
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 1);
-
-    //     shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[0]);
-    //     REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param->getIdentifier() == "meow");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 0);
-    // }
-
-    // SECTION("Can parse function declaration with multiple parameters in parentheses and empty block definition") {
-    //     string source = R"(
-    //         x<Boolean> = (meow<String>, cow<String>) -> {}
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 2);
-
-    //     shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[0]);
-    //     REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param1->getIdentifier() == "meow");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
-
-    //     shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[1]);
-    //     REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(param2->getIdentifier() == "cow");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 0);
-    // }
-
-    // SECTION("Can parse function declaration with empty parameter list and empty block definition") {
-    //     string source = R"(
-    //         x<Boolean> = () -> {}
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 0);
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 0);
-    // }
-
-    // SECTION("Can parse function declaration with empty parameter list using shorthand syntax and empty block definition") {
-    //     string source = R"(
-    //         x<Boolean> = -> {}
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 0);
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 0);
-    // }
-
-    // SECTION("Can parse function declaration with empty parameter list and binary operation definition") {
-    //     string source = R"(
-    //         x<Boolean> = () -> y - 5 == 0
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+    SECTION("Can parse function declaration with no parens, single parameter, and expression definition") {
+        string source = R"(
+            greet<String> = name<String> -> 'hello' + name
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "greet");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getIdentifier() == "name");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
+        REQUIRE(binOpNode->getOperator() == "+");
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+
+        shared_ptr<LiteralNode> leftNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft());
+        REQUIRE(leftNode->getLiteralValue() == "'hello'");
+
+        shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
+        REQUIRE(rightNode->getIdentifier() == "name");
+    }
+
+    SECTION("Can parse function declaration with no parens, single parameter, and empty block definition") {
+        string source = R"(
+            x<Boolean> = meow<String> -> {}
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getIdentifier() == "meow");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function declaration with single parameter in parentheses and empty block definition") {
+        string source = R"(
+            x<Boolean> = (meow<String>) -> {}
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getIdentifier() == "meow");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function declaration with multiple parameters in parentheses and empty block definition") {
+        string source = R"(
+            x<Boolean> = (meow<String>, cow<String>) -> {}
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 2);
+
+        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param1->getIdentifier() == "meow");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
+
+        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[1]);
+        REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param2->getIdentifier() == "cow");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function declaration with empty parameter list and empty block definition") {
+        string source = R"(
+            x<Boolean> = () -> {}
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 0);
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function declaration with empty parameter list using shorthand syntax and empty block definition") {
+        string source = R"(
+            x<Boolean> = -> {}
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 0);
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function declaration with empty parameter list and binary operation definition") {
+        string source = R"(
+            x<Boolean> = () -> y - 5 == 0
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 0);
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
+        REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getOperator() == "==");
+
+        shared_ptr<BinaryOperationNode> leftBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode->getLeft());
+        REQUIRE(leftBinOpNode->getOperator() == "-");
+        REQUIRE(leftBinOpNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(leftBinOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+
+        shared_ptr<IdentifierNode> identifierNode = dynamic_pointer_cast<IdentifierNode>(leftBinOpNode->getLeft());
+        REQUIRE(identifierNode->getIdentifier() == "y");
+
+        shared_ptr<LiteralNode> leftLiteralNode = dynamic_pointer_cast<LiteralNode>(leftBinOpNode->getRight());
+        REQUIRE(leftLiteralNode->getLiteralValue() == "5");
+
+        shared_ptr<LiteralNode> rightLiteralNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getRight());
+        REQUIRE(rightLiteralNode->getLiteralValue() == "0");
+    }
+
+    SECTION("Can parse function declaration with parens, multiple parameters, and block definition containing binary operation") {
+        string source = R"(
+            x<Boolean> = (meow<String>, cow<String>) -> { meow == cow }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
 
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 0);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
 
-    //     shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
-    //     REQUIRE(binOpNode->getOperator() == "==");
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
-    //     shared_ptr<BinaryOperationNode> leftBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode->getLeft());
-    //     REQUIRE(leftBinOpNode->getOperator() == "-");
-    //     REQUIRE(leftBinOpNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(leftBinOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-
-    //     shared_ptr<IdentifierNode> identifierNode = dynamic_pointer_cast<IdentifierNode>(leftBinOpNode->getLeft());
-    //     REQUIRE(identifierNode->getIdentifier() == "y");
-
-    //     shared_ptr<LiteralNode> leftLiteralNode = dynamic_pointer_cast<LiteralNode>(leftBinOpNode->getRight());
-    //     REQUIRE(leftLiteralNode->getLiteralValue() == "5");
-
-    //     shared_ptr<LiteralNode> rightLiteralNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getRight());
-    //     REQUIRE(rightLiteralNode->getLiteralValue() == "0");
-    // }
-
-    // SECTION("Can parse function declaration with parens, multiple parameters, and block definition containing binary operation") {
-    //     string source = R"(
-    //         x<Boolean> = (meow<String>, cow<String>) -> { meow == cow }
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(funcDeclNode->getParameters().size() == 2);
-
-    //     shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[0]);
-    //     shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()[1]);
-
-    //     REQUIRE(param1->getIdentifier() == "meow");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
-
-    //     REQUIRE(param2->getIdentifier() == "cow");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 1);
-
-    //     shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getBlockExpressions()[0]);
-    //     REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
-    //     REQUIRE(binOpNode->getOperator() == "==");
-
-    //     shared_ptr<IdentifierNode> leftIdentifierNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft());
-    //     shared_ptr<IdentifierNode> rightIdentifierNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
-
-    //     REQUIRE(leftIdentifierNode->getIdentifier() == "meow");
-    //     REQUIRE(rightIdentifierNode->getIdentifier() == "cow");
-    // }
-
-    // SECTION("Can curried function declarations with block definition") {
-    //     string source = R"(
-    //         x<Boolean> = x<String> -> y<String> -> {}
-    //     )";
-    //     lexer.lex(source);
-
-    //     shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-    //         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-    //     );
-
-    //     REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
-    //     REQUIRE(parsedAST->getLinks().size() == 0);
-    //     REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
-
-    //     shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-    //     REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-    //     REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-    //     REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
-
-    //     shared_ptr<FunctionDeclarationNode> outerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
-    //     REQUIRE(outerFuncDeclNode->getParameters().size() == 1);
-
-    //     shared_ptr<IdentifierNode> outerParam = dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()[0]);
-    //     REQUIRE(outerParam->getIdentifier() == "x");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(outerParam->getValue())->getType() == "String");
-
-    //     shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerFuncDeclNode->getDefinition());
-    //     REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
-
-    //     REQUIRE(innerFuncDeclNode->getParameters().size() == 1);
-
-    //     shared_ptr<IdentifierNode> innerParam = dynamic_pointer_cast<IdentifierNode>(innerFuncDeclNode->getParameters()[0]);
-    //     REQUIRE(innerParam->getIdentifier() == "y");
-    //     REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(innerParam->getValue())->getType() == "String");
-
-    //     shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(innerFuncDeclNode->getDefinition());
-    //     REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-    //     REQUIRE(blockNode->getBlockExpressions().size() == 0);
-    // }
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 2);
+
+        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[1]);
+
+        REQUIRE(param1->getIdentifier() == "meow");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
+
+        REQUIRE(param2->getIdentifier() == "cow");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 1);
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getBlockExpressions()[0]);
+        REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getOperator() == "==");
+
+        shared_ptr<IdentifierNode> leftIdentifierNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft());
+        shared_ptr<IdentifierNode> rightIdentifierNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
+
+        REQUIRE(leftIdentifierNode->getIdentifier() == "meow");
+        REQUIRE(rightIdentifierNode->getIdentifier() == "cow");
+    }
+
+    SECTION("Can parse curried function declarations with block definition") {
+        string source = R"(
+            x<Boolean> = x<String> -> y<String> -> {}
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+
+        shared_ptr<FunctionDeclarationNode> outerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
+        REQUIRE(outerFuncDeclNode->getParameters()->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> outerParam = dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()->getExpressions()[0]);
+        REQUIRE(outerParam->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(outerParam->getValue())->getType() == "String");
+
+        shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerFuncDeclNode->getDefinition());
+        REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+
+        REQUIRE(innerFuncDeclNode->getParameters()->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> innerParam = dynamic_pointer_cast<IdentifierNode>(innerFuncDeclNode->getParameters()->getExpressions()[0]);
+        REQUIRE(innerParam->getIdentifier() == "y");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(innerParam->getValue())->getType() == "String");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(innerFuncDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function invocation with no arguments") {
+        string source = R"(
+            greet()
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 0);
+    }
+
+    SECTION("Can parse function invocation with a single argument") {
+        string source = R"(
+            greet(names)
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> argument = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        REQUIRE(argument->getIdentifier() == "names");
+    }
+
+    SECTION("Can parse function invocation with multiple arguments") {
+        string source = R"(
+            greet(names, 'Hello, ')
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 2);
+
+        shared_ptr<IdentifierNode> firstArgument = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        REQUIRE(firstArgument->getIdentifier() == "names");
+
+        shared_ptr<LiteralNode> secondArgument = dynamic_pointer_cast<LiteralNode>(arguments->getExpressions()[1]);
+        REQUIRE(secondArgument->getLiteralValue() == "'Hello, '");
+    }
+
+    SECTION("Can parse function invocation with a list argument") {
+        string source = R"(
+            greet(['alex', 'mike', 'denis'])
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 1);
+
+        shared_ptr<ListNode> listArgument = dynamic_pointer_cast<ListNode>(arguments->getExpressions()[0]);
+        REQUIRE(listArgument->getNodeType() == ASTNode::Types::LIST);
+
+        vector<shared_ptr<ASTNode>> listElements = listArgument->getElements();
+        REQUIRE(listElements.size() == 3);
+
+        shared_ptr<LiteralNode> firstElement = dynamic_pointer_cast<LiteralNode>(listElements[0]);
+        REQUIRE(firstElement->getLiteralValue() == "'alex'");
+
+        shared_ptr<LiteralNode> secondElement = dynamic_pointer_cast<LiteralNode>(listElements[1]);
+        REQUIRE(secondElement->getLiteralValue() == "'mike'");
+
+        shared_ptr<LiteralNode> thirdElement = dynamic_pointer_cast<LiteralNode>(listElements[2]);
+        REQUIRE(thirdElement->getLiteralValue() == "'denis'");
+    }
+
+    SECTION("Can parse function invocation with multiple list arguments") {
+        string source = R"(
+            greet(['alex', 'mike', 'denis'], ['Hello', 'Hi'])
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 2);
+
+        // First list argument
+        shared_ptr<ListNode> listArgument1 = dynamic_pointer_cast<ListNode>(arguments->getExpressions()[0]);
+        REQUIRE(listArgument1->getNodeType() == ASTNode::Types::LIST);
+
+        vector<shared_ptr<ASTNode>> listElements1 = listArgument1->getElements();
+        REQUIRE(listElements1.size() == 3);
+
+        shared_ptr<LiteralNode> firstElement1 = dynamic_pointer_cast<LiteralNode>(listElements1[0]);
+        REQUIRE(firstElement1->getLiteralValue() == "'alex'");
+
+        shared_ptr<LiteralNode> secondElement1 = dynamic_pointer_cast<LiteralNode>(listElements1[1]);
+        REQUIRE(secondElement1->getLiteralValue() == "'mike'");
+
+        shared_ptr<LiteralNode> thirdElement1 = dynamic_pointer_cast<LiteralNode>(listElements1[2]);
+        REQUIRE(thirdElement1->getLiteralValue() == "'denis'");
+
+        // Second list argument
+        shared_ptr<ListNode> listArgument2 = dynamic_pointer_cast<ListNode>(arguments->getExpressions()[1]);
+        REQUIRE(listArgument2->getNodeType() == ASTNode::Types::LIST);
+
+        vector<shared_ptr<ASTNode>> listElements2 = listArgument2->getElements();
+        REQUIRE(listElements2.size() == 2);
+
+        shared_ptr<LiteralNode> firstElement2 = dynamic_pointer_cast<LiteralNode>(listElements2[0]);
+        REQUIRE(firstElement2->getLiteralValue() == "'Hello'");
+
+        shared_ptr<LiteralNode> secondElement2 = dynamic_pointer_cast<LiteralNode>(listElements2[1]);
+        REQUIRE(secondElement2->getLiteralValue() == "'Hi'");
+    }
+
+    SECTION("Can parse function invocation with dictionary argument") {
+        string source = R"(
+            greet({ name: 'Alex' })
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 1);
+
+        // Dictionary argument
+        shared_ptr<DictionaryNode> dictArgument = dynamic_pointer_cast<DictionaryNode>(arguments->getExpressions()[0]);
+        REQUIRE(dictArgument->getNodeType() == ASTNode::Types::DICTIONARY);
+
+        vector<shared_ptr<ASTNode>> dictElements = dictArgument->getElements();
+        REQUIRE(dictElements.size() == 1);
+
+        shared_ptr<TupleNode> tupleElement = dynamic_pointer_cast<TupleNode>(dictElements[0]);
+        REQUIRE(tupleElement->getNodeType() == ASTNode::Types::TUPLE);
+
+        shared_ptr<SymbolNode> firstElement = dynamic_pointer_cast<SymbolNode>(tupleElement->getLeft());
+        REQUIRE(firstElement->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(firstElement->getSymbol() == ":name");
+
+        shared_ptr<LiteralNode> secondElement = dynamic_pointer_cast<LiteralNode>(tupleElement->getRight());
+        REQUIRE(secondElement->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(secondElement->getLiteralValue() == "'Alex'");
+    }
+
+    SECTION("Can parse function invocation with function declaration argument") {
+        string source = R"(
+            greet(name, greeting<String> -> greeting + name)
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 2);
+
+        // First argument (name)
+        shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        REQUIRE(firstArg->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(firstArg->getIdentifier() == "name");
+
+        // Second argument (function declaration)
+        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getExpressions()[1]);
+        REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+
+        shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
+        REQUIRE(parameters->getExpressions().size() == 1);
+
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(parameters->getExpressions()[0]);
+        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getIdentifier() == "greeting");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
+        REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getOperator() == "+");
+
+        shared_ptr<IdentifierNode> leftNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft());
+        REQUIRE(leftNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(leftNode->getIdentifier() == "greeting");
+
+        shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
+        REQUIRE(rightNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightNode->getIdentifier() == "name");
+    }
+
+    SECTION("Can parse function invocation with function declaration argument having multiple parameters and a binary operation definition") {
+        string source = R"(
+            greet(name, (greeting<String>, punctuation<String>) -> greeting + name + punctuation)
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+
+        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+
+        REQUIRE(funcInvocationNode != nullptr);
+
+        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        REQUIRE(functionIdentifier->getIdentifier() == "greet");
+
+        shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
+        REQUIRE(arguments->getExpressions().size() == 2);
+
+        // First argument (name)
+        shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        REQUIRE(firstArg->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(firstArg->getIdentifier() == "name");
+
+        // Second argument (function declaration)
+        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getExpressions()[1]);
+        REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+
+        shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
+        REQUIRE(parameters->getExpressions().size() == 2);
+
+        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(parameters->getExpressions()[0]);
+        REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param1->getIdentifier() == "greeting");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
+
+        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(parameters->getExpressions()[1]);
+        REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param2->getIdentifier() == "punctuation");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
+
+        shared_ptr<BinaryOperationNode> outerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
+        REQUIRE(outerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(outerBinOpNode->getOperator() == "+");
+
+        shared_ptr<BinaryOperationNode> innerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(outerBinOpNode->getLeft());
+        REQUIRE(innerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(innerBinOpNode->getOperator() == "+");
+
+        shared_ptr<IdentifierNode> leftNode = dynamic_pointer_cast<IdentifierNode>(innerBinOpNode->getLeft());
+        REQUIRE(leftNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(leftNode->getIdentifier() == "greeting");
+
+        shared_ptr<IdentifierNode> middleNode = dynamic_pointer_cast<IdentifierNode>(innerBinOpNode->getRight());
+        REQUIRE(middleNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(middleNode->getIdentifier() == "name");
+
+        shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(outerBinOpNode->getRight());
+        REQUIRE(rightNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightNode->getIdentifier() == "punctuation");
+    }
     // --------- FUNCTIONS ------------
 
     SECTION("Can parse capsules") {
