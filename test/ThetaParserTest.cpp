@@ -925,7 +925,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(block->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(block);
 
-        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getBlockExpressions();
+        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getElements();
         REQUIRE(blockExpressions.size() == 1);
 
         shared_ptr<ASTNode> binaryOperation = blockExpressions[0];
@@ -993,7 +993,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(block->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(block);
 
-        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getBlockExpressions();
+        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getElements();
         REQUIRE(blockExpressions.size() == 1);
 
         shared_ptr<ASTNode> booleanLiteral = blockExpressions[0];
@@ -1133,7 +1133,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(block1->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode1 = dynamic_pointer_cast<BlockNode>(block1);
 
-        vector<shared_ptr<ASTNode>> blockExpressions1 = blockNode1->getBlockExpressions();
+        vector<shared_ptr<ASTNode>> blockExpressions1 = blockNode1->getElements();
         REQUIRE(blockExpressions1.size() == 1);
 
         shared_ptr<ASTNode> assignment1 = blockExpressions1[0];
@@ -1177,7 +1177,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(block2->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode2 = dynamic_pointer_cast<BlockNode>(block2);
 
-        vector<shared_ptr<ASTNode>> blockExpressions2 = blockNode2->getBlockExpressions();
+        vector<shared_ptr<ASTNode>> blockExpressions2 = blockNode2->getElements();
         REQUIRE(blockExpressions2.size() == 1);
 
         shared_ptr<ASTNode> assignment2 = blockExpressions2[0];
@@ -1206,7 +1206,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(block3->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode3 = dynamic_pointer_cast<BlockNode>(block3);
 
-        vector<shared_ptr<ASTNode>> blockExpressions3 = blockNode3->getBlockExpressions();
+        vector<shared_ptr<ASTNode>> blockExpressions3 = blockNode3->getElements();
         REQUIRE(blockExpressions3.size() == 1);
 
         shared_ptr<ASTNode> assignment3 = blockExpressions3[0];
@@ -1251,9 +1251,9 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 1);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "name");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
@@ -1292,16 +1292,16 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 1);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+        REQUIRE(blockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function declaration with single parameter in parentheses and empty block definition") {
@@ -1326,16 +1326,16 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 1);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+        REQUIRE(blockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function declaration with multiple parameters in parentheses and empty block definition") {
@@ -1360,21 +1360,21 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 2);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 2);
 
-        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param1->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
 
-        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[1]);
+        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
         REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param2->getIdentifier() == "cow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+        REQUIRE(blockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function declaration with empty parameter list and empty block definition") {
@@ -1399,11 +1399,11 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 0);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+        REQUIRE(blockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function declaration with empty parameter list using shorthand syntax and empty block definition") {
@@ -1428,11 +1428,11 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 0);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+        REQUIRE(blockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function declaration with empty parameter list and binary operation definition") {
@@ -1457,7 +1457,7 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 0);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
@@ -1500,10 +1500,10 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(funcDeclNode->getParameters()->getExpressions().size() == 2);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 2);
 
-        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[0]);
-        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getExpressions()[1]);
+        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
 
         REQUIRE(param1->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
@@ -1513,9 +1513,9 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 1);
+        REQUIRE(blockNode->getElements().size() == 1);
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getBlockExpressions()[0]);
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "==");
 
@@ -1548,24 +1548,24 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<FunctionDeclarationNode> outerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
-        REQUIRE(outerFuncDeclNode->getParameters()->getExpressions().size() == 1);
+        REQUIRE(outerFuncDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> outerParam = dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> outerParam = dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()->getElements()[0]);
         REQUIRE(outerParam->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(outerParam->getValue())->getType() == "String");
 
         shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerFuncDeclNode->getDefinition());
         REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
-        REQUIRE(innerFuncDeclNode->getParameters()->getExpressions().size() == 1);
+        REQUIRE(innerFuncDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> innerParam = dynamic_pointer_cast<IdentifierNode>(innerFuncDeclNode->getParameters()->getExpressions()[0]);
+        shared_ptr<IdentifierNode> innerParam = dynamic_pointer_cast<IdentifierNode>(innerFuncDeclNode->getParameters()->getElements()[0]);
         REQUIRE(innerParam->getIdentifier() == "y");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(innerParam->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(innerFuncDeclNode->getDefinition());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getBlockExpressions().size() == 0);
+        REQUIRE(blockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function invocation with no arguments") {
@@ -1590,7 +1590,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 0);
+        REQUIRE(arguments->getElements().size() == 0);
     }
 
     SECTION("Can parse function invocation with a single argument") {
@@ -1615,9 +1615,9 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 1);
+        REQUIRE(arguments->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> argument = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        shared_ptr<IdentifierNode> argument = dynamic_pointer_cast<IdentifierNode>(arguments->getElements()[0]);
         REQUIRE(argument->getIdentifier() == "names");
     }
 
@@ -1643,12 +1643,12 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 2);
+        REQUIRE(arguments->getElements().size() == 2);
 
-        shared_ptr<IdentifierNode> firstArgument = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        shared_ptr<IdentifierNode> firstArgument = dynamic_pointer_cast<IdentifierNode>(arguments->getElements()[0]);
         REQUIRE(firstArgument->getIdentifier() == "names");
 
-        shared_ptr<LiteralNode> secondArgument = dynamic_pointer_cast<LiteralNode>(arguments->getExpressions()[1]);
+        shared_ptr<LiteralNode> secondArgument = dynamic_pointer_cast<LiteralNode>(arguments->getElements()[1]);
         REQUIRE(secondArgument->getLiteralValue() == "'Hello, '");
     }
 
@@ -1674,9 +1674,9 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 1);
+        REQUIRE(arguments->getElements().size() == 1);
 
-        shared_ptr<ListNode> listArgument = dynamic_pointer_cast<ListNode>(arguments->getExpressions()[0]);
+        shared_ptr<ListNode> listArgument = dynamic_pointer_cast<ListNode>(arguments->getElements()[0]);
         REQUIRE(listArgument->getNodeType() == ASTNode::Types::LIST);
 
         vector<shared_ptr<ASTNode>> listElements = listArgument->getElements();
@@ -1714,10 +1714,10 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 2);
+        REQUIRE(arguments->getElements().size() == 2);
 
         // First list argument
-        shared_ptr<ListNode> listArgument1 = dynamic_pointer_cast<ListNode>(arguments->getExpressions()[0]);
+        shared_ptr<ListNode> listArgument1 = dynamic_pointer_cast<ListNode>(arguments->getElements()[0]);
         REQUIRE(listArgument1->getNodeType() == ASTNode::Types::LIST);
 
         vector<shared_ptr<ASTNode>> listElements1 = listArgument1->getElements();
@@ -1733,7 +1733,7 @@ TEST_CASE("ThetaParser") {
         REQUIRE(thirdElement1->getLiteralValue() == "'denis'");
 
         // Second list argument
-        shared_ptr<ListNode> listArgument2 = dynamic_pointer_cast<ListNode>(arguments->getExpressions()[1]);
+        shared_ptr<ListNode> listArgument2 = dynamic_pointer_cast<ListNode>(arguments->getElements()[1]);
         REQUIRE(listArgument2->getNodeType() == ASTNode::Types::LIST);
 
         vector<shared_ptr<ASTNode>> listElements2 = listArgument2->getElements();
@@ -1768,10 +1768,10 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 1);
+        REQUIRE(arguments->getElements().size() == 1);
 
         // Dictionary argument
-        shared_ptr<DictionaryNode> dictArgument = dynamic_pointer_cast<DictionaryNode>(arguments->getExpressions()[0]);
+        shared_ptr<DictionaryNode> dictArgument = dynamic_pointer_cast<DictionaryNode>(arguments->getElements()[0]);
         REQUIRE(dictArgument->getNodeType() == ASTNode::Types::DICTIONARY);
 
         vector<shared_ptr<ASTNode>> dictElements = dictArgument->getElements();
@@ -1811,21 +1811,21 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 2);
+        REQUIRE(arguments->getElements().size() == 2);
 
         // First argument (name)
-        shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getElements()[0]);
         REQUIRE(firstArg->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(firstArg->getIdentifier() == "name");
 
         // Second argument (function declaration)
-        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getExpressions()[1]);
+        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
         REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
         shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
-        REQUIRE(parameters->getExpressions().size() == 1);
+        REQUIRE(parameters->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(parameters->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(parameters->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "greeting");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
@@ -1865,26 +1865,26 @@ TEST_CASE("ThetaParser") {
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
-        REQUIRE(arguments->getExpressions().size() == 2);
+        REQUIRE(arguments->getElements().size() == 2);
 
         // First argument (name)
-        shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getExpressions()[0]);
+        shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getElements()[0]);
         REQUIRE(firstArg->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(firstArg->getIdentifier() == "name");
 
         // Second argument (function declaration)
-        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getExpressions()[1]);
+        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
         REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
         shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
-        REQUIRE(parameters->getExpressions().size() == 2);
+        REQUIRE(parameters->getElements().size() == 2);
 
-        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(parameters->getExpressions()[0]);
+        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(parameters->getElements()[0]);
         REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param1->getIdentifier() == "greeting");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
 
-        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(parameters->getExpressions()[1]);
+        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(parameters->getElements()[1]);
         REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param2->getIdentifier() == "punctuation");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
@@ -1933,7 +1933,7 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(capsuleNode->getValue());
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getBlockExpressions();
+        vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getElements();
         REQUIRE(blockExpressions.size() == 2);
 
         // Check the first assignment within the block
@@ -1993,9 +1993,9 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<BlockNode> linkedBlock1 = dynamic_pointer_cast<BlockNode>(linkedCapsule1->getValue());
         REQUIRE(linkedBlock1->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(linkedBlock1->getBlockExpressions().size() == 1);
+        REQUIRE(linkedBlock1->getElements().size() == 1);
 
-        shared_ptr<AssignmentNode> assignmentNode1 = dynamic_pointer_cast<AssignmentNode>(linkedBlock1->getBlockExpressions()[0]);
+        shared_ptr<AssignmentNode> assignmentNode1 = dynamic_pointer_cast<AssignmentNode>(linkedBlock1->getElements()[0]);
         REQUIRE(assignmentNode1->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode1->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
 
@@ -2029,9 +2029,9 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<BlockNode> nestedLinkedBlock2 = dynamic_pointer_cast<BlockNode>(nestedLinkedCapsule2->getValue());
         REQUIRE(nestedLinkedBlock2->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(nestedLinkedBlock2->getBlockExpressions().size() == 1);
+        REQUIRE(nestedLinkedBlock2->getElements().size() == 1);
 
-        shared_ptr<AssignmentNode> nestedAssignmentNode2 = dynamic_pointer_cast<AssignmentNode>(nestedLinkedBlock2->getBlockExpressions()[0]);
+        shared_ptr<AssignmentNode> nestedAssignmentNode2 = dynamic_pointer_cast<AssignmentNode>(nestedLinkedBlock2->getElements()[0]);
         REQUIRE(nestedAssignmentNode2->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(nestedAssignmentNode2->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
 
@@ -2049,9 +2049,9 @@ TEST_CASE("ThetaParser") {
 
         shared_ptr<BlockNode> mainBlock = dynamic_pointer_cast<BlockNode>(mainCapsule->getValue());
         REQUIRE(mainBlock->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(mainBlock->getBlockExpressions().size() == 1);
+        REQUIRE(mainBlock->getElements().size() == 1);
 
-        shared_ptr<AssignmentNode> mainAssignmentNode = dynamic_pointer_cast<AssignmentNode>(mainBlock->getBlockExpressions()[0]);
+        shared_ptr<AssignmentNode> mainAssignmentNode = dynamic_pointer_cast<AssignmentNode>(mainBlock->getElements()[0]);
         REQUIRE(mainAssignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(mainAssignmentNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
 
@@ -2062,4 +2062,105 @@ TEST_CASE("ThetaParser") {
         shared_ptr<IdentifierNode> mainRightNode = dynamic_pointer_cast<IdentifierNode>(mainAssignmentNode->getRight());
         REQUIRE(mainRightNode->getIdentifier() == "Theta.StringUtil.name");
     }
+
+    SECTION("Can parse struct declarations inside a capsule") {
+        string source = R"(
+            capsule Math {
+                struct Point {
+                    x<Number>
+                    y<Number>
+                }
+            }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CAPSULE);
+
+        shared_ptr<CapsuleNode> capsuleNode = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());
+        REQUIRE(capsuleNode != nullptr);
+        REQUIRE(capsuleNode->getName() == "Math");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(capsuleNode->getValue());
+        REQUIRE(blockNode != nullptr);
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getElements().size() == 1);
+
+        shared_ptr<StructDefinitionNode> structNode = dynamic_pointer_cast<StructDefinitionNode>(blockNode->getElements()[0]);
+        REQUIRE(structNode != nullptr);
+        REQUIRE(structNode->getNodeType() == ASTNode::Types::STRUCT_DEFINITION);
+        REQUIRE(structNode->name == "Point");
+
+        REQUIRE(structNode->getElements().size() == 2);
+
+        shared_ptr<IdentifierNode> xNode = dynamic_pointer_cast<IdentifierNode>(structNode->getElements()[0]);
+        REQUIRE(xNode != nullptr);
+        REQUIRE(xNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(xNode->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(xNode->getValue())->getType() == "Number");
+
+        shared_ptr<IdentifierNode> yNode = dynamic_pointer_cast<IdentifierNode>(structNode->getElements()[1]);
+        REQUIRE(yNode != nullptr);
+        REQUIRE(yNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(yNode->getIdentifier() == "y");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(yNode->getValue())->getType() == "Number");
+    }
+
+    SECTION("Can parse struct declaration with dictionary values") {
+        string source = R"(
+            @Point { x: 5, y: 3 }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::STRUCT_DECLARATION);
+
+        shared_ptr<StructDeclarationNode> structDeclNode = dynamic_pointer_cast<StructDeclarationNode>(parsedAST->getValue());
+        REQUIRE(structDeclNode != nullptr);
+        REQUIRE(structDeclNode->getStructType() == "Point");
+
+        shared_ptr<DictionaryNode> dictNode = dynamic_pointer_cast<DictionaryNode>(structDeclNode->getValue());
+        REQUIRE(dictNode != nullptr);
+        REQUIRE(dictNode->getNodeType() == ASTNode::Types::DICTIONARY);
+        REQUIRE(dictNode->getElements().size() == 2);
+
+        shared_ptr<TupleNode> tuple1 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[0]);
+        REQUIRE(tuple1 != nullptr);
+        REQUIRE(tuple1->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tuple1->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(tuple1->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+
+        shared_ptr<SymbolNode> symbol1 = dynamic_pointer_cast<SymbolNode>(tuple1->getLeft());
+        REQUIRE(symbol1 != nullptr);
+        REQUIRE(symbol1->getSymbol() == ":x");
+
+        shared_ptr<LiteralNode> number1 = dynamic_pointer_cast<LiteralNode>(tuple1->getRight());
+        REQUIRE(number1 != nullptr);
+        REQUIRE(number1->getLiteralValue() == "5");
+
+        shared_ptr<TupleNode> tuple2 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[1]);
+        REQUIRE(tuple2 != nullptr);
+        REQUIRE(tuple2->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tuple2->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(tuple2->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+
+        shared_ptr<SymbolNode> symbol2 = dynamic_pointer_cast<SymbolNode>(tuple2->getLeft());
+        REQUIRE(symbol2 != nullptr);
+        REQUIRE(symbol2->getSymbol() == ":y");
+
+        shared_ptr<LiteralNode> number2 = dynamic_pointer_cast<LiteralNode>(tuple2->getRight());
+        REQUIRE(number2 != nullptr);
+        REQUIRE(number2->getLiteralValue() == "3");
+    }
+
 }

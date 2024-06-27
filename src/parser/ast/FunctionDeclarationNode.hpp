@@ -29,12 +29,12 @@ class FunctionDeclarationNode : public ASTNode {
             oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ", \"parameters\": [";
 
-            for (int i = 0; i < parameters->getExpressions().size(); i++) {
+            for (int i = 0; i < parameters->getElements().size(); i++) {
                 if (i > 0) {
                     oss << ", ";
                 }
 
-                oss << (parameters->getExpressions()[i] ? parameters->getExpressions()[i]->toJSON() : "null");
+                oss << (parameters->getElements()[i] ? parameters->getElements()[i]->toJSON() : "null");
             }
 
             oss << "] ";

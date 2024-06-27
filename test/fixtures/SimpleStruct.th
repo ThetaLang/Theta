@@ -1,0 +1,6 @@
+capsule Math {
+    struct Point {
+        x<Number>
+        y<Number>
+    }
+}

@@ -22,9 +22,9 @@ class ThetaCLI {
                 if (arg1 == "--version") return printLanguageVersion();
                 if (arg1 == "--help") return printUsageInstructions();
 
-                if (validateOption(arg1)) sourceFile = argv[1];
+                sourceFile = argv[1];
             } else {
-                int i = 0;
+                int i = 1;
 
                 while (i < argc) {
                     string arg = argv[i];

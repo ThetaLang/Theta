@@ -30,12 +30,12 @@ class FunctionInvocationNode : public ASTNode {
             oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
             oss << "\"function\": " << (identifier ? identifier->toJSON() : "null") << ", ";
             oss << "\"arguments\": [";
-            for (int i = 0; i < arguments->getExpressions().size(); i++) {
+            for (int i = 0; i < arguments->getElements().size(); i++) {
                 if (i > 0) {
                     oss << ", ";
                 }
 
-                oss << (arguments->getExpressions()[i] ? arguments->getExpressions()[i]->toJSON() : "null");
+                oss << (arguments->getElements()[i] ? arguments->getElements()[i]->toJSON() : "null");
             }
 
             oss << "] ";

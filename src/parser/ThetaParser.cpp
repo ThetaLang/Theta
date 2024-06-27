@@ -11,6 +11,8 @@
 #include "ast/AssignmentNode.hpp"
 #include "ast/ControlFlowNode.hpp"
 #include "ast/FunctionInvocationNode.hpp"
+#include "ast/StructDeclarationNode.hpp"
+#include "ast/StructDefinitionNode.hpp"
 #include "ast/UnaryOperationNode.hpp"
 #include "ast/BinaryOperationNode.hpp"
 #include "ast/LiteralNode.hpp"
@@ -20,7 +22,6 @@
 #include "ast/ListNode.hpp"
 #include "ast/CapsuleNode.hpp"
 #include "ast/FunctionDeclarationNode.hpp"
-#include "ast/KeyedAccessNode.hpp"
 #include "ast/SourceNode.hpp"
 #include "ast/LinkNode.hpp"
 #include "ast/SymbolNode.hpp"
@@ -125,6 +126,43 @@ class ThetaParser {
             return assignment();
         }
 
+        shared_ptr<ASTNode> struct_definition() {
+            if (match(Token::Types::KEYWORD, Lexemes::STRUCT)) {
+                match(Token::Types::IDENTIFIER);
+
+                shared_ptr<StructDefinitionNode> str = make_shared<StructDefinitionNode>(currentToken.getLexeme());
+
+                if (!match(Token::Types::BRACE_OPEN)) {
+                    ThetaCompiler::getInstance().addException(
+                        ThetaCompilationError(
+                            "SyntaxError",
+                            "Expected open brace during struct definition",
+                            currentToken,
+                            source,
+                            fileName
+                        )
+                    );
+                }
+
+                vector<shared_ptr<ASTNode>> items;
+
+                while (!match(Token::Types::BRACE_CLOSE)) {
+                    match(Token::Types::IDENTIFIER);
+                    shared_ptr<ASTNode> el = identifier();
+
+                    if (el == nullptr) break;
+
+                    items.push_back(el);
+                }
+
+                str->setElements(items);
+
+                return str;
+            }
+
+            return assignment();
+        }
+
         shared_ptr<ASTNode> assignment() {
             shared_ptr<ASTNode> expr = expression();
 
@@ -144,7 +182,7 @@ class ThetaParser {
                 vector<shared_ptr<ASTNode>> blockExpr;
 
                 while (!match(Token::Types::BRACE_CLOSE)) {
-                    shared_ptr<ASTNode> expr = assignment();
+                    shared_ptr<ASTNode> expr = struct_definition();
 
                     if (expr == nullptr) break;
 
@@ -152,7 +190,7 @@ class ThetaParser {
                 }
 
                 shared_ptr<BlockNode> block = make_shared<BlockNode>();
-                block->setBlockExpressions(blockExpr);
+                block->setElements(blockExpr);
 
                 return block;
             }
@@ -168,7 +206,7 @@ class ThetaParser {
 
                 if (expr && expr->getNodeType() != ASTNode::Types::AST_NODE_LIST) {
                     shared_ptr<ASTNodeList> parameters = make_shared<ASTNodeList>();
-                    parameters->setExpressions({ expr });
+                    parameters->setElements({ expr });
 
                     expr = parameters;
                 } else if (!expr) {
@@ -185,6 +223,20 @@ class ThetaParser {
         }
 
         shared_ptr<ASTNode> expression() {
+            return struct_declaration();
+        }
+
+        shared_ptr<ASTNode> struct_declaration() {
+            if (match(Token::Types::AT)) {
+                match(Token::Types::IDENTIFIER);
+
+                shared_ptr<StructDeclarationNode> str = make_shared<StructDeclarationNode>(currentToken.getLexeme());
+
+                str->setValue(dict());
+
+                return str;
+            }
+
             return control_flow();
         }
 
@@ -379,7 +431,7 @@ class ThetaParser {
                     expressions.push_back(function_declaration());
                 }
 
-                nodeList->setExpressions(expressions);
+                nodeList->setElements(expressions);
 
                 expr = nodeList;
             }

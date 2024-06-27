@@ -1,6 +1,6 @@
 # Define the compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++14 -I src -I test/catch2 -MMD -MP
+CXXFLAGS = -std=c++14 -I src -I test/catch2 -MMD -MP -g
 
 # Define the source directories
 SRC_DIR = src

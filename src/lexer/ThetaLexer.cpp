@@ -119,6 +119,7 @@ class ThetaLexer {
                 attemptLex(Lexemes::DIVISION, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Lexemes::EQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Lexemes::INEQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
+                attemptLex(Lexemes::AT, Token::Types::AT, token, currentChar, nextChar, source, i) ||
                 attemptLex(Lexemes::AND, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Lexemes::OR, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
                 attemptLex(Lexemes::NOT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||

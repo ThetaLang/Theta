@@ -40,6 +40,7 @@ class Token {
             BRACKET_CLOSE,
             COMMA,
             COLON,
+            AT,
 
             // Whitespace
             NEWLINE,
@@ -95,6 +96,7 @@ class Token {
                 { Token::Types::BRACKET_CLOSE, "BRACKET_CLOSE" },
                 { Token::Types::COMMA, "COMMA" },
                 { Token::Types::COLON, "COLON" },
+                { Token::Types::AT, "AT" },
                 { Token::Types::NEWLINE, "NEWLINE" },
                 { Token::Types::WHITESPACE, "WHITESPACE" },
                 { Token::Types::UNHANDLED, "UNHANDLED" }

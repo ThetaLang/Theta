@@ -67,4 +67,5 @@ namespace Lexemes {
     const string RETURN = "return";
     const string TRUE = "true";
     const string FALSE = "false";
+    const string AT = "@";
 }
