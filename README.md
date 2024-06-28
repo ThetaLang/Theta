@@ -128,7 +128,7 @@ capsule Networking {
     return Enumerable.includes(PassingStatuses, request.status)
   }
 
-  isNetworkRequestFailure<Boolean> = request<NetworkRequest -> {
+  isNetworkRequestFailure<Boolean> = request<NetworkRequest> -> {
     // PassingStatuses is not available in here
   }
 }
