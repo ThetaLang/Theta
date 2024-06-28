@@ -158,14 +158,14 @@ greeting<String> = 'Hello, World'
 Functions are defined as variables pointing to a block. The return type is specified after the function name.
 
 ```theta
-functionName<ReturnType> = param1<Type1>, param2<Type2>, ... -> {
+functionName<ReturnType> = (param1<Type1>, param2<Type2>, ...) -> {
   // function body
 }
 ```
 
 Example:
 ```theta
-add<Number> = a<Number>, b<Number> -> a + b
+add<Number> = (a<Number>, b<Number>) -> a + b
 ```
 
 ### 4.2. Function Composition
@@ -177,7 +177,7 @@ value => function
 
 Example:
 ```theta
-requestParams => Json.encodeStruct => Http.request
+requestParams => Json.encodeStruct() => Http.request()
 ```
 
 ---
@@ -196,8 +196,8 @@ capsule CapsuleName {
 Example:
 ```theta
 capsule Math {
-  add<Number> = a<Number>, b<Number> -> a + b
-  subtract<Number> = a<Number>, b<Number> -> a - b
+  add<Number> = (a<Number>, b<Number>) -> a + b
+  subtract<Number> = (a<Number>, b<Number>) -> a - b
 
   struct Point {
     x<Number>
@@ -285,11 +285,11 @@ capsule Math {
         y<Number>
     }
 
-    distance<Number> = point1<Point>, point2<Point> -> {
+    distance<Number> = (point1<Point>, point2<Point>) -> {
         // Calculate distance...
     }
 
-    dimensionalDistanceX<Number> = point1<Point>, point2<Point> -> {
+    dimensionalDistanceX<Number> = (point1<Point>, point2<Point>) -> {
       { x: point1X } = point1
       { x: point2X } = point2
 
