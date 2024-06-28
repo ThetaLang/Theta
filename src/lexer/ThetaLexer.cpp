@@ -82,12 +82,13 @@ class ThetaLexer {
             Token::Types::NUMBER
         };
 
-        array<string, 6> LANGUAGE_RESERVED_WORDS = {
+        array<string, 7> LANGUAGE_RESERVED_WORDS = {
             Lexemes::LINK,
             Lexemes::CAPSULE,
             Lexemes::IF,
             Lexemes::ELSE,
             Lexemes::STRUCT,
+            Lexemes::ENUM,
             Lexemes::RETURN
         };
 

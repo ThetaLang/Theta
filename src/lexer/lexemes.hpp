@@ -64,6 +64,7 @@ namespace Lexemes {
     const string IF = "if";
     const string ELSE = "else";
     const string STRUCT = "struct";
+    const string ENUM = "enum";
     const string RETURN = "return";
     const string TRUE = "true";
     const string FALSE = "false";

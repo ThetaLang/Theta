@@ -2163,4 +2163,127 @@ TEST_CASE("ThetaParser") {
         REQUIRE(number2->getLiteralValue() == "3");
     }
 
+    SECTION("Can parse enum declaration as a dictionary") {
+        string source = R"(
+            enum Level {
+                :LOW
+                :MEDIUM
+                :HIGH
+            }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode != nullptr);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "Level");
+
+        shared_ptr<DictionaryNode> dictNode = dynamic_pointer_cast<DictionaryNode>(assignmentNode->getRight());
+        REQUIRE(dictNode != nullptr);
+        REQUIRE(dictNode->getNodeType() == ASTNode::Types::DICTIONARY);
+        REQUIRE(dictNode->getElements().size() == 3);
+
+        // Check :LOW
+        shared_ptr<TupleNode> tuple1 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[0]);
+        REQUIRE(tuple1 != nullptr);
+        REQUIRE(tuple1->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tuple1->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(tuple1->getRight()->getNodeType() == ASTNode::Types::SYMBOL);
+
+        shared_ptr<SymbolNode> symbol1 = dynamic_pointer_cast<SymbolNode>(tuple1->getLeft());
+        REQUIRE(symbol1 != nullptr);
+        REQUIRE(symbol1->getSymbol() == ":LOW");
+
+        shared_ptr<SymbolNode> symbol2 = dynamic_pointer_cast<SymbolNode>(tuple1->getRight());
+        REQUIRE(symbol2 != nullptr);
+        REQUIRE(symbol2->getSymbol() == ":LOW");
+
+        // Check :MEDIUM
+        shared_ptr<TupleNode> tuple2 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[1]);
+        REQUIRE(tuple2 != nullptr);
+        REQUIRE(tuple2->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tuple2->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(tuple2->getRight()->getNodeType() == ASTNode::Types::SYMBOL);
+
+        shared_ptr<SymbolNode> symbol3 = dynamic_pointer_cast<SymbolNode>(tuple2->getLeft());
+        REQUIRE(symbol3 != nullptr);
+        REQUIRE(symbol3->getSymbol() == ":MEDIUM");
+
+        shared_ptr<SymbolNode> symbol4 = dynamic_pointer_cast<SymbolNode>(tuple2->getRight());
+        REQUIRE(symbol4 != nullptr);
+        REQUIRE(symbol4->getSymbol() == ":MEDIUM");
+
+        // Check :HIGH
+        shared_ptr<TupleNode> tuple3 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[2]);
+        REQUIRE(tuple3 != nullptr);
+        REQUIRE(tuple3->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tuple3->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(tuple3->getRight()->getNodeType() == ASTNode::Types::SYMBOL);
+
+        shared_ptr<SymbolNode> symbol5 = dynamic_pointer_cast<SymbolNode>(tuple3->getLeft());
+        REQUIRE(symbol5 != nullptr);
+        REQUIRE(symbol5->getSymbol() == ":HIGH");
+
+        shared_ptr<SymbolNode> symbol6 = dynamic_pointer_cast<SymbolNode>(tuple3->getRight());
+        REQUIRE(symbol6 != nullptr);
+        REQUIRE(symbol6->getSymbol() == ":HIGH");
+    }
+
+    SECTION("Can parse capsule with function declaration containing a return statement") {
+        string source = R"(
+            capsule Math {
+                x<String> = () -> {
+                    return true
+                }
+            }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CAPSULE);
+
+        shared_ptr<CapsuleNode> capsuleNode = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());
+        REQUIRE(capsuleNode != nullptr);
+        REQUIRE(capsuleNode->getName() == "Math");
+
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(capsuleNode->getValue());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getElements().size() == 1);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(blockNode->getElements()[0]);
+        REQUIRE(assignmentNode != nullptr);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
+
+        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        REQUIRE(funcDeclNode != nullptr);
+        REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
+
+        shared_ptr<BlockNode> funcBlockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(funcBlockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(funcBlockNode->getElements().size() == 1);
+
+        shared_ptr<ReturnNode> returnNode = dynamic_pointer_cast<ReturnNode>(funcBlockNode->getElements()[0]);
+        REQUIRE(returnNode != nullptr);
+        REQUIRE(returnNode->getNodeType() == ASTNode::Types::RETURN);
+
+        shared_ptr<LiteralNode> returnValueNode = dynamic_pointer_cast<LiteralNode>(returnNode->getValue());
+        REQUIRE(returnValueNode != nullptr);
+        REQUIRE(returnValueNode->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(returnValueNode->getLiteralValue() == "true");
+    }
 }
