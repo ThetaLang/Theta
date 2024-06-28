@@ -95,6 +95,8 @@ class ThetaCLI {
 
         static void repl() {
             cout << "Interactive Theta" << endl;
+            printLanguageVersion();
+            cout << "Report issues at " + makeLink("https://www.github.com/alexdovzhanyn/ThetaLang/issues") << endl;
             cout << "CTRL+D to exit" << endl << endl;
 
             char* input;
@@ -113,5 +115,9 @@ class ThetaCLI {
             }
 
             cout << endl << endl << "Exiting ITH..." << endl;
+        }
+
+        static string makeLink(string url, string text = "") {
+            return "\x1B]8;;" +  url + "\x1B\\" + (text != "" ? text : url) + "\x1B]8;;\x1B\\";
         }
 };
