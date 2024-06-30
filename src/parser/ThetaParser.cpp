@@ -10,6 +10,7 @@
 #include "../util/Exceptions.hpp"
 #include "ast/AssignmentNode.hpp"
 #include "ast/ControlFlowNode.hpp"
+#include "ast/EnumNode.hpp"
 #include "ast/FunctionInvocationNode.hpp"
 #include "ast/ReturnNode.hpp"
 #include "ast/StructDeclarationNode.hpp"
@@ -256,8 +257,8 @@ class ThetaParser {
             if (match(Token::Types::KEYWORD, Lexemes::ENUM)) {
                 match(Token::Types::IDENTIFIER);
 
-                shared_ptr<ASTNode> root = make_shared<AssignmentNode>();
-                root->setLeft(parseIdentifier());
+                shared_ptr<EnumNode> root = make_shared<EnumNode>();
+                root->setIdentifier(parseIdentifier());
 
                 if (!match(Token::Types::BRACE_OPEN)) {
                     ThetaCompiler::getInstance().addException(
@@ -296,17 +297,10 @@ class ThetaParser {
 
                     if (!node) break;
 
-                    shared_ptr<ASTNode> kvPair = make_shared<TupleNode>();
-                    kvPair->setLeft(node);
-                    kvPair->setRight(node);
-
-                    enumVals.push_back(kvPair);
+                    enumVals.push_back(node);
                 }
 
-                shared_ptr<ASTNodeList> d = make_shared<DictionaryNode>();
-                d->setElements(enumVals);
-
-                root->setRight(d);
+                root->setElements(enumVals);
 
                 return root;
             }
