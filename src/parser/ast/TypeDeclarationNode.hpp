@@ -20,7 +20,14 @@ class TypeDeclarationNode : public ASTNode {
             oss << "{";
             oss << "\"type\": \"" << getNodeTypePretty() << "\"";
             oss << ",\"declaredType\": \"" << type << "\"";
-            oss << ",\"value\": " << (value ? value->toJSON() : "null");
+
+            if (left) {
+                oss << ",\"left\": " << left->toJSON();
+                oss << ",\"right\": " << (right ? right->toJSON() : "null");
+            } else {
+                oss << ",\"value\": " << (value ? value->toJSON() : "null");
+            }
+
             oss << "}";
 
             return oss.str();

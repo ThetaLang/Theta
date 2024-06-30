@@ -644,7 +644,14 @@ class ThetaParser {
             shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(currentToken.getLexeme());
 
             if (match(Token::Types::OPERATOR, Lexemes::LT)) {
-                typ->setValue(parseType());
+                shared_ptr<ASTNode> l = parseType();
+
+                if (match(Token::Types::COMMA)) {
+                    typ->setLeft(l);
+                    typ->setRight(parseType());
+                } else {
+                    typ->setValue(l);
+                }
 
                 match(Token::Types::OPERATOR, Lexemes::GT);
             }

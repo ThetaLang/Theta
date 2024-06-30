@@ -85,8 +85,7 @@ Messaging.MessageRequest
 ```
 
 ### 2.3. Enums
-Enumerated types with custom values represented as symbols. Internally, enums are syntactic sugar
-over a dictionary where both keys and values are the same symbol. Enums must be in Pascal case. Enums
+Enumerated types with custom values represented as symbols. Enum names must be in Pascal case. Enums
 are scoped the same as variables, therefore an enum defined in a capsule will be accessible from outside the capsule,
 while an enum defined within a function will be scoped to that function.
 

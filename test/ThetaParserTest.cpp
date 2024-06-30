@@ -720,7 +720,7 @@ TEST_CASE("ThetaParser") {
     }
 
     SECTION("Can parse dict assignment with nested dicts") {
-        string source = "x<Dict> = { bob: { age: 40, wife: 'Janet', bald: true }, mike: { age: 20, wife: '', bald: false }}";
+        string source = "x<Dict<Person>> = { bob: { age: 40, wife: 'Janet', bald: true }, mike: { age: 20, wife: '', bald: false }}";
         lexer.lex(source);
 
         shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
@@ -888,6 +888,53 @@ TEST_CASE("ThetaParser") {
         REQUIRE(expression2->getNodeType() == ASTNode::Types::STRING_LITERAL);
         shared_ptr<LiteralNode> expressionString2 = dynamic_pointer_cast<LiteralNode>(expression2);
         REQUIRE(expressionString2->getLiteralValue() == "'goodbye'");
+    }
+
+    SECTION("Can parse tuple assignment") {
+        string source = R"(
+            x<Tuple<Symbol, String>> = { :ok, 'Success' }
+        )";
+        lexer.lex(source);
+
+        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
+            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
+        );
+
+        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getLinks().size() == 0);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
+        REQUIRE(assignmentNode != nullptr);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
+
+        shared_ptr<TypeDeclarationNode> typeNode = dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getValue());
+        REQUIRE(typeNode != nullptr);
+        REQUIRE(typeNode->getNodeType() == ASTNode::Types::TYPE_DECLARATION);
+        REQUIRE(typeNode->getType() == "Tuple");
+
+        shared_ptr<TypeDeclarationNode> leftTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getLeft());
+        REQUIRE(leftTypeNode != nullptr);
+        REQUIRE(leftTypeNode->getType() == "Symbol");
+
+        shared_ptr<TypeDeclarationNode> rightTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getRight());
+        REQUIRE(rightTypeNode != nullptr);
+        REQUIRE(rightTypeNode->getType() == "String");
+
+        shared_ptr<TupleNode> tupleNode = dynamic_pointer_cast<TupleNode>(assignmentNode->getRight());
+        REQUIRE(tupleNode != nullptr);
+        REQUIRE(tupleNode->getNodeType() == ASTNode::Types::TUPLE);
+
+        shared_ptr<SymbolNode> firstNode = dynamic_pointer_cast<SymbolNode>(tupleNode->getLeft());
+        REQUIRE(firstNode != nullptr);
+        REQUIRE(firstNode->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(firstNode->getSymbol() == ":ok");
+
+        shared_ptr<LiteralNode> secondNode = dynamic_pointer_cast<LiteralNode>(tupleNode->getRight());
+        REQUIRE(secondNode != nullptr);
+        REQUIRE(secondNode->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(secondNode->getLiteralValue() == "'Success'");
     }
     // --------- ASSIGNMENT ----------
 
