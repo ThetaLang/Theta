@@ -1,8 +1,9 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch2/catch_amalgamated.hpp"
-#include "../src/lexer/ThetaLexer.cpp"
+#include "../src/lexer/Lexer.cpp"
 
 using namespace std;
+using namespace Theta;
 
 void verifyTokens(deque<Token> &resultTokens, vector<pair<Token::Types, string>> &expectedTokens) {
     REQUIRE(resultTokens.size() == expectedTokens.size());
@@ -13,8 +14,8 @@ void verifyTokens(deque<Token> &resultTokens, vector<pair<Token::Types, string>>
     }
 }
 
-TEST_CASE("ThetaLexer") {
-    ThetaLexer lexer;
+TEST_CASE("Lexer") {
+    Theta::Lexer lexer;
 
     // --------- LITERALS ----------
     SECTION("Can tokenize numbers with decimals") {

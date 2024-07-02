@@ -7,42 +7,44 @@
 
 using namespace std;
 
-class FunctionDeclarationNode : public ASTNode {
-    public:
-        shared_ptr<ASTNodeList> parameters;
-        shared_ptr<ASTNode> definition;
+namespace Theta {
+    class FunctionDeclarationNode : public ASTNode {
+        public:
+            shared_ptr<ASTNodeList> parameters;
+            shared_ptr<ASTNode> definition;
 
-        FunctionDeclarationNode() : ASTNode(ASTNode::Types::FUNCTION_DECLARATION) {};
+            FunctionDeclarationNode() : ASTNode(ASTNode::Types::FUNCTION_DECLARATION) {};
 
-        void setParameters(shared_ptr<ASTNodeList> params) { parameters = params; }
+            void setParameters(shared_ptr<ASTNodeList> params) { parameters = params; }
 
-        shared_ptr<ASTNodeList> getParameters() { return parameters; }
+            shared_ptr<ASTNodeList> getParameters() { return parameters; }
 
-        void setDefinition(shared_ptr<ASTNode> def) { definition = def; }
+            void setDefinition(shared_ptr<ASTNode> def) { definition = def; }
 
-        shared_ptr<ASTNode> getDefinition() { return definition; }
+            shared_ptr<ASTNode> getDefinition() { return definition; }
 
-        string toJSON() const override {
-            ostringstream oss;
+            string toJSON() const override {
+                ostringstream oss;
 
-            oss << "{";
-            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
-            oss << ", \"parameters\": [";
+                oss << "{";
+                oss << "\"type\": \"" << getNodeTypePretty() << "\"";
+                oss << ", \"parameters\": [";
 
-            for (int i = 0; i < parameters->getElements().size(); i++) {
-                if (i > 0) {
-                    oss << ", ";
+                for (int i = 0; i < parameters->getElements().size(); i++) {
+                    if (i > 0) {
+                        oss << ", ";
+                    }
+
+                    oss << (parameters->getElements()[i] ? parameters->getElements()[i]->toJSON() : "null");
                 }
 
-                oss << (parameters->getElements()[i] ? parameters->getElements()[i]->toJSON() : "null");
+                oss << "] ";
+
+                oss << ", \"definition\": " + (definition ? definition->toJSON() : "null");
+
+                oss << "}";
+
+                return oss.str();
             }
-
-            oss << "] ";
-
-            oss << ", \"definition\": " + (definition ? definition->toJSON() : "null");
-
-            oss << "}";
-
-            return oss.str();
-        }
-};
+    };
+}

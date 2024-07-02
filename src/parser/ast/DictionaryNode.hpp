@@ -7,7 +7,9 @@
 
 using namespace std;
 
-class DictionaryNode : public ASTNodeList {
-    public:
-        DictionaryNode() : ASTNodeList(ASTNode::Types::DICTIONARY) {};
-};
+namespace Theta {
+    class DictionaryNode : public ASTNodeList {
+        public:
+            DictionaryNode() : ASTNodeList(ASTNode::Types::DICTIONARY) {};
+    };
+}

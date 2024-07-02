@@ -9,37 +9,39 @@
 
 using namespace std;
 
-class FunctionInvocationNode : public ASTNode {
-    public:
-        FunctionInvocationNode() : ASTNode(ASTNode::Types::FUNCTION_INVOCATION) {};
+namespace Theta {
+    class FunctionInvocationNode : public ASTNode {
+        public:
+            FunctionInvocationNode() : ASTNode(ASTNode::Types::FUNCTION_INVOCATION) {};
 
-        shared_ptr<ASTNode> identifier;
-        shared_ptr<ASTNodeList> arguments;
+            shared_ptr<ASTNode> identifier;
+            shared_ptr<ASTNodeList> arguments;
 
-        void setIdentifier(shared_ptr<ASTNode> ident) { identifier = ident; }
+            void setIdentifier(shared_ptr<ASTNode> ident) { identifier = ident; }
 
-        shared_ptr<ASTNode> getIdentifier() { return identifier; }
+            shared_ptr<ASTNode> getIdentifier() { return identifier; }
 
-        void setParameters(shared_ptr<ASTNodeList> params) { arguments = params; }
+            void setParameters(shared_ptr<ASTNodeList> params) { arguments = params; }
 
-        shared_ptr<ASTNodeList> getParameters() { return arguments; }
+            shared_ptr<ASTNodeList> getParameters() { return arguments; }
 
-        string toJSON() const override {
-            std::ostringstream oss;
-            oss << "{";
-            oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
-            oss << "\"function\": " << (identifier ? identifier->toJSON() : "null") << ", ";
-            oss << "\"arguments\": [";
-            for (int i = 0; i < arguments->getElements().size(); i++) {
-                if (i > 0) {
-                    oss << ", ";
+            string toJSON() const override {
+                std::ostringstream oss;
+                oss << "{";
+                oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
+                oss << "\"function\": " << (identifier ? identifier->toJSON() : "null") << ", ";
+                oss << "\"arguments\": [";
+                for (int i = 0; i < arguments->getElements().size(); i++) {
+                    if (i > 0) {
+                        oss << ", ";
+                    }
+
+                    oss << (arguments->getElements()[i] ? arguments->getElements()[i]->toJSON() : "null");
                 }
 
-                oss << (arguments->getElements()[i] ? arguments->getElements()[i]->toJSON() : "null");
+                oss << "] ";
+                oss << "}";
+                return oss.str();
             }
-
-            oss << "] ";
-            oss << "}";
-            return oss.str();
-        }
-};
+    };
+}

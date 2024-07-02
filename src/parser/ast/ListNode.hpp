@@ -7,7 +7,9 @@
 
 using namespace std;
 
-class ListNode : public ASTNodeList {
-    public:
-        ListNode() : ASTNodeList(ASTNode::Types::LIST) {};
-};
+namespace Theta {
+    class ListNode : public ASTNodeList {
+        public:
+            ListNode() : ASTNodeList(ASTNode::Types::LIST) {};
+    };
+}
