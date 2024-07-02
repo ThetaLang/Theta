@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
+#include "CodeGen.hpp"
 #include "ThetaCompiler.hpp"
 #include "../lexer/ThetaLexer.cpp"
 #include "../parser/ThetaParser.cpp"
@@ -33,9 +34,11 @@ void ThetaCompiler::compile(string entrypoint, string outputFile, bool emitToken
 shared_ptr<ASTNode> ThetaCompiler::compileDirect(string source) {
     shared_ptr<ASTNode> ast = buildAST(source, "ith");
 
-    for (int i = 0; i < encounteredExceptions.size(); i++) {
-        encounteredExceptions[i].display();
-    }
+    // for (int i = 0; i < encounteredExceptions.size(); i++) {
+    //     encounteredExceptions[i].display();
+    // }
+
+    Theta::CodeGen::generate();
 
     return ast;
 }
