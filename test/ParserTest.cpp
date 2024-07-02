@@ -1,16 +1,17 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch2/catch_amalgamated.hpp"
-#include "../src/lexer/ThetaLexer.cpp"
-#include "../src/parser/ThetaParser.cpp"
-#include "../src/compiler/ThetaCompiler.hpp"
+#include "../src/lexer/Lexer.cpp"
+#include "../src/parser/Parser.cpp"
+#include "../src/compiler/Compiler.hpp"
 
 using namespace std;
+using namespace Theta;
 
-TEST_CASE("ThetaParser") {
-    ThetaLexer lexer;
-    ThetaParser parser;
+TEST_CASE("Parser") {
+    Theta::Lexer lexer;
+    Theta::Parser parser;
 
-    shared_ptr<map<string, string>> filesByCapsuleName = ThetaCompiler::getInstance().filesByCapsuleName;
+    shared_ptr<map<string, string>> filesByCapsuleName = Theta::Compiler::getInstance().filesByCapsuleName;
 
     // --------- PRIMITIVES ----------
     SECTION("Can parse numbers with decimals") {

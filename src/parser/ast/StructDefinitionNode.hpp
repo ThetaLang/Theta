@@ -7,9 +7,11 @@
 
 using namespace std;
 
-class StructDefinitionNode : public ASTNodeList {
-    public:
-        string name;
+namespace Theta {
+    class StructDefinitionNode : public ASTNodeList {
+        public:
+            string name;
 
-        StructDefinitionNode(string n) : ASTNodeList(ASTNode::Types::STRUCT_DEFINITION), name(n) {};
-};
+            StructDefinitionNode(string n) : ASTNodeList(ASTNode::Types::STRUCT_DEFINITION), name(n) {};
+    };
+}

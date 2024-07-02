@@ -3,7 +3,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    ThetaCLI::parseCommand(argc, argv);
+    Theta::CLI::parseCommand(argc, argv);
 
     return 0;
 }

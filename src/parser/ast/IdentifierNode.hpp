@@ -6,23 +6,25 @@
 
 using namespace std;
 
-class IdentifierNode : public ASTNode {
-    public:
-        string identifier;
+namespace Theta {
+    class IdentifierNode : public ASTNode {
+        public:
+            string identifier;
 
-        IdentifierNode(string ident) : identifier(ident), ASTNode(ASTNode::Types::IDENTIFIER) {};
+            IdentifierNode(string ident) : identifier(ident), ASTNode(ASTNode::Types::IDENTIFIER) {};
 
-        string getIdentifier() { return identifier; }
+            string getIdentifier() { return identifier; }
 
-        string toJSON() const override {
-            ostringstream oss;
+            string toJSON() const override {
+                ostringstream oss;
 
-            oss << "{";
-            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
-            oss << ", \"value\": \"" << identifier << "\"";
-            oss << ", \"variableType\": " << (value ? value->toJSON() : "null");
-            oss << "}";
+                oss << "{";
+                oss << "\"type\": \"" << getNodeTypePretty() << "\"";
+                oss << ", \"value\": \"" << identifier << "\"";
+                oss << ", \"variableType\": " << (value ? value->toJSON() : "null");
+                oss << "}";
 
-            return oss.str();
-        }
-};
+                return oss.str();
+            }
+    };
+}

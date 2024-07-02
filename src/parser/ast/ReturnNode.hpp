@@ -6,18 +6,20 @@
 
 using namespace std;
 
-class ReturnNode : public ASTNode {
-    public:
-        ReturnNode() : ASTNode(ASTNode::Types::RETURN) {};
+namespace Theta {
+    class ReturnNode : public ASTNode {
+        public:
+            ReturnNode() : ASTNode(ASTNode::Types::RETURN) {};
 
-        string toJSON() const override {
-            ostringstream oss;
+            string toJSON() const override {
+                ostringstream oss;
 
-            oss << "{";
-            oss << "\"type\": \"" << getNodeTypePretty() << "\"";
-            oss << ", \"value\": " << (value ? value->toJSON() : "null");
-            oss << "}";
+                oss << "{";
+                oss << "\"type\": \"" << getNodeTypePretty() << "\"";
+                oss << ", \"value\": " << (value ? value->toJSON() : "null");
+                oss << "}";
 
-            return oss.str();
-        }
-};
+                return oss.str();
+            }
+    };
+}
