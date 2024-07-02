@@ -12,6 +12,7 @@ namespace Theta {
             static void parseCommand(int argc, char* argv[]) {
                 bool isEmitTokens = false;
                 bool isEmitAST = false;
+                bool isEmitWAT = false;
                 string sourceFile;
                 string outFile;
 
@@ -36,6 +37,7 @@ namespace Theta {
                         }
                         else if (arg == "--emitTokens") isEmitTokens = true;
                         else if (arg == "--emitAST") isEmitAST = true;
+                        else if (arg == "--emitWAT") isEmitWAT = true;
                         else if (i == argc - 1) sourceFile = arg;
                         else validateOption(arg);
 
@@ -52,9 +54,11 @@ namespace Theta {
 
                         if (sourceFile[i + 1] == '.') reachedDelimiter = true;
                     }
+
+                    outFile += ".wasm";
                 }
 
-                Theta::Compiler::getInstance().compile(sourceFile, outFile, isEmitTokens, isEmitAST);
+                Theta::Compiler::getInstance().compile(sourceFile, outFile, isEmitTokens, isEmitAST, isEmitWAT);
             }
 
        private:
@@ -69,6 +73,7 @@ namespace Theta {
                 cout << "  -o <output_file>               Specify the output file name." << endl;
                 cout << "  --emitTokens                   Emit the tokenized representation of the source file produced by the lexer." << endl;
                 cout << "  --emitAST                      Emit the Abstract Syntax Tree (AST) representation produced by the parser." << endl;
+                cout << "  --emitWAT                      Emit the WebAssembly Text format (WAT) representation produced." << endl;
                 cout << "  --help                         Display this help message and exit." << endl;
                 cout << "  --version                      Display the currently installed Theta language version and exit." << endl;
             }
@@ -83,6 +88,7 @@ namespace Theta {
                     "--help",
                     "--emitTokens",
                     "--emitAST",
+                    "--emitWAT",
                     "-o"
                 };
 
@@ -106,10 +112,7 @@ namespace Theta {
                     if (*input) add_history(input);
 
                     // TODO: Change this to get execution result once we get an interpreter built out
-                    shared_ptr<ASTNode> compiled = Theta::Compiler::getInstance().compileDirect(input);
-
-                    cout << "-> " + compiled->toJSON() << endl << endl;
-
+                    Theta::Compiler::getInstance().compileDirect(input);
                     Theta::Compiler::getInstance().clearExceptions();
 
                     free(input);

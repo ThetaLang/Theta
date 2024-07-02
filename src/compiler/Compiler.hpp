@@ -8,9 +8,11 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
+#include <binaryen-c.h>
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/LinkNode.hpp"
 #include "../util/Exceptions.hpp"
+#include "CodeGen.hpp"
 
 using namespace std;
 
@@ -27,7 +29,7 @@ namespace Theta {
              * @param isEmitTokens Toggles whether or not the lexer tokens should be output to the console
              * @param isEmitAST Toggles whether or not the AST should be output to the console
              */
-            void compile(string entrypoint, string outputFile, bool isEmitTokens = false, bool isEmitAST = false);
+            void compile(string entrypoint, string outputFile, bool isEmitTokens = false, bool isEmitAST = false, bool isEmitWAT = false);
 
             /**
              * @brief Compiles the Theta source code starting from the specified entry point.
@@ -96,8 +98,11 @@ namespace Theta {
 
             bool isEmitTokens = false;
             bool isEmitAST = false;
+            bool isEmitWAT = false;
             vector<Theta::CompilationError> encounteredExceptions;
             map<string, shared_ptr<Theta::LinkNode>> parsedLinkASTs;
+
+            void writeModuleToFile(BinaryenModuleRef &module, string file);
 
             /**
              * @brief Discovers all capsules in the Theta source code.
