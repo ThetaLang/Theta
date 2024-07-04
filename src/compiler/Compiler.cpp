@@ -38,6 +38,8 @@ namespace Theta {
             BinaryenModulePrint(module);
         }
 
+        // cout << "IS VALID MODULE? " + to_string(BinaryenModuleValidate(module)) << endl;
+
         writeModuleToFile(module, outputFile);
     }
 

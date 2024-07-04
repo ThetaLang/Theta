@@ -461,7 +461,14 @@ namespace Theta {
 
                     auto it = tokenTypeToAstTypeMap.find(currentToken.getType());
 
-                    return make_shared<LiteralNode>(it->second, currentToken.getLexeme());
+                    string value = currentToken.getLexeme();
+
+                    // Pulls the string out of quotation marks
+                    if (currentToken.getType() == Token::Types::STRING) {
+                        value = value.substr(1, value.length() - 2);
+                    }
+
+                    return make_shared<LiteralNode>(it->second, value);
                 }
 
                 if (match(Token::Types::IDENTIFIER)) {

@@ -1,38 +1,12 @@
 #include "CodeGen.hpp"
-#include <memory>
 
 namespace Theta {
-    // void CodeGen::gen2() {
-    //     cout << "Hello world" << endl;
-
-    //     BinaryenModuleRef module = BinaryenModuleCreate();
-
-    //     // Create a function type for  i32 (i32, i32)
-    //     BinaryenType ii[2] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
-    //     BinaryenType params = BinaryenTypeCreate(ii, 2);
-    //     BinaryenType results = BinaryenTypeInt32();
-
-    //     // Get the 0 and 1 arguments, and add them
-    //     BinaryenExpressionRef x = BinaryenLocalGet(module, 0, BinaryenTypeInt32()),
-    //                         y = BinaryenLocalGet(module, 1, BinaryenTypeInt32());
-    //     BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
-
-    //     // Create the add function
-    //     // Note: no additional local variables
-    //     // Note: no basic blocks here, we are an AST. The function body is just an
-    //     // expression node.
-    //     BinaryenFunctionRef adder =
-    //     BinaryenAddFunction(module, "adder", params, results, NULL, 0, add);
-
-    //     // Print it out
-    //     BinaryenModulePrint(module);
-
-    //     // Clean up the module, which owns all the objects we created above
-    //     BinaryenModuleDispose(module);
-    // }
-
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
         BinaryenModuleRef module = BinaryenModuleCreate();
+
+        BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
+
+        StandardLibrary::registerFunctions(module);
 
         generate(ast, module);
 
@@ -46,37 +20,97 @@ namespace Theta {
             return generateBinaryOperation(dynamic_pointer_cast<BinaryOperationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::NUMBER_LITERAL) {
             return generateNumberLiteral(dynamic_pointer_cast<LiteralNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::STRING_LITERAL) {
+            return generateStringLiteral(dynamic_pointer_cast<LiteralNode>(node), module);
         }
 
         return nullptr;
     }
 
     BinaryenExpressionRef CodeGen::generateBinaryOperation(shared_ptr<BinaryOperationNode> binOpNode, BinaryenModuleRef &module) {
-        BinaryenOp op;
-        if (binOpNode->getOperator() == "+") {
-            op = BinaryenAddInt32();
+        if (binOpNode->getOperator() == Lexemes::EXPONENT) {
+            return generateExponentOperation(binOpNode, module);
         }
+
+        BinaryenOp op = getBinaryenOpFromBinOpNode(binOpNode);
 
         auto left = generate(binOpNode->getLeft(), module);
         auto right = generate(binOpNode->getRight(), module);
 
-        if (std::holds_alternative<BinaryenLiteral>(left) && std::holds_alternative<BinaryenLiteral>(right)) {
-            BinaryenExpressionRef leftTemp = BinaryenConst(module, std::get<BinaryenLiteral>(left));
-            BinaryenExpressionRef rightTemp = BinaryenConst(module, std::get<BinaryenLiteral>(right));
+        BinaryenExpressionRef binaryenLeft;
+        BinaryenExpressionRef binaryenRight;
 
-            return BinaryenBinary(
-                module,
-                op,
-                leftTemp,
-                rightTemp
-            );
-        } else {
+        if (std::holds_alternative<BinaryenLiteral>(left)) {
+            binaryenLeft = BinaryenConst(module, std::get<BinaryenLiteral>(left));
+        } else if (std::holds_alternative<BinaryenExpressionRef>(left)) {
+            binaryenLeft = std::get<BinaryenExpressionRef>(left);
+        }
+
+        if (std::holds_alternative<BinaryenLiteral>(right)) {
+            binaryenRight = BinaryenConst(module, std::get<BinaryenLiteral>(right));
+        } else if (std::holds_alternative<BinaryenExpressionRef>(right)) {
+            binaryenRight =  std::get<BinaryenExpressionRef>(right);
+        }
+
+        if (!binaryenLeft || !binaryenRight) {
             throw std::runtime_error("Invalid operand types for binary operation");
         }
+
+        // TODO: This wont work if we have nested operations on either side
+        if (binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL) {
+            return BinaryenStringConcat(
+                module,
+                binaryenLeft,
+                binaryenRight
+            );
+        }
+
+        return BinaryenBinary(
+            module,
+            op,
+            binaryenLeft,
+            binaryenRight
+        );
     }
 
     BinaryenLiteral CodeGen::generateNumberLiteral(shared_ptr<LiteralNode> literalNode, BinaryenModuleRef &module) {
-        return BinaryenLiteralInt32(stoi(literalNode->getLiteralValue()));
+        return BinaryenLiteralInt64(stoi(literalNode->getLiteralValue()));
+    }
+
+    BinaryenExpressionRef CodeGen::generateStringLiteral(shared_ptr<LiteralNode> literalNode, BinaryenModuleRef &module) {
+        return BinaryenStringConst(module, literalNode->getLiteralValue().c_str());
+    }
+
+    BinaryenExpressionRef CodeGen::generateExponentOperation(shared_ptr<BinaryOperationNode> binOpNode, BinaryenModuleRef &module) {
+        auto left = generate(binOpNode->getLeft(), module);
+        auto right = generate(binOpNode->getRight(), module);
+
+        BinaryenExpressionRef binaryenLeft;
+        BinaryenExpressionRef binaryenRight;
+
+        if (std::holds_alternative<BinaryenLiteral>(left)) {
+            binaryenLeft = BinaryenConst(module, std::get<BinaryenLiteral>(left));
+        } else if (std::holds_alternative<BinaryenExpressionRef>(left)) {
+            binaryenLeft = std::get<BinaryenExpressionRef>(left);
+        }
+
+        if (std::holds_alternative<BinaryenLiteral>(right)) {
+            binaryenRight = BinaryenConst(module, std::get<BinaryenLiteral>(right));
+        } else if (std::holds_alternative<BinaryenExpressionRef>(right)) {
+            binaryenRight =  std::get<BinaryenExpressionRef>(right);
+        }
+
+        if (!binaryenLeft || !binaryenRight) {
+            throw std::runtime_error("Invalid operand types for binary operation");
+        }
+
+        return BinaryenCall(
+            module,
+            "Theta.Math.pow",
+            (BinaryenExpressionRef[]){ binaryenLeft, binaryenRight },
+            2,
+            BinaryenTypeInt64()
+        );
     }
 
     int CodeGen::generateSource(shared_ptr<SourceNode> sourceNode, BinaryenModuleRef &module) {
@@ -88,7 +122,8 @@ namespace Theta {
                     module,
                     "main",
                     BinaryenTypeNone(),
-                    BinaryenTypeInt32(),
+                    // BinaryenTypeStringref(),
+                    BinaryenTypeInt64(),
                     NULL,
                     0,
                     std::get<BinaryenExpressionRef>(body)
@@ -107,4 +142,21 @@ namespace Theta {
         return 0;
     }
 
+
+
+
+
+
+
+
+
+    BinaryenOp CodeGen::getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> binOpNode) {
+        string op = binOpNode->getOperator();
+        if (op == Lexemes::PLUS) return BinaryenAddInt64();
+        if (op == Lexemes::MINUS) return BinaryenSubInt64();
+        if (op == Lexemes::DIVISION) return BinaryenDivSInt64();
+        if (op == Lexemes::TIMES) return BinaryenMulInt64();
+        if (op == Lexemes::MODULO) return BinaryenRemSInt64();
+        // if (op == "**") return
+    }
 }
