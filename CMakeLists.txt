@@ -38,8 +38,14 @@ add_executable(theta ${SRC_FILES} ${MAIN_SRC})
 # Add the readline library
 target_link_libraries(theta readline)
 
+# Add Binaryen
+add_subdirectory(${BINARYEN_DIR})
+
 # Include directories
-include_directories(${SRC_DIR} ${CATCH2_DIR})
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src)
+
+# Link Binaryen to the main target
+target_link_libraries(theta binaryen)
 
 # Create build directories if they don't exist
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/fixtures)
@@ -65,12 +71,6 @@ add_custom_target(copy-fixtures ALL
 
 # Install target to create a symlink
 install(CODE "execute_process(COMMAND ln -sf ${CMAKE_BINARY_DIR}/theta /usr/local/bin/theta)")
-
-# Add Binaryen
-add_subdirectory(${BINARYEN_DIR} EXCLUDE_FROM_ALL)
-
-# Link Binaryen to the main target
-target_link_libraries(theta binaryen)
 
 # Link Binaryen to the test targets
 foreach(TEST_SRC ${TEST_SRC_FILES})

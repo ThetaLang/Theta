@@ -20,15 +20,25 @@ namespace Theta {
         return instance;
     }
 
-    void Compiler::compile(string entrypoint, string outputFile, bool emitTokens, bool emitAST) {
+    void Compiler::compile(string entrypoint, string outputFile, bool emitTokens, bool emitAST, bool emitWAT) {
         isEmitTokens = emitTokens;
         isEmitAST = emitAST;
+        isEmitWAT = emitWAT;
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 
         for (int i = 0; i < encounteredExceptions.size(); i++) {
             encounteredExceptions[i].display();
         }
+
+        BinaryenModuleRef module = CodeGen::generateWasmFromAST(programAST);
+
+        if (isEmitWAT) {
+            cout << "Generated WAT for \"" + entrypoint + "\":" << endl;
+            BinaryenModulePrint(module);
+        }
+
+        writeModuleToFile(module, outputFile);
     }
 
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
@@ -37,6 +47,13 @@ namespace Theta {
         for (int i = 0; i < encounteredExceptions.size(); i++) {
             encounteredExceptions[i].display();
         }
+
+        BinaryenModuleRef module = CodeGen::generateWasmFromAST(ast);
+
+        cout << "-> " + ast->toJSON() << endl;
+        cout << "-> ";
+        BinaryenModulePrint(module);
+        cout << endl;
 
         return ast;
     }
@@ -142,5 +159,27 @@ namespace Theta {
         }
 
         return capsuleName;
+    }
+
+    void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {
+        // TODO: This isnt the right way to do this. This will only allow 4k to be written.
+        // Figure out a better way to decide on size
+        vector<char> buffer(4096);
+
+        size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+
+        ofstream outFile(fileName, std::ios::binary);
+        if (!outFile) {
+            throw std::runtime_error("Failed to open file for writing: " + fileName);
+        }
+
+        outFile.write(buffer.data(), written);
+        outFile.close();
+
+        if (!outFile.good()) {
+            throw std::runtime_error("Failed to write module to file: " + fileName);
+        }
+
+        cout << "Compilation successful. Output: " + fileName << endl;
     }
 }
