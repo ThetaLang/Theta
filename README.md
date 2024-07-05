@@ -54,7 +54,17 @@ This should display the current version of Theta.
   git checkout -b some-feature-branch
   ```
 3. **Make Changes**: Implement your changes and commit them to your branch.
-4. **Submit a Pull Request**: Push your changes to your fork and submit a pull request to this repository.
+4. **Run the Tests**: Run `./build/LexerTest` and `./build/ParserTest` to make sure your changes didn't break any existing functionality
+5. **Submit a Pull Request**: Push your changes to your fork and submit a pull request to this repository.
+
+### Testing Changes
+
+Theta has an Interactive Theta (ITH) REPL that can be accessed by just typing `theta` into the terminal. Right now all expressions must fit on
+one line, because the REPL expects a newline to mean that you want to submit and compile the code. The REPL doesn't yet interpret the code,
+it will just show you the AST that is generated.
+
+To test and run Theta code, you can use the [Theta Browser Playground](https://github.com/alexdovzhanyn/theta-browser-playground) which will
+run Theta code in the browser.
 
 ### Reporting Issues
 If you encounter any issues or have suggestions for improvements, please use the [Issues page](https://github.com/alexdovzhanyn/ThetaLang/issues) to report them. Thank you for contributing to Theta!
