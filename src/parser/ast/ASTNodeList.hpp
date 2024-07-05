@@ -17,6 +17,8 @@ namespace Theta {
 
             vector<shared_ptr<ASTNode>> getElements() { return elements; }
 
+            bool hasMany() override { return true; }
+
             string toJSON() const override {
                 ostringstream oss;
 

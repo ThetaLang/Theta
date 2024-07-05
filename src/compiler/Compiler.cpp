@@ -1,16 +1,6 @@
-#include <cstddef>
-#include <vector>
-#include <deque>
-#include <string>
-#include <map>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <filesystem>
 #include "Compiler.hpp"
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
-#include "../parser/ast/ASTNode.hpp"
 
 using namespace std;
 
@@ -31,6 +21,14 @@ namespace Theta {
             encounteredExceptions[i].display();
         }
 
+        bool isTypeValid = TypeChecker::checkAST(programAST);
+
+        if (isTypeValid) {
+            cout << "Types are valid" << endl;
+        } else {
+            cout << "TYPES NOT VALID" << endl;
+        }
+
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(programAST);
 
         if (isEmitWAT) {
@@ -46,6 +44,14 @@ namespace Theta {
 
         for (int i = 0; i < encounteredExceptions.size(); i++) {
             encounteredExceptions[i].display();
+        }
+
+        bool isTypeValid = TypeChecker::checkAST(ast);
+
+        if (isTypeValid) {
+            cout << "Types are valid" << endl;
+        } else {
+            cout << "TYPES NOT VALID" << endl;
         }
 
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(ast);

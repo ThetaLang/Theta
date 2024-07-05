@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <deque>
 #include <string>
@@ -12,6 +13,7 @@
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/LinkNode.hpp"
 #include "../util/Exceptions.hpp"
+#include "TypeChecker.hpp"
 #include "CodeGen.hpp"
 
 using namespace std;

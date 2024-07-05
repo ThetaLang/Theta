@@ -43,6 +43,7 @@ namespace Theta {
             shared_ptr<ASTNode> value;
             shared_ptr<ASTNode> left;
             shared_ptr<ASTNode> right;
+            shared_ptr<ASTNode> resolvedType;
 
             ASTNode(ASTNode::Types type) : nodeType(type), value(nullptr) {};
 
@@ -58,7 +59,13 @@ namespace Theta {
 
             virtual shared_ptr<ASTNode> getRight() { return right; }
 
+            virtual bool hasMany() { return false; }
+
             virtual ~ASTNode() = default;
+
+            void setResolvedType(shared_ptr<ASTNode> typeNode) { resolvedType = typeNode; }
+
+            shared_ptr<ASTNode> getResolvedType() { return resolvedType; }
 
             static string nodeTypeToString(ASTNode::Types nodeType) {
                 static map<ASTNode::Types, string> typesMap = {
