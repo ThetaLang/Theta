@@ -10,6 +10,55 @@ Theta is a strongly typed, functional, compiled programming language designed to
 
 ---
 
+## Contributing
+Thank you for your interest in contributing to the Theta programming language! Here are some guidelines to help you get started:
+
+### Prerequisites
+
+- **Git Submodules**: We use submodules to manage some dependencies. Make sure to initialize and update the submodules by running:
+  ```sh
+  git submodule update --init --recursive
+  ```
+- C++ Compiler: Ensure you have a compiler that supports C++17.
+
+### Building Theta
+
+1. **Clone the Repository**: If you haven't already, clone the repository:
+  ```sh
+  git clone https://github.com/alexdovzhanyn/ThetaLang.git
+  cd ThetaLang
+  ```
+2. **Initialize Submodules**: Initialize and update the submodules for dependencies like Binaryen:
+  ```sh
+  git submodule update --init --recursive
+  ```
+3. **Build the Project**: Run the build script to compile Theta:
+  ```sh
+  ./build.sh
+  ```
+
+### Verifying the Installation
+To verify that Theta has been installed correctly, run the following command:
+
+```sh
+theta --version
+```
+
+This should display the current version of Theta.
+
+### Contributing Code
+
+1. **Fork the Repository**: Create a fork of this repository on GitHub.
+2. **Create a Branch**: Create a new branch for your feature or bug fix:
+  ```sh
+  git checkout -b some-feature-branch
+  ```
+3. **Make Changes**: Implement your changes and commit them to your branch.
+4. **Submit a Pull Request**: Push your changes to your fork and submit a pull request to this repository.
+
+### Reporting Issues
+If you encounter any issues or have suggestions for improvements, please use the [Issues page](https://github.com/alexdovzhanyn/ThetaLang/issues) to report them. Thank you for contributing to Theta!
+
 ## 1. Basic Concepts
 
 ### 1.1. Lexical Elements
