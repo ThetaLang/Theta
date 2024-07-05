@@ -1,21 +1,23 @@
+#include "Compiler.hpp"
+
 #include <cstddef>
-#include <vector>
 #include <deque>
-#include <string>
-#include <map>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
-#include <filesystem>
-#include "Compiler.hpp"
+#include <string>
+#include <vector>
+
 #include "../lexer/Lexer.cpp"
-#include "../parser/Parser.cpp"
 #include "../parser/ast/ASTNode.hpp"
+#include "../parser/Parser.cpp"
 
 using namespace std;
 
 namespace Theta {
-    Compiler& Compiler::getInstance() {
+    Compiler &Compiler::getInstance() {
         static Compiler instance;
         return instance;
     }
@@ -94,17 +96,11 @@ namespace Theta {
         return parsedAST;
     }
 
-    void Compiler::addException(Theta::CompilationError e) {
-        encounteredExceptions.push_back(e);
-    }
+    void Compiler::addException(Theta::CompilationError e) { encounteredExceptions.push_back(e); }
 
-    vector<Theta::CompilationError> Compiler::getEncounteredExceptions() {
-        return encounteredExceptions;
-    }
+    vector<Theta::CompilationError> Compiler::getEncounteredExceptions() { return encounteredExceptions; }
 
-    void Compiler::clearExceptions() {
-        encounteredExceptions.clear();
-    }
+    void Compiler::clearExceptions() { encounteredExceptions.clear(); }
 
     shared_ptr<Theta::LinkNode> Compiler::getIfExistsParsedLinkAST(string capsuleName) {
         auto it = parsedLinkASTs.find(capsuleName);
@@ -119,7 +115,7 @@ namespace Theta {
     }
 
     void Compiler::discoverCapsules() {
-        for (const auto& entry : std::__fs::filesystem::recursive_directory_iterator(".")) {
+        for (const auto &entry : std::__fs::filesystem::recursive_directory_iterator(".")) {
             if (entry.is_regular_file() && entry.path().extension() == ".th") {
                 string capsuleName = findCapsuleName(entry.path().string());
 
@@ -142,7 +138,8 @@ namespace Theta {
 
         // Iterate over the source but stop once we find a capsule
         while (i + 6 < source.length() && !capsuleNameFound) {
-            if (source[i] == 'c' && source[i + 1] == 'a' && source[i + 2] == 'p' && source[i + 3] == 's' && source[i + 4] == 'u' && source[i + 5] == 'l' && source[i + 6] == 'e') {
+            if (source[i] == 'c' && source[i + 1] == 'a' && source[i + 2] == 'p' && source[i + 3] == 's' &&
+                source[i + 4] == 'u' && source[i + 5] == 'l' && source[i + 6] == 'e') {
                 capsuleNameFound = true;
                 i += 7;
             }

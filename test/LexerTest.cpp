@@ -1,6 +1,7 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include "catch2/catch_amalgamated.hpp"
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #include "../src/lexer/Lexer.cpp"
+
+#include "catch2/catch_amalgamated.hpp"
 
 using namespace std;
 using namespace Theta;
@@ -23,10 +24,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::NUMBER, "5" },
-            { Token::Types::OPERATOR, Lexemes::TIMES },
-            { Token::Types::NUMBER, "12.23" }
-        };
+            {Token::Types::NUMBER, "5"}, {Token::Types::OPERATOR, Lexemes::TIMES}, {Token::Types::NUMBER, "12.23"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -35,12 +33,10 @@ TEST_CASE("Lexer") {
         string source = "5100 / 10.23.4.";
         lexer.lex(source);
 
-        vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::NUMBER, "5100" },
-            { Token::Types::OPERATOR, Lexemes::DIVISION },
-            { Token::Types::NUMBER, "10.23" },
-            { Token::Types::IDENTIFIER, ".4." }
-        };
+        vector<pair<Token::Types, string>> expectedTokens = {{Token::Types::NUMBER, "5100"},
+                                                             {Token::Types::OPERATOR, Lexemes::DIVISION},
+                                                             {Token::Types::NUMBER, "10.23"},
+                                                             {Token::Types::IDENTIFIER, ".4."}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -49,9 +45,7 @@ TEST_CASE("Lexer") {
         string source = "'And his name is John Cena!'";
         lexer.lex(source);
 
-        vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::STRING, "'And his name is John Cena!'" }
-        };
+        vector<pair<Token::Types, string>> expectedTokens = {{Token::Types::STRING, "'And his name is John Cena!'"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -62,52 +56,49 @@ TEST_CASE("Lexer") {
         string source = "['Alex', 'Tony', 'John', 'Denis']";
         lexer.lex(source);
 
-        vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN },
-            { Token::Types::STRING, "'Alex'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'Tony'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'John'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'Denis'" },
-            { Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE }
-        };
+        vector<pair<Token::Types, string>> expectedTokens = {{Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN},
+                                                             {Token::Types::STRING, "'Alex'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'Tony'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'John'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'Denis'"},
+                                                             {Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
 
     SECTION("Can tokenize a nested list of strings") {
-        string source = "[['alex', 'john', ['jeremy', 'pablo']], ['clarinda'], 'den' + 'is', 'jessica', 'ellis']";
+        string source = "[['alex', 'john', ['jeremy', 'pablo']], ['clarinda'], 'den' + 'is', "
+                        "'jessica', 'ellis']";
         lexer.lex(source);
 
-        vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN },
-            { Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN },
-            { Token::Types::STRING, "'alex'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'john'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN },
-            { Token::Types::STRING, "'jeremy'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'pablo'" },
-            { Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE },
-            { Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN },
-            { Token::Types::STRING, "'clarinda'" },
-            { Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'den'" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::STRING, "'is'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'jessica'" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "'ellis'" },
-            { Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE }
-        };
+        vector<pair<Token::Types, string>> expectedTokens = {{Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN},
+                                                             {Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN},
+                                                             {Token::Types::STRING, "'alex'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'john'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN},
+                                                             {Token::Types::STRING, "'jeremy'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'pablo'"},
+                                                             {Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE},
+                                                             {Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::BRACKET_OPEN, Lexemes::BRACKET_OPEN},
+                                                             {Token::Types::STRING, "'clarinda'"},
+                                                             {Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'den'"},
+                                                             {Token::Types::OPERATOR, Lexemes::PLUS},
+                                                             {Token::Types::STRING, "'is'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'jessica'"},
+                                                             {Token::Types::COMMA, Lexemes::COMMA},
+                                                             {Token::Types::STRING, "'ellis'"},
+                                                             {Token::Types::BRACKET_CLOSE, Lexemes::BRACKET_CLOSE}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -120,10 +111,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::NUMBER, "100" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::NUMBER, "7" }
-        };
+            {Token::Types::NUMBER, "100"}, {Token::Types::OPERATOR, Lexemes::PLUS}, {Token::Types::NUMBER, "7"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -133,10 +121,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         vector<pair<Token::Types, string>> expectedTokens = {
-            { Token::Types::NUMBER, "42" },
-            { Token::Types::OPERATOR, Lexemes::MINUS },
-            { Token::Types::NUMBER, "11" }
-        };
+            {Token::Types::NUMBER, "42"}, {Token::Types::OPERATOR, Lexemes::MINUS}, {Token::Types::NUMBER, "11"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -146,10 +131,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::NUMBER, "10" },
-            { Token::Types::OPERATOR, Lexemes::TIMES },
-            { Token::Types::NUMBER, "11" }
-        };
+            {Token::Types::NUMBER, "10"}, {Token::Types::OPERATOR, Lexemes::TIMES}, {Token::Types::NUMBER, "11"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -159,10 +141,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::NUMBER, "100" },
-            { Token::Types::OPERATOR, Lexemes::DIVISION },
-            { Token::Types::NUMBER, "5" }
-        };
+            {Token::Types::NUMBER, "100"}, {Token::Types::OPERATOR, Lexemes::DIVISION}, {Token::Types::NUMBER, "5"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -172,10 +151,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::NUMBER, "2" },
-            { Token::Types::OPERATOR, Lexemes::EXPONENT },
-            { Token::Types::NUMBER, "3" }
-        };
+            {Token::Types::NUMBER, "2"}, {Token::Types::OPERATOR, Lexemes::EXPONENT}, {Token::Types::NUMBER, "3"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -185,10 +161,7 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::NUMBER, "9" },
-            { Token::Types::OPERATOR, Lexemes::MODULO },
-            { Token::Types::NUMBER, "2" }
-        };
+            {Token::Types::NUMBER, "9"}, {Token::Types::OPERATOR, Lexemes::MODULO}, {Token::Types::NUMBER, "2"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -201,12 +174,10 @@ TEST_CASE("Lexer") {
 
         REQUIRE(lexer.tokens.size() == 4);
 
-        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::BOOLEAN, Lexemes::TRUE },
-            { Token::Types::OPERATOR, Lexemes::AND },
-            { Token::Types::OPERATOR, Lexemes::NOT },
-            { Token::Types::BOOLEAN, Lexemes::FALSE }
-        };
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {{Token::Types::BOOLEAN, Lexemes::TRUE},
+                                                                            {Token::Types::OPERATOR, Lexemes::AND},
+                                                                            {Token::Types::OPERATOR, Lexemes::NOT},
+                                                                            {Token::Types::BOOLEAN, Lexemes::FALSE}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -215,12 +186,10 @@ TEST_CASE("Lexer") {
         string source = "!x || y";
         lexer.lex(source);
 
-        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::OPERATOR, Lexemes::NOT },
-            { Token::Types::IDENTIFIER, "x" },
-            { Token::Types::OPERATOR, Lexemes::OR },
-            { Token::Types::IDENTIFIER, "y" }
-        };
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {{Token::Types::OPERATOR, Lexemes::NOT},
+                                                                            {Token::Types::IDENTIFIER, "x"},
+                                                                            {Token::Types::OPERATOR, Lexemes::OR},
+                                                                            {Token::Types::IDENTIFIER, "y"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -232,13 +201,12 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "message" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::STRING, "'Hello, World!'" }
-        };
+            {Token::Types::IDENTIFIER, "message"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::STRING, "'Hello, World!'"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -248,13 +216,12 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "isOpen" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "Boolean" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::BOOLEAN, Lexemes::TRUE }
-        };
+            {Token::Types::IDENTIFIER, "isOpen"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "Boolean"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::BOOLEAN, Lexemes::TRUE}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -264,15 +231,14 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "total" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "Number" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::NUMBER, "5" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::NUMBER, "3" }
-        };
+            {Token::Types::IDENTIFIER, "total"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "Number"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::NUMBER, "5"},
+            {Token::Types::OPERATOR, Lexemes::PLUS},
+            {Token::Types::NUMBER, "3"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -284,17 +250,16 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::KEYWORD, Lexemes::IF },
-            { Token::Types::PAREN_OPEN, Lexemes::PAREN_OPEN },
-            { Token::Types::IDENTIFIER, "x" },
-            { Token::Types::OPERATOR, Lexemes::EQUALITY },
-            { Token::Types::NUMBER, "10" },
-            { Token::Types::PAREN_CLOSE, Lexemes::PAREN_CLOSE },
-            { Token::Types::BRACE_OPEN, Lexemes::BRACE_OPEN },
-            { Token::Types::KEYWORD, Lexemes::RETURN },
-            { Token::Types::BOOLEAN, Lexemes::TRUE },
-            { Token::Types::BRACE_CLOSE, Lexemes::BRACE_CLOSE }
-        };
+            {Token::Types::KEYWORD, Lexemes::IF},
+            {Token::Types::PAREN_OPEN, Lexemes::PAREN_OPEN},
+            {Token::Types::IDENTIFIER, "x"},
+            {Token::Types::OPERATOR, Lexemes::EQUALITY},
+            {Token::Types::NUMBER, "10"},
+            {Token::Types::PAREN_CLOSE, Lexemes::PAREN_CLOSE},
+            {Token::Types::BRACE_OPEN, Lexemes::BRACE_OPEN},
+            {Token::Types::KEYWORD, Lexemes::RETURN},
+            {Token::Types::BOOLEAN, Lexemes::TRUE},
+            {Token::Types::BRACE_CLOSE, Lexemes::BRACE_CLOSE}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -306,20 +271,19 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "greet" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::IDENTIFIER, "name" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String"},
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION },
-            { Token::Types::STRING, "'hello'" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::IDENTIFIER, "name" }
-        };
+            {Token::Types::IDENTIFIER, "greet"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::IDENTIFIER, "name"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION},
+            {Token::Types::STRING, "'hello'"},
+            {Token::Types::OPERATOR, Lexemes::PLUS},
+            {Token::Types::IDENTIFIER, "name"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -329,25 +293,24 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "greet" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::IDENTIFIER, "greeting" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String"},
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::IDENTIFIER, "name" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String"},
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION },
-            { Token::Types::STRING, "'hello'" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::IDENTIFIER, "name" }
-        };
+            {Token::Types::IDENTIFIER, "greet"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::IDENTIFIER, "greeting"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::COMMA, Lexemes::COMMA},
+            {Token::Types::IDENTIFIER, "name"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION},
+            {Token::Types::STRING, "'hello'"},
+            {Token::Types::OPERATOR, Lexemes::PLUS},
+            {Token::Types::IDENTIFIER, "name"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -357,53 +320,50 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "greet" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::PAREN_OPEN, Lexemes::PAREN_OPEN },
-            { Token::Types::PAREN_CLOSE, Lexemes::PAREN_CLOSE },
-            { Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION },
-            { Token::Types::STRING, "'hello there'" }
-        };
+            {Token::Types::IDENTIFIER, "greet"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::PAREN_OPEN, Lexemes::PAREN_OPEN},
+            {Token::Types::PAREN_CLOSE, Lexemes::PAREN_CLOSE},
+            {Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION},
+            {Token::Types::STRING, "'hello there'"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
 
     SECTION("Can tokenize multiline function definition") {
-        string source =
-            "greet<String> = names<List<String>> -> { "
-            "    'hello' + concat_strings(names, ', ')"
-            "}";
+        string source = "greet<String> = names<List<String>> -> { "
+                        "    'hello' + concat_strings(names, ', ')"
+                        "}";
 
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "greet" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::IDENTIFIER, "names" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "List"},
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "String" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION },
-            { Token::Types::BRACE_OPEN, Lexemes::BRACE_OPEN },
-            { Token::Types::STRING, "'hello'" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::IDENTIFIER, "concat_strings" },
-            { Token::Types::PAREN_OPEN, Lexemes::PAREN_OPEN },
-            { Token::Types::IDENTIFIER, "names" },
-            { Token::Types::COMMA, Lexemes::COMMA },
-            { Token::Types::STRING, "', '" },
-            { Token::Types::PAREN_CLOSE, Lexemes::PAREN_CLOSE },
-            { Token::Types::BRACE_CLOSE, Lexemes::BRACE_CLOSE }
-        };
+            {Token::Types::IDENTIFIER, "greet"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::IDENTIFIER, "names"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "List"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "String"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::FUNC_DECLARATION, Lexemes::FUNC_DECLARATION},
+            {Token::Types::BRACE_OPEN, Lexemes::BRACE_OPEN},
+            {Token::Types::STRING, "'hello'"},
+            {Token::Types::OPERATOR, Lexemes::PLUS},
+            {Token::Types::IDENTIFIER, "concat_strings"},
+            {Token::Types::PAREN_OPEN, Lexemes::PAREN_OPEN},
+            {Token::Types::IDENTIFIER, "names"},
+            {Token::Types::COMMA, Lexemes::COMMA},
+            {Token::Types::STRING, "', '"},
+            {Token::Types::PAREN_CLOSE, Lexemes::PAREN_CLOSE},
+            {Token::Types::BRACE_CLOSE, Lexemes::BRACE_CLOSE}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -414,15 +374,14 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "x" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "Number" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::NUMBER, "5" },
-            { Token::Types::OPERATOR, Lexemes::PLUS },
-            { Token::Types::NUMBER, "3" }
-        };
+            {Token::Types::IDENTIFIER, "x"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "Number"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::NUMBER, "5"},
+            {Token::Types::OPERATOR, Lexemes::PLUS},
+            {Token::Types::NUMBER, "3"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
@@ -432,17 +391,15 @@ TEST_CASE("Lexer") {
         lexer.lex(source);
 
         std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
-            { Token::Types::IDENTIFIER, "x" },
-            { Token::Types::OPERATOR, Lexemes::LT },
-            { Token::Types::IDENTIFIER, "Number" },
-            { Token::Types::OPERATOR, Lexemes::GT },
-            { Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT },
-            { Token::Types::NUMBER, "5" },
-            { Token::Types::OPERATOR, Lexemes::MINUS },
-            { Token::Types::NUMBER, "3" }
-        };
+            {Token::Types::IDENTIFIER, "x"},
+            {Token::Types::OPERATOR, Lexemes::LT},
+            {Token::Types::IDENTIFIER, "Number"},
+            {Token::Types::OPERATOR, Lexemes::GT},
+            {Token::Types::ASSIGNMENT, Lexemes::ASSIGNMENT},
+            {Token::Types::NUMBER, "5"},
+            {Token::Types::OPERATOR, Lexemes::MINUS},
+            {Token::Types::NUMBER, "3"}};
 
         verifyTokens(lexer.tokens, expectedTokens);
     }
-
 }

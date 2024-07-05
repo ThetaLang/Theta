@@ -1,121 +1,119 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#import <map>
+#import <sstream>
 #import <string>
 #import <vector>
-#import <sstream>
-#import <map>
 
 using namespace std;
 
 namespace Theta {
     class Token {
-        public:
-            enum Types {
-                // Literal Types
-                STRING,
-                NUMBER,
-                BOOLEAN,
+    public:
+        enum Types {
+            // Literal Types
+            STRING,
+            NUMBER,
+            BOOLEAN,
 
-                // Identifiers and Keywords
-                KEYWORD,
-                IDENTIFIER,
+            // Identifiers and Keywords
+            KEYWORD,
+            IDENTIFIER,
 
-                // Comments
-                COMMENT,
-                MULTILINE_COMMENT,
+            // Comments
+            COMMENT,
+            MULTILINE_COMMENT,
 
-                // Operators and Assignments
-                OPERATOR,
-                ASSIGNMENT,
-                FUNC_DECLARATION,
+            // Operators and Assignments
+            OPERATOR,
+            ASSIGNMENT,
+            FUNC_DECLARATION,
 
-                // Delimiters
-                BRACE_OPEN,
-                BRACE_CLOSE,
-                PAREN_OPEN,
-                PAREN_CLOSE,
-                ANGLE_BRACKET_OPEN,
-                ANGLE_BRACKET_CLOSE,
-                BRACKET_OPEN,
-                BRACKET_CLOSE,
-                COMMA,
-                COLON,
-                AT,
+            // Delimiters
+            BRACE_OPEN,
+            BRACE_CLOSE,
+            PAREN_OPEN,
+            PAREN_CLOSE,
+            ANGLE_BRACKET_OPEN,
+            ANGLE_BRACKET_CLOSE,
+            BRACKET_OPEN,
+            BRACKET_CLOSE,
+            COMMA,
+            COLON,
+            AT,
 
-                // Whitespace
-                NEWLINE,
-                WHITESPACE,
+            // Whitespace
+            NEWLINE,
+            WHITESPACE,
 
-                UNHANDLED
-            };
+            UNHANDLED
+        };
 
-            Token();
-            Token(Token::Types tokenType, string tokenLexeme);
+        Token();
+        Token(Token::Types tokenType, string tokenLexeme);
 
-            Token::Types getType();
+        Token::Types getType();
 
-            void setType(Token::Types tokenType);
+        void setType(Token::Types tokenType);
 
-            string getLexeme();
+        string getLexeme();
 
-            void setLexeme(string tokenText);
+        void setLexeme(string tokenText);
 
-            void appendLexeme(char character);
+        void appendLexeme(char character);
 
-            void appendLexeme(string appendableText);
+        void appendLexeme(string appendableText);
 
-            vector<int> getStartLocation();
+        vector<int> getStartLocation();
 
-            string getStartLocationString();
+        string getStartLocationString();
 
-            void setStartLine(int start);
+        void setStartLine(int start);
 
-            void setStartColumn(int start);
+        void setStartColumn(int start);
 
-            string toJSON();
+        string toJSON();
 
-            static string tokenTypeToString(Token::Types token) {
-                static map<Token::Types, string> tokensMap = {
-                    { Token::Types::STRING, "STRING" },
-                    { Token::Types::NUMBER, "NUMBER" },
-                    { Token::Types::BOOLEAN, "BOOLEAN" },
-                    { Token::Types::KEYWORD, "KEYWORD" },
-                    { Token::Types::IDENTIFIER, "IDENTIFIER" },
-                    { Token::Types::COMMENT, "COMMENT" },
-                    { Token::Types::MULTILINE_COMMENT, "MULTILINE_COMMENT" },
-                    { Token::Types::OPERATOR, "OPERATOR" },
-                    { Token::Types::ASSIGNMENT, "ASSIGNMENT" },
-                    { Token::Types::FUNC_DECLARATION, "FUNC_DECLARATION" },
-                    { Token::Types::BRACE_OPEN, "BRACE_OPEN" },
-                    { Token::Types::BRACE_CLOSE, "BRACE_CLOSE" },
-                    { Token::Types::PAREN_OPEN, "PAREN_OPEN" },
-                    { Token::Types::PAREN_CLOSE, "PAREN_CLOSE" },
-                    { Token::Types::ANGLE_BRACKET_OPEN, "ANGLE_BRACKET_OPEN" },
-                    { Token::Types::ANGLE_BRACKET_CLOSE, "ANGLE_BRACKET_CLOSE" },
-                    { Token::Types::BRACKET_OPEN, "BRACKET_OPEN" },
-                    { Token::Types::BRACKET_CLOSE, "BRACKET_CLOSE" },
-                    { Token::Types::COMMA, "COMMA" },
-                    { Token::Types::COLON, "COLON" },
-                    { Token::Types::AT, "AT" },
-                    { Token::Types::NEWLINE, "NEWLINE" },
-                    { Token::Types::WHITESPACE, "WHITESPACE" },
-                    { Token::Types::UNHANDLED, "UNHANDLED" }
-                };
+        static string tokenTypeToString(Token::Types token) {
+            static map<Token::Types, string> tokensMap = {{Token::Types::STRING, "STRING"},
+                                                          {Token::Types::NUMBER, "NUMBER"},
+                                                          {Token::Types::BOOLEAN, "BOOLEAN"},
+                                                          {Token::Types::KEYWORD, "KEYWORD"},
+                                                          {Token::Types::IDENTIFIER, "IDENTIFIER"},
+                                                          {Token::Types::COMMENT, "COMMENT"},
+                                                          {Token::Types::MULTILINE_COMMENT, "MULTILINE_COMMENT"},
+                                                          {Token::Types::OPERATOR, "OPERATOR"},
+                                                          {Token::Types::ASSIGNMENT, "ASSIGNMENT"},
+                                                          {Token::Types::FUNC_DECLARATION, "FUNC_DECLARATION"},
+                                                          {Token::Types::BRACE_OPEN, "BRACE_OPEN"},
+                                                          {Token::Types::BRACE_CLOSE, "BRACE_CLOSE"},
+                                                          {Token::Types::PAREN_OPEN, "PAREN_OPEN"},
+                                                          {Token::Types::PAREN_CLOSE, "PAREN_CLOSE"},
+                                                          {Token::Types::ANGLE_BRACKET_OPEN, "ANGLE_BRACKET_OPEN"},
+                                                          {Token::Types::ANGLE_BRACKET_CLOSE, "ANGLE_BRACKET_CLOSE"},
+                                                          {Token::Types::BRACKET_OPEN, "BRACKET_OPEN"},
+                                                          {Token::Types::BRACKET_CLOSE, "BRACKET_CLOSE"},
+                                                          {Token::Types::COMMA, "COMMA"},
+                                                          {Token::Types::COLON, "COLON"},
+                                                          {Token::Types::AT, "AT"},
+                                                          {Token::Types::NEWLINE, "NEWLINE"},
+                                                          {Token::Types::WHITESPACE, "WHITESPACE"},
+                                                          {Token::Types::UNHANDLED, "UNHANDLED"}};
 
-                auto it = tokensMap.find(token);
-                if (it != tokensMap.end()) {
-                    return it->second;
-                } else {
-                    return "UNKNOWN";
-                }
+            auto it = tokensMap.find(token);
+            if (it != tokensMap.end()) {
+                return it->second;
+            } else {
+                return "UNKNOWN";
             }
+        }
 
-        private:
-            string lexeme;
-            int line;
-            int column;
-            Token::Types type;
+    private:
+        string lexeme;
+        int line;
+        int column;
+        Token::Types type;
     };
 }
 
