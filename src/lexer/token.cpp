@@ -13,13 +13,13 @@ void Theta::Token::setType(Theta::Token::Types tokenType) { type = tokenType; }
 
 string Theta::Token::getLexeme() { return lexeme; }
 
-void Theta::Token::setLexeme(string tokenText) { lexeme = tokenText;  }
+void Theta::Token::setLexeme(string tokenText) { lexeme = tokenText; }
 
 void Theta::Token::appendLexeme(char character) { lexeme += character; }
 
 void Theta::Token::appendLexeme(string appendableText) { lexeme += appendableText; }
 
-vector<int> Theta::Token::getStartLocation() { return { line, column }; }
+vector<int> Theta::Token::getStartLocation() { return {line, column}; }
 
 string Theta::Token::getStartLocationString() { return "line " + to_string(line) + ", column " + to_string(column); }
 

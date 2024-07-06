@@ -31,7 +31,8 @@ namespace Theta {
         return nullptr;
     }
 
-    BinaryenExpressionRef CodeGen::generateBinaryOperation(shared_ptr<BinaryOperationNode> binOpNode, BinaryenModuleRef &module) {
+    BinaryenExpressionRef CodeGen::generateBinaryOperation(shared_ptr<BinaryOperationNode> binOpNode,
+                                                           BinaryenModuleRef &module) {
         if (binOpNode->getOperator() == Lexemes::EXPONENT) {
             return generateExponentOperation(binOpNode, module);
         }
@@ -47,22 +48,14 @@ namespace Theta {
 
         // TODO: This wont work if we have nested operations on either side
         if (binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL) {
-            return BinaryenStringConcat(
-                module,
-                binaryenLeft,
-                binaryenRight
-            );
+            return BinaryenStringConcat(module, binaryenLeft, binaryenRight);
         }
 
-        return BinaryenBinary(
-            module,
-            op,
-            binaryenLeft,
-            binaryenRight
-        );
+        return BinaryenBinary(module, op, binaryenLeft, binaryenRight);
     }
 
-    BinaryenExpressionRef CodeGen::generateUnaryOperation(shared_ptr<UnaryOperationNode> unaryOpNode, BinaryenModuleRef &module) {
+    BinaryenExpressionRef CodeGen::generateUnaryOperation(shared_ptr<UnaryOperationNode> unaryOpNode,
+                                                          BinaryenModuleRef &module) {
         BinaryenExpressionRef binaryenVal = generate(unaryOpNode->getValue(), module);
 
         if (!binaryenVal) {
@@ -74,33 +67,26 @@ namespace Theta {
         }
 
         // Must be a negative. Multiply by negative 1
-        return BinaryenBinary(
-            module,
-            BinaryenMulInt64(),
-            binaryenVal,
-            BinaryenConst(module, BinaryenLiteralInt64(-1))
-        );
+        return BinaryenBinary(module, BinaryenMulInt64(), binaryenVal, BinaryenConst(module, BinaryenLiteralInt64(-1)));
     }
 
-    BinaryenExpressionRef CodeGen::generateNumberLiteral(shared_ptr<LiteralNode> literalNode, BinaryenModuleRef &module) {
-        return BinaryenConst(
-            module,
-            BinaryenLiteralInt64(stoi(literalNode->getLiteralValue()))
-        );
+    BinaryenExpressionRef CodeGen::generateNumberLiteral(shared_ptr<LiteralNode> literalNode,
+                                                         BinaryenModuleRef &module) {
+        return BinaryenConst(module, BinaryenLiteralInt64(stoi(literalNode->getLiteralValue())));
     }
 
-    BinaryenExpressionRef CodeGen::generateStringLiteral(shared_ptr<LiteralNode> literalNode, BinaryenModuleRef &module) {
+    BinaryenExpressionRef CodeGen::generateStringLiteral(shared_ptr<LiteralNode> literalNode,
+                                                         BinaryenModuleRef &module) {
         return BinaryenStringConst(module, literalNode->getLiteralValue().c_str());
     }
 
-    BinaryenExpressionRef CodeGen::generateBooleanLiteral(shared_ptr<LiteralNode> literalNode, BinaryenModuleRef &module) {
-        return BinaryenConst(
-            module,
-            BinaryenLiteralInt32(literalNode->getLiteralValue() == "true" ? 1 : 0)
-        );
+    BinaryenExpressionRef CodeGen::generateBooleanLiteral(shared_ptr<LiteralNode> literalNode,
+                                                          BinaryenModuleRef &module) {
+        return BinaryenConst(module, BinaryenLiteralInt32(literalNode->getLiteralValue() == "true" ? 1 : 0));
     }
 
-    BinaryenExpressionRef CodeGen::generateExponentOperation(shared_ptr<BinaryOperationNode> binOpNode, BinaryenModuleRef &module) {
+    BinaryenExpressionRef CodeGen::generateExponentOperation(shared_ptr<BinaryOperationNode> binOpNode,
+                                                             BinaryenModuleRef &module) {
         BinaryenExpressionRef binaryenLeft = generate(binOpNode->getLeft(), module);
         BinaryenExpressionRef binaryenRight = generate(binOpNode->getRight(), module);
 
@@ -109,12 +95,7 @@ namespace Theta {
         }
 
         return BinaryenCall(
-            module,
-            "Theta.Math.pow",
-            (BinaryenExpressionRef[]){ binaryenLeft, binaryenRight },
-            2,
-            BinaryenTypeInt64()
-        );
+            module, "Theta.Math.pow", (BinaryenExpressionRef[]){binaryenLeft, binaryenRight}, 2, BinaryenTypeInt64());
     }
 
     void CodeGen::generateSource(shared_ptr<SourceNode> sourceNode, BinaryenModuleRef &module) {
@@ -125,17 +106,15 @@ namespace Theta {
                 throw std::runtime_error("Invalid body type for source node");
             }
 
-            BinaryenFunctionRef mainFn = BinaryenAddFunction(
-                module,
-                "main",
-                BinaryenTypeNone(),
-                // BinaryenTypeStringref(),
-                // BinaryenTypeInt64(),
-                BinaryenTypeInt32(),
-                NULL,
-                0,
-                body
-            );
+            BinaryenFunctionRef mainFn = BinaryenAddFunction(module,
+                                                             "main",
+                                                             BinaryenTypeNone(),
+                                                             // BinaryenTypeStringref(),
+                                                             // BinaryenTypeInt64(),
+                                                             BinaryenTypeInt32(),
+                                                             NULL,
+                                                             0,
+                                                             body);
 
             BinaryenAddFunctionExport(module, "main", "main");
         } else {
@@ -150,7 +129,6 @@ namespace Theta {
         if (op == Lexemes::DIVISION) return BinaryenDivSInt64();
         if (op == Lexemes::TIMES) return BinaryenMulInt64();
         if (op == Lexemes::MODULO) return BinaryenRemSInt64();
-
 
         // if (op == "**") return
     }

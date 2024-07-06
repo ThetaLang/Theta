@@ -1,8 +1,9 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include "catch2/catch_amalgamated.hpp"
-#include "../src/lexer/Lexer.cpp"
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
 #include "../src/parser/Parser.cpp"
+
 #include "../src/compiler/Compiler.hpp"
+#include "../src/lexer/Lexer.cpp"
+#include "catch2/catch_amalgamated.hpp"
 
 using namespace std;
 using namespace Theta;
@@ -18,9 +19,8 @@ TEST_CASE("Parser") {
         string source = "5 * 12.23";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -53,9 +53,8 @@ TEST_CASE("Parser") {
         string source = "'And his name is John Cena!'";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -70,9 +69,8 @@ TEST_CASE("Parser") {
         string source = ":atomic_nuclei";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -88,9 +86,8 @@ TEST_CASE("Parser") {
         string source = "['Alex', 'Tony', 'John', 'Denis']";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -100,7 +97,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(listNode->getElements().size() == 4);
 
-        vector<string> expectedValues = { "'Alex'", "'Tony'", "'John'", "'Denis'" };
+        vector<string> expectedValues = {"'Alex'", "'Tony'", "'John'", "'Denis'"};
 
         for (int i = 0; i < listNode->getElements().size(); i++) {
             shared_ptr<LiteralNode> literalNode = dynamic_pointer_cast<LiteralNode>(listNode->getElements()[i]);
@@ -111,12 +108,12 @@ TEST_CASE("Parser") {
     }
 
     SECTION("Can parse a nested list of strings") {
-        string source = "[['alex', 'john', ['jeremy', 'pablo']], ['clarinda'], 'den' + 'is', 'jessica', 'ellis']";
+        string source = "[['alex', 'john', ['jeremy', 'pablo']], ['clarinda'], 'den' + 'is', "
+                        "'jessica', 'ellis']";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -140,8 +137,10 @@ TEST_CASE("Parser") {
         REQUIRE(listElement0Element2->getElements().size() == 2);
         REQUIRE(listElement0Element2->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listElement0Element2->getElements()[1]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[0])->getLiteralValue() == "'jeremy'");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[1])->getLiteralValue() == "'pablo'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[0])->getLiteralValue() ==
+                "'jeremy'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[1])->getLiteralValue() ==
+                "'pablo'");
 
         REQUIRE(listNode->getElements()[1]->getNodeType() == ASTNode::Types::LIST);
 
@@ -153,7 +152,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(listNode->getElements()[2]->getNodeType() == ASTNode::Types::BINARY_OPERATION);
 
-        shared_ptr<BinaryOperationNode> listElement2 = dynamic_pointer_cast<BinaryOperationNode>(listNode->getElements()[2]);
+        shared_ptr<BinaryOperationNode> listElement2 =
+            dynamic_pointer_cast<BinaryOperationNode>(listNode->getElements()[2]);
         REQUIRE(listElement2->getOperator() == "+");
         REQUIRE(listElement2->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listElement2->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
@@ -170,9 +170,8 @@ TEST_CASE("Parser") {
         string source = "{ :ok, 'Success' }";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -198,9 +197,8 @@ TEST_CASE("Parser") {
         string source = "100 + 7";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -219,9 +217,8 @@ TEST_CASE("Parser") {
         string source = "42 - 11";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -240,9 +237,8 @@ TEST_CASE("Parser") {
         string source = "10 * 11";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -261,9 +257,8 @@ TEST_CASE("Parser") {
         string source = "100/5";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -282,9 +277,8 @@ TEST_CASE("Parser") {
         string source = "2 ** 3";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -303,9 +297,8 @@ TEST_CASE("Parser") {
         string source = "9 % 2";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -324,9 +317,8 @@ TEST_CASE("Parser") {
         string source = "100.4 - -24";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -348,9 +340,8 @@ TEST_CASE("Parser") {
         string source = "12 + (23 - -1) * 7 ** 2.4";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -370,15 +361,18 @@ TEST_CASE("Parser") {
         REQUIRE(binOpNode2->getLeft()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode2->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
 
-        shared_ptr<BinaryOperationNode> binOpNode2LeftBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getLeft());
-        shared_ptr<BinaryOperationNode> binOpNode2RightBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getRight());
+        shared_ptr<BinaryOperationNode> binOpNode2LeftBinOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getLeft());
+        shared_ptr<BinaryOperationNode> binOpNode2RightBinOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getRight());
 
         REQUIRE(binOpNode2LeftBinOpNode->getOperator() == "-");
         REQUIRE(binOpNode2LeftBinOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode2LeftBinOpNode->getLeft())->getLiteralValue() == "23");
         REQUIRE(binOpNode2LeftBinOpNode->getRight()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
 
-        shared_ptr<UnaryOperationNode> unaryOpNode = dynamic_pointer_cast<UnaryOperationNode>(binOpNode2LeftBinOpNode->getRight());
+        shared_ptr<UnaryOperationNode> unaryOpNode =
+            dynamic_pointer_cast<UnaryOperationNode>(binOpNode2LeftBinOpNode->getRight());
 
         REQUIRE(unaryOpNode->getOperator() == "-");
         REQUIRE(unaryOpNode->getValue()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
@@ -397,9 +391,8 @@ TEST_CASE("Parser") {
         string source = "true && false";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -418,9 +411,8 @@ TEST_CASE("Parser") {
         string source = "true && !false";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -440,9 +432,8 @@ TEST_CASE("Parser") {
         string source = "!x || y";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -462,9 +453,8 @@ TEST_CASE("Parser") {
         string source = "x == y";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -483,9 +473,8 @@ TEST_CASE("Parser") {
         string source = "true != false";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -506,29 +495,32 @@ TEST_CASE("Parser") {
         string source = "'hello' => + ' mike' => + ' how are you'";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
 
-        shared_ptr<BinaryOperationNode> firstPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
+        shared_ptr<BinaryOperationNode> firstPipelineOp =
+            dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
         REQUIRE(firstPipelineOp->getOperator() == "=>");
         REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
 
-        shared_ptr<BinaryOperationNode> rightConcatOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getRight());
+        shared_ptr<BinaryOperationNode> rightConcatOp =
+            dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getRight());
         REQUIRE(rightConcatOp->getOperator() == "+");
         REQUIRE(rightConcatOp->getLeft() == nullptr);
         REQUIRE(rightConcatOp->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(rightConcatOp->getRight())->getLiteralValue() == "' how are you'");
 
-        shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
+        shared_ptr<BinaryOperationNode> secondPipelineOp =
+            dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
         REQUIRE(secondPipelineOp->getOperator() == "=>");
         REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
 
-        shared_ptr<BinaryOperationNode> leftConcatOp = dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getRight());
+        shared_ptr<BinaryOperationNode> leftConcatOp =
+            dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getRight());
         REQUIRE(leftConcatOp->getOperator() == "+");
         REQUIRE(leftConcatOp->getLeft() == nullptr);
         REQUIRE(leftConcatOp->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
@@ -544,9 +536,8 @@ TEST_CASE("Parser") {
         string source = "message<String> = 'Hello, World!'";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -556,7 +547,8 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "message");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "String");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNode->getRight())->getLiteralValue() == "'Hello, World!'");
     }
 
@@ -564,9 +556,8 @@ TEST_CASE("Parser") {
         string source = "isOpen<Boolean> = true";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -576,7 +567,8 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "isOpen");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNode->getRight())->getLiteralValue() == "true");
     }
 
@@ -584,9 +576,8 @@ TEST_CASE("Parser") {
         string source = "isOpen<Boolean> = !true && false";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -596,9 +587,11 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "isOpen");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
 
         REQUIRE(binOpNode->getOperator() == "&&");
         REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
@@ -613,9 +606,8 @@ TEST_CASE("Parser") {
         string source = "total<Number> = 5 + 3";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -625,9 +617,11 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "total");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Number");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Number");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
 
         REQUIRE(binOpNode->getOperator() == "+");
         REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
@@ -640,9 +634,8 @@ TEST_CASE("Parser") {
         string source = "total<Number> = 5 + -3";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -652,9 +645,11 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "total");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Number");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Number");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
 
         REQUIRE(binOpNode->getOperator() == "+");
         REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
@@ -669,9 +664,8 @@ TEST_CASE("Parser") {
         string source = "x<List<Boolean>> = [x == y, y + 5 > 9, 'meow' != 'cow', !gross]";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -686,7 +680,8 @@ TEST_CASE("Parser") {
         REQUIRE(listDefNode->getElements().size() == 4);
 
         // Checking first element: x == y
-        shared_ptr<BinaryOperationNode> binOpNode1 = dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[0]);
+        shared_ptr<BinaryOperationNode> binOpNode1 =
+            dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[0]);
         REQUIRE(binOpNode1->getOperator() == "==");
         REQUIRE(binOpNode1->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode1->getLeft())->getIdentifier() == "x");
@@ -694,9 +689,11 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode1->getRight())->getIdentifier() == "y");
 
         // Checking second element: y + 5 > 9
-        shared_ptr<BinaryOperationNode> binOpNode2 = dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[1]);
+        shared_ptr<BinaryOperationNode> binOpNode2 =
+            dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[1]);
         REQUIRE(binOpNode2->getOperator() == ">");
-        shared_ptr<BinaryOperationNode> innerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getLeft());
+        shared_ptr<BinaryOperationNode> innerBinOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getLeft());
         REQUIRE(innerBinOpNode->getOperator() == "+");
         REQUIRE(innerBinOpNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(innerBinOpNode->getLeft())->getIdentifier() == "y");
@@ -706,7 +703,8 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode2->getRight())->getLiteralValue() == "9");
 
         // Checking third element: 'meow' != 'cow'
-        shared_ptr<BinaryOperationNode> binOpNode3 = dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[2]);
+        shared_ptr<BinaryOperationNode> binOpNode3 =
+            dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[2]);
         REQUIRE(binOpNode3->getOperator() == "!=");
         REQUIRE(binOpNode3->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getLeft())->getLiteralValue() == "'meow'");
@@ -714,19 +712,21 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getRight())->getLiteralValue() == "'cow'");
 
         // Checking fourth element: !gross
-        shared_ptr<UnaryOperationNode> unaryOpNode = dynamic_pointer_cast<UnaryOperationNode>(listDefNode->getElements()[3]);
+        shared_ptr<UnaryOperationNode> unaryOpNode =
+            dynamic_pointer_cast<UnaryOperationNode>(listDefNode->getElements()[3]);
         REQUIRE(unaryOpNode->getOperator() == "!");
         REQUIRE(unaryOpNode->getValue()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(unaryOpNode->getValue())->getIdentifier() == "gross");
     }
 
     SECTION("Can parse dict assignment with nested dicts") {
-        string source = "x<Dict<Person>> = { bob: { age: 40, wife: 'Janet', bald: true }, mike: { age: 20, wife: '', bald: false }}";
+        string source = "x<Dict<Person>> = { bob: { age: 40, wife: 'Janet', bald: true }, mike: { "
+                        "age: 20, wife: '', "
+                        "bald: false }}";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -737,7 +737,8 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::DICTIONARY);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
 
-        shared_ptr<TypeDeclarationNode> typeDeclNode = dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue());
+        shared_ptr<TypeDeclarationNode> typeDeclNode =
+            dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue());
         REQUIRE(typeDeclNode->getType() == "Dict");
 
         shared_ptr<DictionaryNode> dictDefNode = dynamic_pointer_cast<DictionaryNode>(assignmentNode->getRight());
@@ -790,9 +791,8 @@ TEST_CASE("Parser") {
         string source = "x<String> = 'hello' => reverse => capitalize => print";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -801,19 +801,23 @@ TEST_CASE("Parser") {
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "String");
 
-        shared_ptr<BinaryOperationNode> firstPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
+        shared_ptr<BinaryOperationNode> firstPipelineOp =
+            dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
         REQUIRE(firstPipelineOp->getOperator() == "=>");
         REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(firstPipelineOp->getRight())->getIdentifier() == "print");
 
-        shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
+        shared_ptr<BinaryOperationNode> secondPipelineOp =
+            dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
         REQUIRE(secondPipelineOp->getOperator() == "=>");
         REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(secondPipelineOp->getRight())->getIdentifier() == "capitalize");
 
-        shared_ptr<BinaryOperationNode> thirdPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getLeft());
+        shared_ptr<BinaryOperationNode> thirdPipelineOp =
+            dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getLeft());
         REQUIRE(thirdPipelineOp->getOperator() == "=>");
         REQUIRE(thirdPipelineOp->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(thirdPipelineOp->getRight())->getIdentifier() == "reverse");
@@ -828,9 +832,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -852,7 +855,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(controlFlowNode != nullptr);
 
-        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs =
+            controlFlowNode->getConditionExpressionPairs();
         REQUIRE(conditionExpressionPairs.size() == 2);
 
         // Check the first condition-expression pair
@@ -897,9 +901,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -910,7 +913,8 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
 
-        shared_ptr<TypeDeclarationNode> typeNode = dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getValue());
+        shared_ptr<TypeDeclarationNode> typeNode = dynamic_pointer_cast<TypeDeclarationNode>(
+            dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getValue());
         REQUIRE(typeNode != nullptr);
         REQUIRE(typeNode->getNodeType() == ASTNode::Types::TYPE_DECLARATION);
         REQUIRE(typeNode->getType() == "Tuple");
@@ -948,9 +952,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -960,7 +963,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(controlFlowNode != nullptr);
 
-        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs =
+            controlFlowNode->getConditionExpressionPairs();
         REQUIRE(conditionExpressionPairs.size() == 1);
 
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
@@ -978,7 +982,8 @@ TEST_CASE("Parser") {
 
         shared_ptr<ASTNode> binaryOperation = blockExpressions[0];
         REQUIRE(binaryOperation->getNodeType() == ASTNode::Types::BINARY_OPERATION);
-        shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(binaryOperation);
+        shared_ptr<BinaryOperationNode> binaryOperationNode =
+            dynamic_pointer_cast<BinaryOperationNode>(binaryOperation);
 
         REQUIRE(binaryOperationNode->getOperator() == "==");
 
@@ -1003,9 +1008,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1015,7 +1019,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(controlFlowNode != nullptr);
 
-        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs =
+            controlFlowNode->getConditionExpressionPairs();
         REQUIRE(conditionExpressionPairs.size() == 1);
 
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
@@ -1057,9 +1062,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1069,7 +1073,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(controlFlowNode != nullptr);
 
-        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs =
+            controlFlowNode->getConditionExpressionPairs();
         REQUIRE(conditionExpressionPairs.size() == 1);
 
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
@@ -1103,9 +1108,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1115,7 +1119,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(controlFlowNode != nullptr);
 
-        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs =
+            controlFlowNode->getConditionExpressionPairs();
         REQUIRE(conditionExpressionPairs.size() == 1);
 
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
@@ -1142,9 +1147,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1154,7 +1158,8 @@ TEST_CASE("Parser") {
 
         REQUIRE(controlFlowNode != nullptr);
 
-        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = controlFlowNode->getConditionExpressionPairs();
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs =
+            controlFlowNode->getConditionExpressionPairs();
         REQUIRE(conditionExpressionPairs.size() == 3);
 
         // Check the first condition-expression pair
@@ -1277,15 +1282,15 @@ TEST_CASE("Parser") {
     // --------- CONTROL FLOW ---------
 
     // --------- FUNCTIONS ------------
-    SECTION("Can parse function declaration with no parens, single parameter, and expression definition") {
+    SECTION("Can parse function declaration with no parens, single parameter, and expression "
+            "definition") {
         string source = R"(
             greet<String> = name<String> -> 'hello' + name
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1295,18 +1300,22 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "greet");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "String");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> param =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "name");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
         REQUIRE(binOpNode->getOperator() == "+");
         REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
@@ -1318,15 +1327,15 @@ TEST_CASE("Parser") {
         REQUIRE(rightNode->getIdentifier() == "name");
     }
 
-    SECTION("Can parse function declaration with no parens, single parameter, and empty block definition") {
+    SECTION("Can parse function declaration with no parens, single parameter, and empty block "
+            "definition") {
         string source = R"(
             x<Boolean> = meow<String> -> {}
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1336,13 +1345,16 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> param =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
@@ -1352,15 +1364,15 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
-    SECTION("Can parse function declaration with single parameter in parentheses and empty block definition") {
+    SECTION("Can parse function declaration with single parameter in parentheses and empty block "
+            "definition") {
         string source = R"(
             x<Boolean> = (meow<String>) -> {}
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1370,13 +1382,16 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> param =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
@@ -1386,15 +1401,15 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
-    SECTION("Can parse function declaration with multiple parameters in parentheses and empty block definition") {
+    SECTION("Can parse function declaration with multiple parameters in parentheses and empty "
+            "block definition") {
         string source = R"(
             x<Boolean> = (meow<String>, cow<String>) -> {}
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1404,18 +1419,22 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 2);
 
-        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> param1 =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
         REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param1->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
 
-        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
+        shared_ptr<IdentifierNode> param2 =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
         REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(param2->getIdentifier() == "cow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
@@ -1431,9 +1450,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1443,9 +1461,11 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
@@ -1454,15 +1474,15 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
-    SECTION("Can parse function declaration with empty parameter list using shorthand syntax and empty block definition") {
+    SECTION("Can parse function declaration with empty parameter list using shorthand syntax and "
+            "empty block definition") {
         string source = R"(
             x<Boolean> = -> {}
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1472,9 +1492,11 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
@@ -1483,15 +1505,15 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
-    SECTION("Can parse function declaration with empty parameter list and binary operation definition") {
+    SECTION("Can parse function declaration with empty parameter list and binary operation "
+            "definition") {
         string source = R"(
             x<Boolean> = () -> y - 5 == 0
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1501,13 +1523,16 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "==");
 
@@ -1526,15 +1551,16 @@ TEST_CASE("Parser") {
         REQUIRE(rightLiteralNode->getLiteralValue() == "0");
     }
 
-    SECTION("Can parse function declaration with parens, multiple parameters, and block definition containing binary operation") {
+    SECTION("Can parse function declaration with parens, multiple parameters, and block definition "
+            "containing binary "
+            "operation") {
         string source = R"(
             x<Boolean> = (meow<String>, cow<String>) -> { meow == cow }
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1544,14 +1570,18 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 2);
 
-        shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
-        shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
+        shared_ptr<IdentifierNode> param1 =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> param2 =
+            dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
 
         REQUIRE(param1->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
@@ -1563,7 +1593,8 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "==");
 
@@ -1580,9 +1611,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -1592,22 +1622,27 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "Boolean");
 
-        shared_ptr<FunctionDeclarationNode> outerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> outerFuncDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
 
         REQUIRE(outerFuncDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> outerParam = dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> outerParam =
+            dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()->getElements()[0]);
         REQUIRE(outerParam->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(outerParam->getValue())->getType() == "String");
 
-        shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerFuncDeclNode->getDefinition());
+        shared_ptr<FunctionDeclarationNode> innerFuncDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(outerFuncDeclNode->getDefinition());
         REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
         REQUIRE(innerFuncDeclNode->getParameters()->getElements().size() == 1);
 
-        shared_ptr<IdentifierNode> innerParam = dynamic_pointer_cast<IdentifierNode>(innerFuncDeclNode->getParameters()->getElements()[0]);
+        shared_ptr<IdentifierNode> innerParam =
+            dynamic_pointer_cast<IdentifierNode>(innerFuncDeclNode->getParameters()->getElements()[0]);
         REQUIRE(innerParam->getIdentifier() == "y");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(innerParam->getValue())->getType() == "String");
 
@@ -1622,19 +1657,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1647,19 +1683,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1675,19 +1712,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1706,19 +1744,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1746,19 +1785,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1800,19 +1840,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1843,19 +1884,20 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1867,7 +1909,8 @@ TEST_CASE("Parser") {
         REQUIRE(firstArg->getIdentifier() == "name");
 
         // Second argument (function declaration)
-        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
+        shared_ptr<FunctionDeclarationNode> funcDeclArg =
+            dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
         REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
         shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
@@ -1878,7 +1921,8 @@ TEST_CASE("Parser") {
         REQUIRE(param->getIdentifier() == "greeting");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
+        shared_ptr<BinaryOperationNode> binOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "+");
 
@@ -1891,25 +1935,28 @@ TEST_CASE("Parser") {
         REQUIRE(rightNode->getIdentifier() == "name");
     }
 
-    SECTION("Can parse function invocation with function declaration argument having multiple parameters and a binary operation definition") {
+    SECTION("Can parse function invocation with function declaration argument having multiple "
+            "parameters and a binary "
+            "operation definition") {
         string source = R"(
             greet(name, (greeting<String>, punctuation<String>) -> greeting + name + punctuation)
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
-        shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
+        shared_ptr<FunctionInvocationNode> funcInvocationNode =
+            dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
         REQUIRE(funcInvocationNode != nullptr);
 
-        shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
+        shared_ptr<IdentifierNode> functionIdentifier =
+            dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
         REQUIRE(functionIdentifier->getIdentifier() == "greet");
 
         shared_ptr<ASTNodeList> arguments = funcInvocationNode->getParameters();
@@ -1921,7 +1968,8 @@ TEST_CASE("Parser") {
         REQUIRE(firstArg->getIdentifier() == "name");
 
         // Second argument (function declaration)
-        shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
+        shared_ptr<FunctionDeclarationNode> funcDeclArg =
+            dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
         REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
         shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
@@ -1937,11 +1985,13 @@ TEST_CASE("Parser") {
         REQUIRE(param2->getIdentifier() == "punctuation");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> outerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
+        shared_ptr<BinaryOperationNode> outerBinOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
         REQUIRE(outerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(outerBinOpNode->getOperator() == "+");
 
-        shared_ptr<BinaryOperationNode> innerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(outerBinOpNode->getLeft());
+        shared_ptr<BinaryOperationNode> innerBinOpNode =
+            dynamic_pointer_cast<BinaryOperationNode>(outerBinOpNode->getLeft());
         REQUIRE(innerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(innerBinOpNode->getOperator() == "+");
 
@@ -1968,9 +2018,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -2003,7 +2052,8 @@ TEST_CASE("Parser") {
         shared_ptr<AssignmentNode> assignmentNodeY = dynamic_pointer_cast<AssignmentNode>(blockExpressions[1]);
         REQUIRE(assignmentNodeY->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNodeY->getLeft())->getIdentifier() == "y");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNodeY->getLeft()->getValue())->getType() == "Number");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNodeY->getLeft()->getValue())->getType() ==
+                "Number");
         REQUIRE(assignmentNodeY->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNodeY->getRight())->getLiteralValue() == "432.11");
     }
@@ -2019,9 +2069,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 2);
@@ -2043,7 +2092,8 @@ TEST_CASE("Parser") {
         REQUIRE(linkedBlock1->getNodeType() == ASTNode::Types::BLOCK);
         REQUIRE(linkedBlock1->getElements().size() == 1);
 
-        shared_ptr<AssignmentNode> assignmentNode1 = dynamic_pointer_cast<AssignmentNode>(linkedBlock1->getElements()[0]);
+        shared_ptr<AssignmentNode> assignmentNode1 =
+            dynamic_pointer_cast<AssignmentNode>(linkedBlock1->getElements()[0]);
         REQUIRE(assignmentNode1->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(assignmentNode1->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
 
@@ -2071,7 +2121,8 @@ TEST_CASE("Parser") {
         REQUIRE(nestedLinkedSource2->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(nestedLinkedSource2->getLinks().size() == 0);
 
-        shared_ptr<CapsuleNode> nestedLinkedCapsule2 = dynamic_pointer_cast<CapsuleNode>(nestedLinkedSource2->getValue());
+        shared_ptr<CapsuleNode> nestedLinkedCapsule2 =
+            dynamic_pointer_cast<CapsuleNode>(nestedLinkedSource2->getValue());
         REQUIRE(nestedLinkedCapsule2->getNodeType() == ASTNode::Types::CAPSULE);
         REQUIRE(nestedLinkedCapsule2->name == "Theta.StringUtil");
 
@@ -2079,11 +2130,13 @@ TEST_CASE("Parser") {
         REQUIRE(nestedLinkedBlock2->getNodeType() == ASTNode::Types::BLOCK);
         REQUIRE(nestedLinkedBlock2->getElements().size() == 1);
 
-        shared_ptr<AssignmentNode> nestedAssignmentNode2 = dynamic_pointer_cast<AssignmentNode>(nestedLinkedBlock2->getElements()[0]);
+        shared_ptr<AssignmentNode> nestedAssignmentNode2 =
+            dynamic_pointer_cast<AssignmentNode>(nestedLinkedBlock2->getElements()[0]);
         REQUIRE(nestedAssignmentNode2->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(nestedAssignmentNode2->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
 
-        shared_ptr<IdentifierNode> nestedLeftNode2 = dynamic_pointer_cast<IdentifierNode>(nestedAssignmentNode2->getLeft());
+        shared_ptr<IdentifierNode> nestedLeftNode2 =
+            dynamic_pointer_cast<IdentifierNode>(nestedAssignmentNode2->getLeft());
         REQUIRE(nestedLeftNode2->getIdentifier() == "name");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(nestedLeftNode2->getValue())->getType() == "String");
 
@@ -2099,7 +2152,8 @@ TEST_CASE("Parser") {
         REQUIRE(mainBlock->getNodeType() == ASTNode::Types::BLOCK);
         REQUIRE(mainBlock->getElements().size() == 1);
 
-        shared_ptr<AssignmentNode> mainAssignmentNode = dynamic_pointer_cast<AssignmentNode>(mainBlock->getElements()[0]);
+        shared_ptr<AssignmentNode> mainAssignmentNode =
+            dynamic_pointer_cast<AssignmentNode>(mainBlock->getElements()[0]);
         REQUIRE(mainAssignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(mainAssignmentNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
 
@@ -2122,9 +2176,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -2139,7 +2192,8 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
-        shared_ptr<StructDefinitionNode> structNode = dynamic_pointer_cast<StructDefinitionNode>(blockNode->getElements()[0]);
+        shared_ptr<StructDefinitionNode> structNode =
+            dynamic_pointer_cast<StructDefinitionNode>(blockNode->getElements()[0]);
         REQUIRE(structNode != nullptr);
         REQUIRE(structNode->getNodeType() == ASTNode::Types::STRUCT_DEFINITION);
         REQUIRE(structNode->name == "Point");
@@ -2165,15 +2219,15 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::STRUCT_DECLARATION);
 
-        shared_ptr<StructDeclarationNode> structDeclNode = dynamic_pointer_cast<StructDeclarationNode>(parsedAST->getValue());
+        shared_ptr<StructDeclarationNode> structDeclNode =
+            dynamic_pointer_cast<StructDeclarationNode>(parsedAST->getValue());
         REQUIRE(structDeclNode != nullptr);
         REQUIRE(structDeclNode->getStructType() == "Point");
 
@@ -2221,9 +2275,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -2269,9 +2322,8 @@ TEST_CASE("Parser") {
         )";
         lexer.lex(source);
 
-        shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
-            parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
-        );
+        shared_ptr<SourceNode> parsedAST =
+            dynamic_pointer_cast<SourceNode>(parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName));
 
         REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
@@ -2289,9 +2341,11 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode != nullptr);
         REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
-        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
+        REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() ==
+                "String");
 
-        shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        shared_ptr<FunctionDeclarationNode> funcDeclNode =
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
         REQUIRE(funcDeclNode != nullptr);
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
