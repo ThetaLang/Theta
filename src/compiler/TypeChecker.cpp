@@ -61,9 +61,22 @@ namespace Theta {
     }
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
-        bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType() );
+        bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
 
-        if (!typesMatch) return false;
+        if (!typesMatch) {
+            string leftTypeString = dynamic_pointer_cast<TypeDeclarationNode>(node->getLeft()->getValue())->toString();
+            string rightTypeString = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->toString();
+
+            Compiler::getInstance().addException(
+                make_shared<TypeError>(
+                    rightTypeString + " is not assignable to " + leftTypeString,
+                    node->getLeft()->getValue(),
+                    node->getRight()->getResolvedType()
+                )
+            );
+
+            return false;
+        }
 
         node->setResolvedType(node->getLeft()->getValue());
 
