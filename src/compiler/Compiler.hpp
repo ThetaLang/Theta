@@ -65,13 +65,13 @@ namespace Theta {
              * @brief Adds an encountered exception to the list of exceptions to display later
              * @param e The exception to add
              */
-            void addException(Theta::CompilationError e);
+            void addException(shared_ptr<Theta::Error> e);
 
             /**
              * @brief Returns all the exceptions we encountered during the compilation process
              * @return A vector of compilation errors
              */
-            vector<Theta::CompilationError> getEncounteredExceptions();
+            vector<shared_ptr<Theta::Error>> getEncounteredExceptions();
 
             /**
              * @brief Clears the list of compilation errors
@@ -101,7 +101,7 @@ namespace Theta {
             bool isEmitTokens = false;
             bool isEmitAST = false;
             bool isEmitWAT = false;
-            vector<Theta::CompilationError> encounteredExceptions;
+            vector<shared_ptr<Theta::Error>> encounteredExceptions;
             map<string, shared_ptr<Theta::LinkNode>> parsedLinkASTs;
 
             void writeModuleToFile(BinaryenModuleRef &module, string file);

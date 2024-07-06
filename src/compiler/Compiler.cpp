@@ -17,16 +17,10 @@ namespace Theta {
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 
-        for (int i = 0; i < encounteredExceptions.size(); i++) {
-            encounteredExceptions[i].display();
-        }
-
         bool isTypeValid = TypeChecker::checkAST(programAST);
 
-        if (isTypeValid) {
-            cout << "Types are valid" << endl;
-        } else {
-            cout << "TYPES NOT VALID" << endl;
+        for (int i = 0; i < encounteredExceptions.size(); i++) {
+            encounteredExceptions[i]->display();
         }
 
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(programAST);
@@ -42,16 +36,10 @@ namespace Theta {
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
 
-        for (int i = 0; i < encounteredExceptions.size(); i++) {
-            encounteredExceptions[i].display();
-        }
-
         bool isTypeValid = TypeChecker::checkAST(ast);
 
-        if (isTypeValid) {
-            cout << "Types are valid" << endl;
-        } else {
-            cout << "TYPES NOT VALID" << endl;
+        for (int i = 0; i < encounteredExceptions.size(); i++) {
+            encounteredExceptions[i]->display();
         }
 
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(ast);
@@ -100,11 +88,11 @@ namespace Theta {
         return parsedAST;
     }
 
-    void Compiler::addException(Theta::CompilationError e) {
+    void Compiler::addException(shared_ptr<Theta::Error> e) {
         encounteredExceptions.push_back(e);
     }
 
-    vector<Theta::CompilationError> Compiler::getEncounteredExceptions() {
+    vector<shared_ptr<Theta::Error>> Compiler::getEncounteredExceptions() {
         return encounteredExceptions;
     }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -14,6 +15,21 @@ namespace Theta {
             TypeDeclarationNode(string typ) : type(typ), ASTNode(ASTNode::Types::TYPE_DECLARATION) {};
 
             string getType() { return type; }
+
+            string toString() {
+                string typeString = "<" + type;
+
+                if (value) {
+                    typeString += "<" + dynamic_pointer_cast<TypeDeclarationNode>(value)->toString() + ">";
+                } else if (left) {
+                    typeString += "<" + dynamic_pointer_cast<TypeDeclarationNode>(left)->toString() + ", ";
+                    typeString += dynamic_pointer_cast<TypeDeclarationNode>(right)->toString() + ">";
+                }
+
+                typeString += ">";
+
+                return typeString;
+            }
 
             string toJSON() const override {
                 ostringstream oss;

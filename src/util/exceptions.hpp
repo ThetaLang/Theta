@@ -4,12 +4,18 @@
 #import <string>
 #import <vector>
 #import <iostream>
+#import "../parser/ast/TypeDeclarationNode.hpp"
 #import "../lexer/Token.hpp"
 
 using namespace std;
 
 namespace Theta {
-    class CompilationError : public exception {
+    class Error : public exception {
+        public:
+            virtual void display() = 0;
+    };
+
+    class CompilationError : public Error {
         private:
             string errorType;
             string message;
@@ -24,7 +30,7 @@ namespace Theta {
                 return message + " at line " + to_string(token.getStartLocation()[0]) + ", column " + to_string(token.getStartLocation()[1]);
             }
 
-            void display() {
+            void display() override {
                 cout << "\n" + fileName << endl;
                 cout << "  \033[1;31m" + errorType + "\033[0m: " << what() << ':' << endl;
 
@@ -77,6 +83,22 @@ namespace Theta {
                 if (contextNextLine != "") {
                     cout << "    " + to_string(token.getStartLocation()[0] + 1) + ": " + contextNextLine << endl;
                 }
+            }
+    };
+
+    class TypeError : public Error {
+        public:
+            TypeError(string msg, shared_ptr<ASTNode> t1, shared_ptr<ASTNode> t2) : message(msg), type1(t1), type2(t2) {}
+
+            string message;
+            shared_ptr<ASTNode> type1;
+            shared_ptr<ASTNode> type2;
+
+            void display() override {
+                string leftTypeString = dynamic_pointer_cast<TypeDeclarationNode>(type1)->toString();
+                string rightTypeString = dynamic_pointer_cast<TypeDeclarationNode>(type2)->toString();
+
+                cout << "  \033[1;31mTypeError\033[0m: " + message + ": " + leftTypeString + " is not equivalent to " + rightTypeString << endl;
             }
     };
 

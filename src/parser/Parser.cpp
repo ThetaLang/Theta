@@ -50,7 +50,7 @@ namespace Theta {
                 // Throw parse errors for any remaining tokens after we've finished our parser run
                 for (int i = 0; i < tokens.size(); i++) {
                     Theta::Compiler::getInstance().addException(
-                        Theta::CompilationError(
+                        make_shared<Theta::CompilationError>(
                             "ParseError",
                             "Unparsed token " + tokens[i].getLexeme(),
                             tokens[i],
@@ -97,7 +97,7 @@ namespace Theta {
 
                 if (fileContainingLinkedCapsule == filesByCapsule->end()) {
                     Theta::Compiler::getInstance().addException(
-                        Theta::CompilationError(
+                        make_shared<Theta::CompilationError>(
                             "LinkageError",
                             "Could not find capsule " + currentToken.getLexeme() + " referenced",
                             currentToken,
@@ -148,7 +148,7 @@ namespace Theta {
 
                     if (!match(Token::Types::BRACE_OPEN)) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Expected open brace during struct definition",
                                 currentToken,
@@ -263,7 +263,7 @@ namespace Theta {
 
                     if (!match(Token::Types::BRACE_OPEN)) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Expected opening brace during enum declaration",
                                 currentToken,
@@ -280,7 +280,7 @@ namespace Theta {
                     while (!match(Token::Types::BRACE_CLOSE)) {
                         if (!match(Token::Types::COLON)) {
                             Theta::Compiler::getInstance().addException(
-                                Theta::CompilationError(
+                                make_shared<Theta::CompilationError>(
                                     "SyntaxError",
                                     "Enum must only contain symbols",
                                     remainingTokens->front(),
@@ -585,7 +585,7 @@ namespace Theta {
 
                     if (!match(Token::Types::BRACE_CLOSE)) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Expected closing brace after tuple definition",
                                 remainingTokens->front(),
@@ -675,7 +675,7 @@ namespace Theta {
                 }
 
                 Theta::Compiler::getInstance().addException(
-                    Theta::CompilationError(
+                    make_shared<Theta::CompilationError>(
                         "SyntaxError",
                         "Expected identifier as part of symbol declaration",
                         remainingTokens->front(),
@@ -726,7 +726,7 @@ namespace Theta {
 
                     if (isStartsWithDigit || isDisallowedChar) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Invalid identifier \"" + token.getLexeme() + "\"",
                                 token,
