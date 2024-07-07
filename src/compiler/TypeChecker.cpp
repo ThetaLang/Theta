@@ -208,8 +208,30 @@ namespace Theta {
             (
                 t1->getLeft() && t2->getLeft() && t1->getRight() && t2->getRight() &&
                 (!isSameType(t1->getLeft(), t2->getLeft()) || !isSameType(t1->getRight(), t2->getRight()))
-            )
+            ) ||
+            // Variadic types
+            (!t1->hasMany() && t2->hasMany())
         ) return false;
+
+        // Only true if t1 contains all of the types in t2. t1 may have more types than t2. This is for situations like
+        // x<Variadic<String, Number>> = 1, which should pass type validation.
+        if (t1->hasMany() && !t2->hasMany()) {
+            for (int i = 0; i < t1->getElements().size(); i++) {
+                bool containsType = isSameType(t2, t1->getElements().at(i));
+
+                if (!containsType) return false;
+            }
+        } else if (t1->hasMany() && t2->hasMany()) {
+            for (int i = 0; i < t2->getElements().size(); i++) {
+                bool containsType = false;
+
+                for (int j = 0; j < t1->getElements().size(); j++) {
+                    if (isSameType(t2->getElements().at(i), t1->getElements().at(j))) containsType = true;
+                }
+
+                if (!containsType) return false;
+            }
+        }
 
         return t1->getType() == t2->getType();
     }
@@ -259,17 +281,26 @@ namespace Theta {
     shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types) {
         shared_ptr<TypeDeclarationNode> variadicTypeNode = make_shared<TypeDeclarationNode>("Variadic");
 
+        // The unique function requires a sorted vector
+        sort(types.begin(), types.end(), [](const shared_ptr<TypeDeclarationNode>& a, const shared_ptr<TypeDeclarationNode>& b) {
+            if (a && b) {
+                return a->getType() < b->getType();
+            }
+            return false;
+        });
+
         auto ip = unique(types.begin(), types.end(), isSameType);
         types.resize(distance(types.begin(), ip));
 
         // If theres only 1 unique type, this isn't variadic
         if (types.size() == 1) return types[0];
 
-        cout << "MAKING VARIADIC TYPE" << endl;
-
+        vector<shared_ptr<ASTNode>> typesAsASTNode;
         for (int i = 0; i < types.size(); i++) {
-            cout << types.at(i)->toJSON() << endl;
+            typesAsASTNode.push_back(dynamic_pointer_cast<ASTNode>(types.at(i)));
         }
+
+        variadicTypeNode->setElements(typesAsASTNode);
 
         return variadicTypeNode;
     }

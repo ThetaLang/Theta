@@ -649,12 +649,23 @@ namespace Theta {
             shared_ptr<ASTNode> parseType() {
                 match(Token::Types::IDENTIFIER);
 
-                shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(currentToken.getLexeme());
+                string typeName = currentToken.getLexeme();
+                shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(typeName);
 
                 if (match(Token::Types::OPERATOR, Lexemes::LT)) {
                     shared_ptr<ASTNode> l = parseType();
 
-                    if (match(Token::Types::COMMA)) {
+                    if (typeName == "Variadic") {
+                        shared_ptr<TypeDeclarationNode> variadic = dynamic_pointer_cast<TypeDeclarationNode>(typ);
+                        vector<shared_ptr<ASTNode>> types;
+                        types.push_back(l);
+
+                        while (match(Token::Types::COMMA)) {
+                            types.push_back(parseType());
+                        }
+
+                        variadic->setElements(types);
+                    } else if (match(Token::Types::COMMA)) {
                         typ->setLeft(l);
                         typ->setRight(parseType());
                     } else {
