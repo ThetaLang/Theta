@@ -13,6 +13,9 @@
 #include "../parser/ast/IdentifierNode.hpp"
 #include "../parser/ast/AssignmentNode.hpp"
 #include "../parser/ast/BinaryOperationNode.hpp"
+#include "../parser/ast/BlockNode.hpp"
+#include "../parser/ast/ControlFlowNode.hpp"
+#include "../parser/ast/FunctionDeclarationNode.hpp"
 #include "../parser/ast/TypeDeclarationNode.hpp"
 
 
@@ -32,6 +35,16 @@ namespace Theta {
 
             static bool checkBinaryOperationNode(shared_ptr<BinaryOperationNode> node);
 
+            static bool checkBlockNode(shared_ptr<BlockNode> node);
+
+            static bool checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node);
+
+            static bool checkControlFlowNode(shared_ptr<ControlFlowNode> node);
+
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
+
+            static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
+
+            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types);
     };
 }
