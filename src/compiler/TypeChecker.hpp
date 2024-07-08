@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include "Compiler.hpp"
+#include "DataTypes.hpp"
 #include "../util/Exceptions.hpp"
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/ASTNodeList.hpp"
@@ -34,6 +35,8 @@ namespace Theta {
             static bool checkAssignmentNode(shared_ptr<AssignmentNode> node);
 
             static bool checkBinaryOperationNode(shared_ptr<BinaryOperationNode> node);
+
+            static bool checkUnaryOperatonNode(shared_ptr<UnaryOperationNode> node);
 
             static bool checkBlockNode(shared_ptr<BlockNode> node);
 

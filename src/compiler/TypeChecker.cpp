@@ -1,5 +1,4 @@
 #include "TypeChecker.hpp"
-#include <memory>
 
 using namespace std;
 
@@ -31,23 +30,7 @@ namespace Theta {
     }
 
     bool TypeChecker::checkNode(shared_ptr<ASTNode> node) {
-        if (node->getNodeType() == ASTNode::ASSIGNMENT) {
-            return checkAssignmentNode(dynamic_pointer_cast<AssignmentNode>(node));
-        } else if (node->getNodeType() == ASTNode::IDENTIFIER) {
-            return true;
-        } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
-            return true;
-        } else if (node->getNodeType() == ASTNode::NUMBER_LITERAL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>("Number"));
-            return true;
-        } else if (node->getNodeType() == ASTNode::STRING_LITERAL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>("String"));
-            return true;
-        } else if (node->getNodeType() == ASTNode::BOOLEAN_LITERAL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>("Boolean"));
-            return true;
-        } else if (node->getNodeType() == ASTNode::CAPSULE) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>("Capsule"));
+        if (node->getNodeType() == ASTNode::IDENTIFIER || node->getNodeType() == ASTNode::TYPE_DECLARATION) {
             return true;
         } else if (node->getNodeType() == ASTNode::SOURCE) {
             node->setResolvedType(node->getValue()->getResolvedType());
@@ -55,8 +38,27 @@ namespace Theta {
         } else if (node->getNodeType() == ASTNode::RETURN) {
             node->setResolvedType(node->getValue()->getResolvedType());
             return true;
+        } else if (node->getNodeType() == ASTNode::NUMBER_LITERAL) {
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::NUMBER));
+            return true;
+        } else if (node->getNodeType() == ASTNode::STRING_LITERAL) {
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::STRING));
+            return true;
+        } else if (node->getNodeType() == ASTNode::BOOLEAN_LITERAL) {
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN));
+            return true;
+        } else if (node->getNodeType() == ASTNode::CAPSULE) {
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::CAPSULE));
+            return true;
+        } else if (node->getNodeType() == ASTNode::SYMBOL) {
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::SYMBOL));
+            return true;
+        } else if (node->getNodeType() == ASTNode::ASSIGNMENT) {
+            return checkAssignmentNode(dynamic_pointer_cast<AssignmentNode>(node));
         } else if (node->getNodeType() == ASTNode::BINARY_OPERATION) {
             return checkBinaryOperationNode(dynamic_pointer_cast<BinaryOperationNode>(node));
+        } else if (node->getNodeType() == ASTNode::UNARY_OPERATION) {
+            return checkUnaryOperationNode(dynamic_pointer_cast<UnaryOperationNode>(node));
         } else if (node->getNodeType() == ASTNode::BLOCK) {
             return checkBlockNode(dynamic_pointer_cast<BlockNode>(node));
         } else if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
@@ -70,7 +72,7 @@ namespace Theta {
         //     if (childResolvedType)
         // }
 
-        return true;
+        return false;
     }
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
@@ -116,6 +118,10 @@ namespace Theta {
         return true;
     }
 
+    bool TypeChecker::checkUnaryOperationNode(shared_ptr<UnaryOperationNode> node) {
+        bool
+    }
+
     bool TypeChecker::checkBlockNode(shared_ptr<BlockNode> node) {
         vector<shared_ptr<TypeDeclarationNode>> blockReturnTypes;
 
@@ -159,12 +165,14 @@ namespace Theta {
             if (pair.first) {
                 bool validCondition = checkAST(pair.first);
 
-                if (!validCondition || !isSameType(pair.first->getResolvedType(), make_shared<TypeDeclarationNode>("Boolean"))) {
+                shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN);
+
+                if (!validCondition || !isSameType(pair.first->getResolvedType(), boolType)) {
                     Compiler::getInstance().addException(
                         make_shared<TypeError>(
                             "Non-boolean expression in control flow condition",
                             pair.first->getResolvedType(),
-                            make_shared<TypeDeclarationNode>("Boolean")
+                            boolType
                         )
                     );
 
@@ -279,7 +287,7 @@ namespace Theta {
     }
 
     shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types) {
-        shared_ptr<TypeDeclarationNode> variadicTypeNode = make_shared<TypeDeclarationNode>("Variadic");
+        shared_ptr<TypeDeclarationNode> variadicTypeNode = make_shared<TypeDeclarationNode>(DataTypes::VARIADIC);
 
         // The unique function requires a sorted vector
         sort(types.begin(), types.end(), [](const shared_ptr<TypeDeclarationNode>& a, const shared_ptr<TypeDeclarationNode>& b) {
