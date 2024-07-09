@@ -18,7 +18,7 @@
 #include "../parser/ast/ControlFlowNode.hpp"
 #include "../parser/ast/FunctionDeclarationNode.hpp"
 #include "../parser/ast/TypeDeclarationNode.hpp"
-
+#include "../parser/ast/UnaryOperationNode.hpp"
 
 using namespace std;
 
@@ -36,7 +36,7 @@ namespace Theta {
 
             static bool checkBinaryOperationNode(shared_ptr<BinaryOperationNode> node);
 
-            static bool checkUnaryOperatonNode(shared_ptr<UnaryOperationNode> node);
+            static bool checkUnaryOperationNode(shared_ptr<UnaryOperationNode> node);
 
             static bool checkBlockNode(shared_ptr<BlockNode> node);
 

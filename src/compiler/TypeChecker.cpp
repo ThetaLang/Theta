@@ -119,7 +119,39 @@ namespace Theta {
     }
 
     bool TypeChecker::checkUnaryOperationNode(shared_ptr<UnaryOperationNode> node) {
-        bool
+        bool valid = checkAST(node->getValue());
+
+        if (!valid) return false;
+
+        shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN);
+        shared_ptr<TypeDeclarationNode> numType = make_shared<TypeDeclarationNode>(DataTypes::NUMBER);
+
+        if (isSameType(node->getValue()->getResolvedType(), boolType) && node->getOperator() != Lexemes::NOT) {
+            Compiler::getInstance().addException(
+                make_shared<TypeError>(
+                    "Boolean expression may only have boolean unary operator",
+                    node->getValue()->getResolvedType(),
+                    numType
+                )
+            );
+            
+            return false;
+        }
+
+        if (isSameType(node->getValue()->getResolvedType(), numType) && node->getOperator() != Lexemes::MINUS) {
+            Compiler::getInstance().addException(
+                make_shared<TypeError>(
+                    "Numerical expression may only have numerical unary operator",
+                    node->getValue()->getResolvedType(),
+                    boolType
+                )
+            );
+            
+            return false;
+        }
+        
+        node->setResolvedType(node->getValue()->getResolvedType());
+        return true;
     }
 
     bool TypeChecker::checkBlockNode(shared_ptr<BlockNode> node) {
