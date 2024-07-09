@@ -1,17 +1,8 @@
 #pragma once
 
 #include <vector>
-#include <string>
-#include <map>
-#include <fstream>
-#include <iostream>
 #include <memory>
-#include "Compiler.hpp"
-#include "DataTypes.hpp"
-#include "../util/Exceptions.hpp"
 #include "../parser/ast/ASTNode.hpp"
-#include "../parser/ast/ASTNodeList.hpp"
-#include "../parser/ast/IdentifierNode.hpp"
 #include "../parser/ast/AssignmentNode.hpp"
 #include "../parser/ast/BinaryOperationNode.hpp"
 #include "../parser/ast/BlockNode.hpp"
@@ -19,6 +10,7 @@
 #include "../parser/ast/FunctionDeclarationNode.hpp"
 #include "../parser/ast/TypeDeclarationNode.hpp"
 #include "../parser/ast/UnaryOperationNode.hpp"
+#include "../parser/ast/ListNode.hpp"
 
 using namespace std;
 
@@ -44,7 +36,11 @@ namespace Theta {
 
             static bool checkControlFlowNode(shared_ptr<ControlFlowNode> node);
 
+            static bool checkListNode(shared_ptr<ListNode> node);
+
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
+
+            static bool isHomogenous(vector<shared_ptr<TypeDeclarationNode>> types);
 
             static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
 

@@ -1,4 +1,11 @@
 #include "TypeChecker.hpp"
+#include "Compiler.hpp"
+#include <memory>
+#include <string>
+#include "DataTypes.hpp"
+#include "../util/Exceptions.hpp"
+#include "../parser/ast/ASTNodeList.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
 
 using namespace std;
 
@@ -65,6 +72,8 @@ namespace Theta {
             return checkFunctionDeclarationNode(dynamic_pointer_cast<FunctionDeclarationNode>(node));
         } else if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
             return checkControlFlowNode(dynamic_pointer_cast<ControlFlowNode>(node));
+        } else if (node->getNodeType() == ASTNode::LIST) {
+            return checkListNode(dynamic_pointer_cast<ListNode>(node));
         }
         // if (node->getValue()) {
         //     shared_ptr<ASTNode> childResolvedType = node->getValue()->getResolvedType();
@@ -228,6 +237,42 @@ namespace Theta {
         return true;
     }
 
+    bool TypeChecker::checkListNode(shared_ptr<ListNode> node) {
+        vector<shared_ptr<TypeDeclarationNode>> returnTypes;
+
+        shared_ptr<ASTNodeList> listNode = dynamic_pointer_cast<ASTNodeList>(node);
+
+        for (int i = 0; i < listNode->getElements().size(); i++) {
+            bool validElement = checkAST(listNode->getElements().at(i));
+
+            if (!validElement) return false;
+            
+            returnTypes.push_back(dynamic_pointer_cast<TypeDeclarationNode>(listNode->getElements().at(i)->getResolvedType()));
+        }
+
+        if (!isHomogenous(returnTypes)) {
+            // TODO: Loop through all the returnTypes and add an exception for each unmatching
+            // type 
+            Compiler::getInstance().addException(
+                make_shared<TypeError>(
+                    "Lists must be homogenous",
+                    returnTypes.at(0),
+                    returnTypes.at(1) // FIXME: This isn't always going to be the wrong type
+                )
+            );
+
+            return false;
+        }
+    
+        shared_ptr<TypeDeclarationNode> listType = make_shared<TypeDeclarationNode>(DataTypes::LIST);
+
+        listType->setValue(returnTypes.at(0));
+
+        node->setResolvedType(listType);
+
+        return true;
+    }
+
     bool TypeChecker::isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2) {
         shared_ptr<TypeDeclarationNode> t1 = dynamic_pointer_cast<TypeDeclarationNode>(type1);
         shared_ptr<TypeDeclarationNode> t2 = dynamic_pointer_cast<TypeDeclarationNode>(type2);
@@ -316,6 +361,21 @@ namespace Theta {
         }
 
         return {};
+    }
+
+    bool TypeChecker::isHomogenous(vector<shared_ptr<TypeDeclarationNode>> types) {
+        if (types.size() == 0) return true;
+
+        sort(types.begin(), types.end(), [](const shared_ptr<TypeDeclarationNode> &a, const shared_ptr<TypeDeclarationNode> &b) {
+            if (a && b) return a->getType() < b->getType();
+
+            return false;
+        });
+        
+        auto ip = unique(types.begin(), types.end(), isSameType);
+        types.resize(distance(types.begin(), ip));
+    
+        return types.size() == 1;
     }
 
     shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types) {
