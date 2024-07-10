@@ -1,11 +1,8 @@
-#include <cstddef>
 #include <vector>
 #include <deque>
 #include <string>
 #include <map>
-#include <iostream>
 #include <memory>
-#include <filesystem>
 #include "../lexer/Token.hpp"
 #include "../util/Exceptions.hpp"
 #include "ast/AssignmentNode.hpp"
@@ -33,6 +30,7 @@
 #include "ast/ASTNodeList.hpp"
 #include "../compiler/Compiler.hpp"
 #include "../lexer/Lexemes.hpp"
+#include "../compiler/DataTypes.hpp"
 
 using namespace std;
 
@@ -655,7 +653,7 @@ namespace Theta {
                 if (match(Token::Types::OPERATOR, Lexemes::LT)) {
                     shared_ptr<ASTNode> l = parseType();
 
-                    if (typeName == "Variadic") {
+                    if (typeName == DataTypes::VARIADIC) {
                         shared_ptr<TypeDeclarationNode> variadic = dynamic_pointer_cast<TypeDeclarationNode>(typ);
                         vector<shared_ptr<ASTNode>> types;
                         types.push_back(l);
