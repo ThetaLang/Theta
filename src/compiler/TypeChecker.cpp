@@ -5,6 +5,7 @@
 #include "DataTypes.hpp"
 #include "../util/Exceptions.hpp"
 #include "../parser/ast/ASTNodeList.hpp"
+#include "parser/ast/TupleNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 
 using namespace std;
@@ -74,6 +75,8 @@ namespace Theta {
             return checkControlFlowNode(dynamic_pointer_cast<ControlFlowNode>(node));
         } else if (node->getNodeType() == ASTNode::LIST) {
             return checkListNode(dynamic_pointer_cast<ListNode>(node));
+        } else if (node->getNodeType() == ASTNode::TUPLE) {
+            return checkTupleNode(dynamic_pointer_cast<TupleNode>(node));
         }
         // if (node->getValue()) {
         //     shared_ptr<ASTNode> childResolvedType = node->getValue()->getResolvedType();
@@ -269,6 +272,22 @@ namespace Theta {
         listType->setValue(returnTypes.at(0));
 
         node->setResolvedType(listType);
+
+        return true;
+    }
+
+    bool TypeChecker::checkTupleNode(shared_ptr<TupleNode> node) {
+        bool validLeft = checkAST(node->getLeft());
+        bool validRight = checkAST(node->getRight());
+
+        if (!validLeft || !validRight) return false;
+        
+        shared_ptr<TypeDeclarationNode> type = make_shared<TypeDeclarationNode>(DataTypes::TUPLE);
+
+        type->setLeft(node->getLeft()->getResolvedType());
+        type->setRight(node->getRight()->getResolvedType());
+
+        node->setResolvedType(type);
 
         return true;
     }

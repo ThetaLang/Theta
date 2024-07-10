@@ -11,6 +11,7 @@
 #include "../parser/ast/TypeDeclarationNode.hpp"
 #include "../parser/ast/UnaryOperationNode.hpp"
 #include "../parser/ast/ListNode.hpp"
+#include "parser/ast/TupleNode.hpp"
 
 using namespace std;
 
@@ -37,6 +38,8 @@ namespace Theta {
             static bool checkControlFlowNode(shared_ptr<ControlFlowNode> node);
 
             static bool checkListNode(shared_ptr<ListNode> node);
+
+            static bool checkTupleNode(shared_ptr<TupleNode> node);
 
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
 
