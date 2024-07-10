@@ -5,6 +5,7 @@
 #include "DataTypes.hpp"
 #include "../util/Exceptions.hpp"
 #include "../parser/ast/ASTNodeList.hpp"
+#include "parser/ast/DictionaryNode.hpp"
 #include "parser/ast/TupleNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 
@@ -77,6 +78,8 @@ namespace Theta {
             return checkListNode(dynamic_pointer_cast<ListNode>(node));
         } else if (node->getNodeType() == ASTNode::TUPLE) {
             return checkTupleNode(dynamic_pointer_cast<TupleNode>(node));
+        } else if (node->getNodeType() == ASTNode::DICTIONARY) {
+            return checkDictionaryNode(dynamic_pointer_cast<DictionaryNode>(node));
         }
         // if (node->getValue()) {
         //     shared_ptr<ASTNode> childResolvedType = node->getValue()->getResolvedType();
@@ -289,6 +292,54 @@ namespace Theta {
 
         node->setResolvedType(type);
 
+        return true;
+    }
+
+    bool TypeChecker::checkDictionaryNode(shared_ptr<DictionaryNode> node) {
+        vector<shared_ptr<TypeDeclarationNode>> keyTypes;
+        vector<shared_ptr<TypeDeclarationNode>> valueTypes;
+
+        shared_ptr<ASTNodeList> dictNode = dynamic_pointer_cast<ASTNodeList>(node);
+        
+        for (int i = 0; i < dictNode->getElements().size(); i++) {
+            shared_ptr<ASTNode> kvTuple = dictNode->getElements().at(i);
+
+            bool isKeyValid = checkAST(kvTuple->getLeft());
+            bool isValValid = checkAST(kvTuple->getRight());
+
+            if (!isKeyValid || !isValValid) return false;
+        
+            shared_ptr<TypeDeclarationNode> symbolType = make_shared<TypeDeclarationNode>(DataTypes::SYMBOL);
+
+            if (!isSameType(kvTuple->getLeft()->getResolvedType(), symbolType)) {
+                Compiler::getInstance().addException(
+                    make_shared<TypeError>(
+                        "Dictionary key must be a <Symbol>",
+                        kvTuple->getLeft()->getResolvedType(),
+                        symbolType
+                    )
+                );
+            }
+        
+            keyTypes.push_back(dynamic_pointer_cast<TypeDeclarationNode>(kvTuple->getLeft()->getResolvedType()));
+            valueTypes.push_back(dynamic_pointer_cast<TypeDeclarationNode>(kvTuple->getRight()->getResolvedType()));
+        }
+
+        if (!isHomogenous(valueTypes)) {
+            Compiler::getInstance().addException(
+                make_shared<TypeError>(
+                    "Dictionary values must be homogenous",
+                    valueTypes.at(0),
+                    valueTypes.at(1) // FIXME: This wont always be the incorrect type. Need to detect which values are mistyped
+                )
+            );
+        }
+
+        shared_ptr<TypeDeclarationNode> dictType = make_shared<TypeDeclarationNode>(DataTypes::DICT);
+        dictType->setValue(valueTypes.at(0));
+
+        node->setResolvedType(dictType);
+        
         return true;
     }
 
