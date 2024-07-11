@@ -1,6 +1,7 @@
 #include "Compiler.hpp"
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
+#include "compiler/TypeChecker.hpp"
 
 using namespace std;
 
@@ -17,7 +18,9 @@ namespace Theta {
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 
-        bool isTypeValid = TypeChecker::checkAST(programAST);
+        TypeChecker typeChecker;
+
+        bool isTypeValid = typeChecker.checkAST(programAST);
 
         for (int i = 0; i < encounteredExceptions.size(); i++) {
             encounteredExceptions[i]->display();
@@ -36,7 +39,9 @@ namespace Theta {
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
 
-        bool isTypeValid = TypeChecker::checkAST(ast);
+        TypeChecker typeChecker;
+
+        bool isTypeValid = typeChecker.checkAST(ast);
 
         for (int i = 0; i < encounteredExceptions.size(); i++) {
             encounteredExceptions[i]->display();

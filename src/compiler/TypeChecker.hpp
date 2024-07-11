@@ -12,7 +12,11 @@
 #include "../parser/ast/UnaryOperationNode.hpp"
 #include "../parser/ast/ListNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
+#include "parser/ast/IdentifierNode.hpp"
+#include "parser/ast/StructDeclarationNode.hpp"
+#include "parser/ast/StructDefinitionNode.hpp"
 #include "parser/ast/TupleNode.hpp"
+#include "SymbolTableStack.hpp"
 
 using namespace std;
 
@@ -21,32 +25,46 @@ namespace Theta {
 
     class TypeChecker {
         public:
-            static bool checkAST(shared_ptr<ASTNode> ast);
+            bool checkAST(shared_ptr<ASTNode> ast);
 
         private:
-            static bool checkNode(shared_ptr<ASTNode> node);
+            SymbolTableStack symbolTable;
+        
+            bool checkNode(shared_ptr<ASTNode> node);
 
-            static bool checkAssignmentNode(shared_ptr<AssignmentNode> node);
+            bool checkTypeDeclarationNode(shared_ptr<TypeDeclarationNode> node);
 
-            static bool checkBinaryOperationNode(shared_ptr<BinaryOperationNode> node);
+            bool checkAssignmentNode(shared_ptr<AssignmentNode> node);
 
-            static bool checkUnaryOperationNode(shared_ptr<UnaryOperationNode> node);
+            bool checkIdentifierNode(shared_ptr<IdentifierNode> node);
 
-            static bool checkBlockNode(shared_ptr<BlockNode> node);
+            bool checkBinaryOperationNode(shared_ptr<BinaryOperationNode> node);
 
-            static bool checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node);
+            bool checkUnaryOperationNode(shared_ptr<UnaryOperationNode> node);
 
-            static bool checkControlFlowNode(shared_ptr<ControlFlowNode> node);
+            bool checkBlockNode(shared_ptr<BlockNode> node);
 
-            static bool checkListNode(shared_ptr<ListNode> node);
+            bool checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node);
 
-            static bool checkTupleNode(shared_ptr<TupleNode> node);
+            bool checkControlFlowNode(shared_ptr<ControlFlowNode> node);
 
-            static bool checkDictionaryNode(shared_ptr<DictionaryNode> node);
+            bool checkListNode(shared_ptr<ListNode> node);
+
+            bool checkTupleNode(shared_ptr<TupleNode> node);
+
+            bool checkDictionaryNode(shared_ptr<DictionaryNode> node);
+
+            bool checkStructDefinitionNode(shared_ptr<StructDefinitionNode> node);
+
+            bool checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node);
+
+            static bool isScoped(ASTNode::Types nodeType);
 
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
 
             static bool isHomogenous(vector<shared_ptr<TypeDeclarationNode>> types);
+
+            static bool isLanguageDataType(string type);
 
             static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
 

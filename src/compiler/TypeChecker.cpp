@@ -1,18 +1,28 @@
 #include "TypeChecker.hpp"
 #include "Compiler.hpp"
 #include <memory>
+#include <array>
 #include <string>
+#include <utility>
 #include "DataTypes.hpp"
 #include "../util/Exceptions.hpp"
 #include "../parser/ast/ASTNodeList.hpp"
 #include "parser/ast/DictionaryNode.hpp"
+#include "parser/ast/StructDeclarationNode.hpp"
+#include "parser/ast/StructDefinitionNode.hpp"
+#include "parser/ast/SymbolNode.hpp"
 #include "parser/ast/TupleNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
+#include "parser/ast/IdentifierNode.hpp"
 
 using namespace std;
 
 namespace Theta {
     bool TypeChecker::checkAST(shared_ptr<ASTNode> ast) {
+        bool hasOwnScope = isScoped(ast->getNodeType());
+
+        if (hasOwnScope) symbolTable.enterScope();
+
         // Check node children first
         if (ast->getValue()) {
             bool childValid = checkAST(ast->getValue());
@@ -35,13 +45,13 @@ namespace Theta {
             }
         }
 
+        if (hasOwnScope) symbolTable.exitScope();
+
         return checkNode(ast);
     }
 
     bool TypeChecker::checkNode(shared_ptr<ASTNode> node) {
-        if (node->getNodeType() == ASTNode::IDENTIFIER || node->getNodeType() == ASTNode::TYPE_DECLARATION) {
-            return true;
-        } else if (node->getNodeType() == ASTNode::SOURCE) {
+        if (node->getNodeType() == ASTNode::SOURCE) {
             node->setResolvedType(node->getValue()->getResolvedType());
             return true;
         } else if (node->getNodeType() == ASTNode::RETURN) {
@@ -62,8 +72,12 @@ namespace Theta {
         } else if (node->getNodeType() == ASTNode::SYMBOL) {
             node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::SYMBOL));
             return true;
+        } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
+            return checkTypeDeclarationNode(dynamic_pointer_cast<TypeDeclarationNode>(node));
         } else if (node->getNodeType() == ASTNode::ASSIGNMENT) {
             return checkAssignmentNode(dynamic_pointer_cast<AssignmentNode>(node));
+        } else if (node->getNodeType() == ASTNode::IDENTIFIER) {
+            return checkIdentifierNode(dynamic_pointer_cast<IdentifierNode>(node));
         } else if (node->getNodeType() == ASTNode::BINARY_OPERATION) {
             return checkBinaryOperationNode(dynamic_pointer_cast<BinaryOperationNode>(node));
         } else if (node->getNodeType() == ASTNode::UNARY_OPERATION) {
@@ -80,6 +94,10 @@ namespace Theta {
             return checkTupleNode(dynamic_pointer_cast<TupleNode>(node));
         } else if (node->getNodeType() == ASTNode::DICTIONARY) {
             return checkDictionaryNode(dynamic_pointer_cast<DictionaryNode>(node));
+        } else if (node->getNodeType() == ASTNode::STRUCT_DEFINITION) {
+            return checkStructDefinitionNode(dynamic_pointer_cast<StructDefinitionNode>(node));
+        } else if (node->getNodeType() == ASTNode::STRUCT_DECLARATION) {
+            return checkStructDeclarationNode(dynamic_pointer_cast<StructDeclarationNode>(node));
         }
         // if (node->getValue()) {
         //     shared_ptr<ASTNode> childResolvedType = node->getValue()->getResolvedType();
@@ -88,6 +106,20 @@ namespace Theta {
         // }
 
         return false;
+    }
+
+    bool TypeChecker::checkTypeDeclarationNode(shared_ptr<TypeDeclarationNode> node) {
+        if (isLanguageDataType(node->getType())) return true;
+
+        shared_ptr<ASTNode> customDataTypeInScope = symbolTable.lookup(node->getType());
+
+        if (!customDataTypeInScope) {
+            // TODO: ReferenceError
+            cout << "COULD NOT FIND CUSTOM TYPE" << endl;
+            return false;
+        }
+
+        return true;
     }
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
@@ -110,6 +142,33 @@ namespace Theta {
 
         node->setResolvedType(node->getLeft()->getValue());
 
+        shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
+
+        shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
+
+        if (existingIdentifierInScope) {
+            // TODO: IllegalOperationError
+            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+            return false;
+        }
+    
+        symbolTable.insert(ident->getIdentifier(), node->getResolvedType());
+
+        return true;
+    }
+
+    bool TypeChecker::checkIdentifierNode(shared_ptr<IdentifierNode> node) {
+        if (node->getValue()) return true;
+        
+        shared_ptr<ASTNode> existingIdentifierInScopeType = symbolTable.lookup(node->getIdentifier());
+
+        if (!existingIdentifierInScopeType) {
+            // TODO: ReferenceError
+            cout << "CANT FIND IDENTIFIER" << endl;
+            return false;
+        }
+
+        node->setResolvedType(existingIdentifierInScopeType);
         return true;
     }
 
@@ -343,6 +402,99 @@ namespace Theta {
         return true;
     }
 
+    bool TypeChecker::checkStructDefinitionNode(shared_ptr<StructDefinitionNode> node) {
+        shared_ptr<ASTNodeList> structNode = dynamic_pointer_cast<ASTNodeList>(node);
+
+        for (int i = 0; i < structNode->getElements().size(); i++) {
+            bool valid = checkAST(structNode->getElements().at(i));
+
+            if (!valid) return false;
+        }
+
+        structNode->setResolvedType(make_shared<TypeDeclarationNode>(node->getName()));
+    
+        shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(node->getName());
+
+        if (existingIdentifierInScope) {
+            // TODO: IllegalOperationException
+            cout << "AN IDENTIFIER ALREADY EXISTS IN SCOPE" << endl;
+            return false;
+        }
+
+        symbolTable.insert(node->getName(), node);
+
+        return true;
+    }
+
+    bool TypeChecker::checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node) {
+        shared_ptr<ASTNode> structDefinitionInScope = symbolTable.lookup(node->getStructType());
+
+        if (!structDefinitionInScope) {
+            // TODO: ReferenceError
+            cout << "NO STRUCT DEFINITION FOUND" << endl;
+            return false;
+        }
+
+        shared_ptr<ASTNodeList> structDeclarationNode = dynamic_pointer_cast<ASTNodeList>(node->getValue());
+
+        shared_ptr<ASTNodeList> structDefinition = dynamic_pointer_cast<ASTNodeList>(structDefinitionInScope);
+
+        map<string, shared_ptr<TypeDeclarationNode>> requiredStructFields;
+        for (int i = 0; i < structDefinition->getElements().size(); i++) {
+            shared_ptr<IdentifierNode> elem = dynamic_pointer_cast<IdentifierNode>(structDefinition->getElements().at(i));
+
+            // Needs the : because struct declarations are lists of tuples
+            requiredStructFields.insert(make_pair(":" + elem->getIdentifier(), dynamic_pointer_cast<TypeDeclarationNode>(elem->getValue())));
+        }
+
+        for (int i = 0; i < structDeclarationNode->getElements().size(); i++) {
+            shared_ptr<SymbolNode> key = dynamic_pointer_cast<SymbolNode>(structDeclarationNode->getElements().at(i)->getLeft());
+            
+            auto it = requiredStructFields.find(key->getSymbol()); 
+
+            if (it == requiredStructFields.end()) {
+                // TODO: ReferenceError
+                cout << "STRUCT DECLARATION CANT CONTAIN KEYS NOT IN DEFINITION" << endl;
+                return false;
+            }
+
+            if (!isSameType(it->second, structDeclarationNode->getElements().at(i)->getRight()->getResolvedType())) {
+                Compiler::getInstance().addException(
+                    make_shared<TypeError>(
+                        "Struct key type mismatch",
+                        it->second,
+                        structDeclarationNode->getElements().at(i)->getRight()->getResolvedType()
+                    )
+                );
+
+                return false;
+            }
+
+            requiredStructFields.erase(key->getSymbol());
+        }
+    
+        // Should be empty by the end. If its not, that means the declared struct doesnt match the definition
+        if (requiredStructFields.size() > 0) {
+            // TODO: MissingSomethingException
+            cout << "STRUCT DECLARATION DOES NOT SATISFY ITS DEFINED REQUIREMENTS" << endl;
+            return false;
+        }
+
+        node->setResolvedType(make_shared<TypeDeclarationNode>(node->getStructType()));
+
+        return true;
+    }
+
+    bool TypeChecker::isScoped(ASTNode::Types nodeType) {
+        array<ASTNode::Types, 3> SCOPED_NODE_TYPES = {
+            ASTNode::CAPSULE,
+            ASTNode::BLOCK,
+            ASTNode::FUNCTION_DECLARATION
+        };
+
+        return find(SCOPED_NODE_TYPES.begin(), SCOPED_NODE_TYPES.end(), nodeType) != SCOPED_NODE_TYPES.end();
+    }
+
     bool TypeChecker::isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2) {
         shared_ptr<TypeDeclarationNode> t1 = dynamic_pointer_cast<TypeDeclarationNode>(type1);
         shared_ptr<TypeDeclarationNode> t2 = dynamic_pointer_cast<TypeDeclarationNode>(type2);
@@ -446,6 +598,21 @@ namespace Theta {
         types.resize(distance(types.begin(), ip));
     
         return types.size() == 1;
+    }
+
+    bool TypeChecker::isLanguageDataType(string type) {
+        array<string, 8> LANGUAGE_DATATYPES = {
+            DataTypes::NUMBER,
+            DataTypes::STRING,
+            DataTypes::BOOLEAN,
+            DataTypes::DICT,
+            DataTypes::LIST,
+            DataTypes::TUPLE,
+            DataTypes::VARIADIC,
+            DataTypes::SYMBOL
+        };
+
+        return find(LANGUAGE_DATATYPES.begin(), LANGUAGE_DATATYPES.end(), type) != LANGUAGE_DATATYPES.end();
     }
 
     shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types) {
