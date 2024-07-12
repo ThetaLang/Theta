@@ -24,6 +24,10 @@ namespace Theta {
 
         if (hasOwnScope) symbolTable.enterScope();
 
+        if (ast->getNodeType() == ASTNode::ASSIGNMENT && ast->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            hoistFunction(ast);
+        }
+
         // Check node children first
         if (ast->getValue()) {
             bool childValid = checkAST(ast->getValue());
@@ -115,7 +119,7 @@ namespace Theta {
 
         if (!customDataTypeInScope) {
             // TODO: ReferenceError
-            cout << "COULD NOT FIND CUSTOM TYPE" << endl;
+            cout << "COULD NOT FIND CUSTOM TYPE: " + node->getType() << endl;
             return false;
         }
 
@@ -123,15 +127,11 @@ namespace Theta {
     }
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
-        bool typesMatch;
-
         string rhsType = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->getType();
 
-        if (rhsType == DataTypes::FUNCTION) {
-            typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType()->getValue());
-        } else {
-            typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
-        }
+        bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
+        
+        shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
         if (!typesMatch) {
             string leftTypeString = dynamic_pointer_cast<TypeDeclarationNode>(node->getLeft()->getValue())->toString();
@@ -150,22 +150,8 @@ namespace Theta {
 
         node->setResolvedType(node->getLeft()->getValue());
 
-        shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
-        if (rhsType == DataTypes::FUNCTION) {
-            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
-
-            shared_ptr<ASTNode> existingFuncIdentifierInScope = symbolTable.lookup(uniqueFuncIdentifier);
-            shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
-
-            if (existingIdentifierInScope || existingFuncIdentifierInScope) {
-                // TODO: IllegalOperationError
-                cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
-                return false;
-            }
-
-            symbolTable.insert(uniqueFuncIdentifier, node->getRight());
-        } else {
+        if (rhsType != DataTypes::FUNCTION) {
             shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
 
             if (existingIdentifierInScope) {
@@ -178,6 +164,26 @@ namespace Theta {
         }
 
         return true;
+    }
+
+    void TypeChecker::hoistFunction(shared_ptr<ASTNode> node) {
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(node); 
+        shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
+
+        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
+
+        shared_ptr<ASTNode> existingFuncIdentifierInScope = symbolTable.lookup(uniqueFuncIdentifier);
+        shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
+
+        if (existingIdentifierInScope || existingFuncIdentifierInScope) {
+            // TODO: IllegalOperationError
+            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+        }
+
+        // Initially set the function resolvedType to whatever the identifier type is specified
+        node->getRight()->setResolvedType(ident->getValue());
+
+        symbolTable.insert(uniqueFuncIdentifier, node->getRight());
     }
 
     bool TypeChecker::checkIdentifierNode(shared_ptr<IdentifierNode> node) {
@@ -283,7 +289,7 @@ namespace Theta {
         funcType->setValue(node->getDefinition()->getResolvedType());
 
         node->setResolvedType(funcType); 
-
+    
         return valid;
     }
 
@@ -297,7 +303,6 @@ namespace Theta {
         string funcIdentifier = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
 
         shared_ptr<ASTNode> referencedFunction = symbolTable.lookup(getDeterministicFunctionIdentifier(funcIdentifier, node));
-
         if (!referencedFunction) {
             // TODO: ReferenceError
             cout << "COULDNT FIND REFERENCED FUNCTION" << endl;
@@ -649,7 +654,7 @@ namespace Theta {
     }
 
     bool TypeChecker::isLanguageDataType(string type) {
-        array<string, 8> LANGUAGE_DATATYPES = {
+        array<string, 9> LANGUAGE_DATATYPES = {
             DataTypes::NUMBER,
             DataTypes::STRING,
             DataTypes::BOOLEAN,
@@ -657,7 +662,8 @@ namespace Theta {
             DataTypes::LIST,
             DataTypes::TUPLE,
             DataTypes::VARIADIC,
-            DataTypes::SYMBOL
+            DataTypes::SYMBOL,
+            DataTypes::FUNCTION
         };
 
         return find(LANGUAGE_DATATYPES.begin(), LANGUAGE_DATATYPES.end(), type) != LANGUAGE_DATATYPES.end();

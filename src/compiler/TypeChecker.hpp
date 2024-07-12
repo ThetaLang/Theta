@@ -61,6 +61,8 @@ namespace Theta {
 
             bool checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node);
 
+            void hoistFunction(shared_ptr<ASTNode> node);
+
             static bool isScoped(ASTNode::Types nodeType);
 
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
