@@ -12,6 +12,7 @@
 #include "../parser/ast/UnaryOperationNode.hpp"
 #include "../parser/ast/ListNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
+#include "parser/ast/FunctionInvocationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/StructDeclarationNode.hpp"
 #include "parser/ast/StructDefinitionNode.hpp"
@@ -46,6 +47,8 @@ namespace Theta {
 
             bool checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node);
 
+            bool checkFunctionInvocationNode(shared_ptr<FunctionInvocationNode> node);
+
             bool checkControlFlowNode(shared_ptr<ControlFlowNode> node);
 
             bool checkListNode(shared_ptr<ListNode> node);
@@ -69,5 +72,7 @@ namespace Theta {
             static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
 
             static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types);
+    
+            static string getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> declarationNode);
     };
 }

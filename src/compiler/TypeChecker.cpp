@@ -8,6 +8,7 @@
 #include "../util/Exceptions.hpp"
 #include "../parser/ast/ASTNodeList.hpp"
 #include "parser/ast/DictionaryNode.hpp"
+#include "parser/ast/FunctionInvocationNode.hpp"
 #include "parser/ast/StructDeclarationNode.hpp"
 #include "parser/ast/StructDefinitionNode.hpp"
 #include "parser/ast/SymbolNode.hpp"
@@ -51,7 +52,9 @@ namespace Theta {
     }
 
     bool TypeChecker::checkNode(shared_ptr<ASTNode> node) {
-        if (node->getNodeType() == ASTNode::SOURCE) {
+        if (node->getNodeType() == ASTNode::AST_NODE_LIST) {
+            return true;
+        } else if (node->getNodeType() == ASTNode::SOURCE) {
             node->setResolvedType(node->getValue()->getResolvedType());
             return true;
         } else if (node->getNodeType() == ASTNode::RETURN) {
@@ -86,6 +89,8 @@ namespace Theta {
             return checkBlockNode(dynamic_pointer_cast<BlockNode>(node));
         } else if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             return checkFunctionDeclarationNode(dynamic_pointer_cast<FunctionDeclarationNode>(node));
+        } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
+            return checkFunctionInvocationNode(dynamic_pointer_cast<FunctionInvocationNode>(node));
         } else if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
             return checkControlFlowNode(dynamic_pointer_cast<ControlFlowNode>(node));
         } else if (node->getNodeType() == ASTNode::LIST) {
@@ -99,11 +104,6 @@ namespace Theta {
         } else if (node->getNodeType() == ASTNode::STRUCT_DECLARATION) {
             return checkStructDeclarationNode(dynamic_pointer_cast<StructDeclarationNode>(node));
         }
-        // if (node->getValue()) {
-        //     shared_ptr<ASTNode> childResolvedType = node->getValue()->getResolvedType();
-
-        //     if (childResolvedType)
-        // }
 
         return false;
     }
@@ -123,7 +123,15 @@ namespace Theta {
     }
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
-        bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
+        bool typesMatch;
+
+        string rhsType = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->getType();
+
+        if (rhsType == DataTypes::FUNCTION) {
+            typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType()->getValue());
+        } else {
+            typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
+        }
 
         if (!typesMatch) {
             string leftTypeString = dynamic_pointer_cast<TypeDeclarationNode>(node->getLeft()->getValue())->toString();
@@ -144,15 +152,30 @@ namespace Theta {
 
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
-        shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
+        if (rhsType == DataTypes::FUNCTION) {
+            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
 
-        if (existingIdentifierInScope) {
-            // TODO: IllegalOperationError
-            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
-            return false;
+            shared_ptr<ASTNode> existingFuncIdentifierInScope = symbolTable.lookup(uniqueFuncIdentifier);
+            shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
+
+            if (existingIdentifierInScope || existingFuncIdentifierInScope) {
+                // TODO: IllegalOperationError
+                cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+                return false;
+            }
+
+            symbolTable.insert(uniqueFuncIdentifier, node->getRight());
+        } else {
+            shared_ptr<ASTNode> existingIdentifierInScope = symbolTable.lookup(ident->getIdentifier());
+
+            if (existingIdentifierInScope) {
+                // TODO: IllegalOperationError
+                cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+                return false;
+            }
+
+            symbolTable.insert(ident->getIdentifier(), node->getResolvedType());
         }
-    
-        symbolTable.insert(ident->getIdentifier(), node->getResolvedType());
 
         return true;
     }
@@ -164,7 +187,7 @@ namespace Theta {
 
         if (!existingIdentifierInScopeType) {
             // TODO: ReferenceError
-            cout << "CANT FIND IDENTIFIER" << endl;
+            cout << "CANT FIND IDENTIFIER: " + node->getIdentifier() << endl;
             return false;
         }
 
@@ -254,11 +277,36 @@ namespace Theta {
     bool TypeChecker::checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node) {
         bool valid = checkAST(node->getDefinition());
 
-        if (valid) {
-            node->setResolvedType(node->getDefinition()->getResolvedType());
-        }
+        if (!valid) return false;
+    
+        shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION);
+        funcType->setValue(node->getDefinition()->getResolvedType());
+
+        node->setResolvedType(funcType); 
 
         return valid;
+    }
+
+    bool TypeChecker::checkFunctionInvocationNode(shared_ptr<FunctionInvocationNode> node) {
+        vector<shared_ptr<ASTNode>> params = dynamic_pointer_cast<ASTNodeList>(node->getParameters())->getElements();
+
+        bool validParams = checkAST(node->getParameters());
+
+        if (!validParams) return false;
+
+        string funcIdentifier = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
+
+        shared_ptr<ASTNode> referencedFunction = symbolTable.lookup(getDeterministicFunctionIdentifier(funcIdentifier, node));
+
+        if (!referencedFunction) {
+            // TODO: ReferenceError
+            cout << "COULDNT FIND REFERENCED FUNCTION" << endl;
+            return false;
+        }
+
+        node->setResolvedType(dynamic_pointer_cast<FunctionDeclarationNode>(referencedFunction)->getResolvedType()->getValue());
+
+        return true;
     }
 
     bool TypeChecker::checkControlFlowNode(shared_ptr<ControlFlowNode> node) {
@@ -640,5 +688,31 @@ namespace Theta {
         variadicTypeNode->setElements(typesAsASTNode);
 
         return variadicTypeNode;
+    }
+
+    string TypeChecker::getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> node) {
+        vector<shared_ptr<ASTNode>> params;
+
+        if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
+            params = declarationNode->getParameters()->getElements();
+        } else {
+            shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
+            params = invocationNode->getParameters()->getElements();
+        }
+        
+        string functionIdentifier = variableName + to_string(params.size());
+
+        for (int i = 0; i < params.size(); i++) {
+            if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getValue());
+                functionIdentifier += paramType->getType();
+            } else {
+                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getResolvedType());
+                functionIdentifier += paramType->getType();
+            }
+        }
+
+        return functionIdentifier;
     }
 }

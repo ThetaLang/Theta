@@ -16,6 +16,6 @@ namespace Theta {
         const string DICT = "Dict";
         const string CAPSULE = "Capsule";
         const string VARIADIC = "Variadic";
-        const string STRUCT = "Struct";
+        const string FUNCTION = "Function";
     }
 }
