@@ -254,13 +254,15 @@ namespace Theta {
         }
 
         // Add return type of last expression for implicit return
-        blockReturnTypes.push_back(
-            dynamic_pointer_cast<TypeDeclarationNode>(node->getElements().at(node->getElements().size() - 1)->getResolvedType())
-        );
+        if (node->getElements().size() > 0) {
+            blockReturnTypes.push_back(
+                dynamic_pointer_cast<TypeDeclarationNode>(node->getElements().at(node->getElements().size() - 1)->getResolvedType())
+            );
+        }
 
         if (blockReturnTypes.size() == 1) {
             node->setResolvedType(blockReturnTypes[0]);
-        } else {
+        } else if (blockReturnTypes.size() > 1) {
             node->setResolvedType(makeVariadicType(blockReturnTypes));
         }
 

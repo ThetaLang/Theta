@@ -29,6 +29,8 @@ namespace Theta {
         public:
             bool checkAST(shared_ptr<ASTNode> ast);
 
+            static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
+
         private:
             SymbolTableStack identifierTable;
             SymbolTableStack capsuleDeclarationsTable;
@@ -68,8 +70,6 @@ namespace Theta {
             void hoistFunction(shared_ptr<ASTNode> node);
 
             static bool isScoped(ASTNode::Types nodeType);
-
-            static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
 
             static bool isHomogenous(vector<shared_ptr<TypeDeclarationNode>> types);
 

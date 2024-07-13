@@ -1,7 +1,10 @@
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 
+#include "compiler/TypeChecker.hpp"
+#include <memory>
 #import <string>
+#include <utility>
 #import <vector>
 #import <iostream>
 #import "../parser/ast/TypeDeclarationNode.hpp"
@@ -95,10 +98,51 @@ namespace Theta {
             shared_ptr<ASTNode> type2;
 
             void display() override {
-                string leftTypeString = dynamic_pointer_cast<TypeDeclarationNode>(type1)->toString();
-                string rightTypeString = dynamic_pointer_cast<TypeDeclarationNode>(type2)->toString();
+                string errText = "  \033[1;31mTypeError\033[0m: " + message + ": "; 
 
-                cout << "  \033[1;31mTypeError\033[0m: " + message + ": " + leftTypeString + " is not equivalent to " + rightTypeString << endl;
+                pair<string, string> typeDiff = getTypeDiff(
+                    dynamic_pointer_cast<TypeDeclarationNode>(type1),
+                    dynamic_pointer_cast<TypeDeclarationNode>(type2)
+                );
+
+                if (typeDiff.first == "VARIADIC_MISMATCH") {
+                    errText += "Variadic right hand side must satisfy at least one left hand side type, and may not include extra types";
+                } else {
+                    errText += typeDiff.first + " is not equivalent to " + typeDiff.second;
+                }
+
+                cout << errText << endl;
+            }
+        
+        private:
+            static pair<string, string> getTypeDiff(shared_ptr<TypeDeclarationNode> t1, shared_ptr<TypeDeclarationNode> t2) {
+                if (!t1 || !t2) {
+                    return make_pair((t1 ? t1->getType() : "Nothing"), (t2 ? t2->getType() : "Nothing"));
+                } else if (t1->getType() != t2->getType()) {
+                    return make_pair(
+                        (t1->getType() != "" ? t1->getType() : "Nothing"), 
+                        (t2->getType() != "" ? t2->getType() : "Nothing")
+                    );
+                } else if (t1->getValue() || t2->getValue()) {
+                    return getTypeDiff(
+                        dynamic_pointer_cast<TypeDeclarationNode>(t1->getValue()), 
+                        dynamic_pointer_cast<TypeDeclarationNode>(t2->getValue())
+                    );
+                } else if (t1->getLeft() || t2->getLeft()) {
+                    if (!TypeChecker::isSameType(t1->getLeft(), t2->getLeft())) {
+                        return getTypeDiff(
+                            dynamic_pointer_cast<TypeDeclarationNode>(t1->getLeft()),
+                            dynamic_pointer_cast<TypeDeclarationNode>(t2->getLeft())
+                        );
+                    }
+                    
+                    return getTypeDiff(
+                        dynamic_pointer_cast<TypeDeclarationNode>(t1->getRight()),
+                        dynamic_pointer_cast<TypeDeclarationNode>(t2->getRight())
+                    );
+                } 
+
+                return make_pair("VARIADIC_MISMATCH", "VARIADIC_MISMATCH");
             }
     };
 
