@@ -129,8 +129,6 @@ namespace Theta {
     }
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
-        string rhsType = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->getType();
-
         bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
         
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
@@ -152,7 +150,8 @@ namespace Theta {
 
         node->setResolvedType(node->getLeft()->getValue());
 
-
+        string rhsType = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->getType();
+        
         if (rhsType != DataTypes::FUNCTION) {
             shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
@@ -166,42 +165,6 @@ namespace Theta {
         }
 
         return true;
-    }
-
-    void TypeChecker::hoistCapsuleDeclarations(shared_ptr<CapsuleNode> node) {
-        vector<shared_ptr<ASTNode>> capsuleTopLevelElements = dynamic_pointer_cast<ASTNodeList>(node->getValue())->getElements();
-
-        capsuleDeclarationsTable.enterScope();
-
-        for (int i = 0; i < capsuleTopLevelElements.size(); i++) {
-            // TODO: Should also grab Struct definitions to make them exportable out of the capsule
-            if (capsuleTopLevelElements.at(i)->getNodeType() == ASTNode::ASSIGNMENT) {
-                if (capsuleTopLevelElements.at(i)->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-                    hoistFunction(capsuleTopLevelElements.at(i));
-                }
-            }
-        }
-    }
-
-    void TypeChecker::hoistFunction(shared_ptr<ASTNode> node) {
-        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(node); 
-        shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
-
-        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
-
-        shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
-        shared_ptr<ASTNode> existingIdentifierInScope = capsuleDeclarationsTable.lookup(ident->getIdentifier());
-
-        if (existingIdentifierInScope || existingFuncIdentifierInScope) {
-            // TODO: IllegalOperationError
-            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
-        }
-
-        // Initially set the function resolvedType to whatever the identifier type is specified
-        // TODO: Should this be DataType::UNKOWN instead?
-        node->getRight()->setResolvedType(ident->getValue());
-
-        capsuleDeclarationsTable.insert(uniqueFuncIdentifier, node->getRight());
     }
 
     bool TypeChecker::checkIdentifierNode(shared_ptr<IdentifierNode> node) {
@@ -308,12 +271,17 @@ namespace Theta {
         bool valid = checkAST(node->getDefinition());
 
         if (!valid) return false;
-    
-        shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION);
-        funcType->setValue(node->getDefinition()->getResolvedType());
 
-        node->setResolvedType(funcType); 
-    
+        // A function might already have a resolvedType of Function<Uknown> if it was hoisted
+        if (node->getResolvedType()) {
+            node->getResolvedType()->setValue(node->getDefinition()->getResolvedType());
+        } else {
+            shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION);
+            funcType->setValue(node->getDefinition()->getResolvedType());
+
+            node->setResolvedType(funcType); 
+        }
+
         return valid;
     }
 
@@ -331,7 +299,6 @@ namespace Theta {
         
         shared_ptr<ASTNode> localFunctionReference = identifierTable.lookup(uniqueFuncIdentifier);
         if (localFunctionReference) {
-            cout << "HERE" << endl;
             referencedFunction = localFunctionReference;
         }
 
@@ -341,7 +308,7 @@ namespace Theta {
             return false;
         }
 
-        node->setResolvedType(dynamic_pointer_cast<FunctionDeclarationNode>(referencedFunction)->getResolvedType()->getValue());
+        node->setResolvedType(referencedFunction->getResolvedType()->getValue());
 
         return true;
     }
@@ -570,6 +537,43 @@ namespace Theta {
         return true;
     }
 
+    void TypeChecker::hoistCapsuleDeclarations(shared_ptr<CapsuleNode> node) {
+        vector<shared_ptr<ASTNode>> capsuleTopLevelElements = dynamic_pointer_cast<ASTNodeList>(node->getValue())->getElements();
+
+        capsuleDeclarationsTable.enterScope();
+
+        for (int i = 0; i < capsuleTopLevelElements.size(); i++) {
+            // TODO: Should also grab Struct definitions to make them exportable out of the capsule
+            if (capsuleTopLevelElements.at(i)->getNodeType() == ASTNode::ASSIGNMENT) {
+                if (capsuleTopLevelElements.at(i)->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+                    hoistFunction(capsuleTopLevelElements.at(i));
+                }
+            }
+        }
+    }
+
+    void TypeChecker::hoistFunction(shared_ptr<ASTNode> node) {
+        shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(node); 
+        shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
+
+        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
+
+        shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
+        shared_ptr<ASTNode> existingIdentifierInScope = capsuleDeclarationsTable.lookup(ident->getIdentifier());
+
+        if (existingIdentifierInScope || existingFuncIdentifierInScope) {
+            // TODO: IllegalOperationError
+            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+        }
+
+        // Initially set the function resolvedType to whatever the identifier type is specified. This will get
+        // updated later when we actually typecheck the function definition to whatever types the function actually returns.
+        // This way, we support recursive function type resolution and cyclic function type resolution
+        node->getRight()->setResolvedType(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(ident->getValue())));
+
+        capsuleDeclarationsTable.insert(uniqueFuncIdentifier, node->getRight());
+    }
+
     bool TypeChecker::isScoped(ASTNode::Types nodeType) {
         array<ASTNode::Types, 3> SCOPED_NODE_TYPES = {
             ASTNode::CAPSULE,
@@ -752,5 +756,26 @@ namespace Theta {
         }
 
         return functionIdentifier;
+    }
+
+    shared_ptr<TypeDeclarationNode> TypeChecker::deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> original) {
+        shared_ptr<TypeDeclarationNode> copy = make_shared<TypeDeclarationNode>(original->getType());
+
+        if (original->getValue()) {
+            copy->setValue(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getValue())));
+        } else if (original->getLeft()) {
+            copy->setLeft(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getLeft())));
+            copy->setRight(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getRight())));
+        } else if (original->getElements().size() > 0) {
+            vector<shared_ptr<ASTNode>> copyChildren;
+
+            for (int i = 0; i < original->getElements().size(); i++) {
+                copyChildren.push_back(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getElements().at(i))));
+            }
+
+            copy->setElements(copyChildren);
+        }
+
+        return copy;
     }
 }

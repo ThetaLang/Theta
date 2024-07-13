@@ -80,5 +80,7 @@ namespace Theta {
             static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types);
     
             static string getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> declarationNode);
+
+            static shared_ptr<TypeDeclarationNode> deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
     };
 }
