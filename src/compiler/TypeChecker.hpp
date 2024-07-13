@@ -11,6 +11,7 @@
 #include "../parser/ast/TypeDeclarationNode.hpp"
 #include "../parser/ast/UnaryOperationNode.hpp"
 #include "../parser/ast/ListNode.hpp"
+#include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
@@ -29,7 +30,8 @@ namespace Theta {
             bool checkAST(shared_ptr<ASTNode> ast);
 
         private:
-            SymbolTableStack symbolTable;
+            SymbolTableStack identifierTable;
+            SymbolTableStack capsuleDeclarationsTable;
         
             bool checkNode(shared_ptr<ASTNode> node);
 
@@ -60,6 +62,8 @@ namespace Theta {
             bool checkStructDefinitionNode(shared_ptr<StructDefinitionNode> node);
 
             bool checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node);
+
+            void hoistCapsuleDeclarations(shared_ptr<CapsuleNode> node);
 
             void hoistFunction(shared_ptr<ASTNode> node);
 

@@ -2,6 +2,8 @@
 #include "SymbolTable.hpp"
 #include <stack>
 
+using namespace std;
+
 namespace Theta {
     class SymbolTableStack {
         public:
