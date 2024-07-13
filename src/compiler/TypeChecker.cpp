@@ -11,6 +11,7 @@
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
+#include "parser/ast/LiteralNode.hpp"
 #include "parser/ast/StructDeclarationNode.hpp"
 #include "parser/ast/StructDefinitionNode.hpp"
 #include "parser/ast/SymbolNode.hpp"
@@ -109,6 +110,8 @@ namespace Theta {
             return checkStructDefinitionNode(dynamic_pointer_cast<StructDefinitionNode>(node));
         } else if (node->getNodeType() == ASTNode::STRUCT_DECLARATION) {
             return checkStructDeclarationNode(dynamic_pointer_cast<StructDeclarationNode>(node));
+        } else if (node->getNodeType() == ASTNode::ENUM) {
+            return checkEnumNode(dynamic_pointer_cast<EnumNode>(node));
         }
 
         return false;
@@ -535,6 +538,30 @@ namespace Theta {
         }
 
         node->setResolvedType(make_shared<TypeDeclarationNode>(node->getStructType()));
+
+        return true;
+    }
+
+    bool TypeChecker::checkEnumNode(shared_ptr<EnumNode> node) {
+        vector<shared_ptr<ASTNode>> enumVals = dynamic_pointer_cast<ASTNodeList>(node)->getElements();
+        
+        shared_ptr<TypeDeclarationNode> enumReturnType = make_shared<TypeDeclarationNode>(DataTypes::NUMBER);
+        
+        string enumName = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
+        for (int i = 0; i < enumVals.size(); i++) {
+            shared_ptr<SymbolNode> enumSymbol = dynamic_pointer_cast<SymbolNode>(enumVals.at(i));
+
+            string enumQualifiedIdentifierName = enumName + "." + enumSymbol->getSymbol().substr(1);
+
+            shared_ptr<ASTNode> foundIdentifierForName = identifierTable.lookup(enumQualifiedIdentifierName);
+            if (foundIdentifierForName) {
+                // TODO: IllegalOperationError
+                cout << "CANT REDEFINE IDENTIFIER" << endl;
+                return false;
+            }
+
+            identifierTable.insert(enumQualifiedIdentifierName, enumReturnType);
+        }
 
         return true;
     }

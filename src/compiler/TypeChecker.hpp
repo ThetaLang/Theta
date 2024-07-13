@@ -2,15 +2,15 @@
 
 #include <vector>
 #include <memory>
-#include "../parser/ast/ASTNode.hpp"
-#include "../parser/ast/AssignmentNode.hpp"
-#include "../parser/ast/BinaryOperationNode.hpp"
-#include "../parser/ast/BlockNode.hpp"
-#include "../parser/ast/ControlFlowNode.hpp"
-#include "../parser/ast/FunctionDeclarationNode.hpp"
-#include "../parser/ast/TypeDeclarationNode.hpp"
-#include "../parser/ast/UnaryOperationNode.hpp"
-#include "../parser/ast/ListNode.hpp"
+#include "parser/ast/ASTNode.hpp"
+#include "parser/ast/AssignmentNode.hpp"
+#include "parser/ast/BinaryOperationNode.hpp"
+#include "parser/ast/BlockNode.hpp"
+#include "parser/ast/ControlFlowNode.hpp"
+#include "parser/ast/FunctionDeclarationNode.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
+#include "parser/ast/UnaryOperationNode.hpp"
+#include "parser/ast/ListNode.hpp"
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
@@ -18,6 +18,7 @@
 #include "parser/ast/StructDeclarationNode.hpp"
 #include "parser/ast/StructDefinitionNode.hpp"
 #include "parser/ast/TupleNode.hpp"
+#include "parser/ast/EnumNode.hpp"
 #include "SymbolTableStack.hpp"
 
 using namespace std;
@@ -64,6 +65,8 @@ namespace Theta {
             bool checkStructDefinitionNode(shared_ptr<StructDefinitionNode> node);
 
             bool checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node);
+
+            bool checkEnumNode(shared_ptr<EnumNode> node);
 
             void hoistCapsuleDeclarations(shared_ptr<CapsuleNode> node);
 
