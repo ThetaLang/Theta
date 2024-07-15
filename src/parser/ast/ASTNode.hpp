@@ -62,6 +62,8 @@ namespace Theta {
 
             virtual bool hasMany() { return false; }
 
+            virtual bool hasOwnScope() { return false; }
+
             virtual ~ASTNode() = default;
 
             void setResolvedType(shared_ptr<ASTNode> typeNode) { resolvedType = typeNode; }

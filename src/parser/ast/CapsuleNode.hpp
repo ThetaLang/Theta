@@ -15,6 +15,8 @@ namespace Theta {
 
             string getName() { return name; }
 
+            bool hasOwnScope() override { return true; }
+
             string toJSON() const override {
                 ostringstream oss;
 

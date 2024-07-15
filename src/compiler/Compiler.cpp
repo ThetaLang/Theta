@@ -26,6 +26,8 @@ namespace Theta {
             encounteredExceptions[i]->display();
         }
 
+        if (!isTypeValid) return;
+
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(programAST);
 
         if (isEmitWAT) {
@@ -46,6 +48,8 @@ namespace Theta {
         for (int i = 0; i < encounteredExceptions.size(); i++) {
             encounteredExceptions[i]->display();
         }
+
+        if (!isTypeValid) return ast;
 
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(ast);
 

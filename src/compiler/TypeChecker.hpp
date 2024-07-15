@@ -72,7 +72,7 @@ namespace Theta {
 
             void hoistFunction(shared_ptr<ASTNode> node);
 
-            static bool isScoped(ASTNode::Types nodeType);
+            void hoistIdentifier(shared_ptr<ASTNode> node);
 
             static bool isHomogenous(vector<shared_ptr<TypeDeclarationNode>> types);
 

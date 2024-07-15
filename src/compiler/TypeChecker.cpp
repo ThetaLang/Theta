@@ -6,8 +6,8 @@
 #include <string>
 #include <utility>
 #include "DataTypes.hpp"
-#include "../util/Exceptions.hpp"
-#include "../parser/ast/ASTNodeList.hpp"
+#include "util/Exceptions.hpp"
+#include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
@@ -23,9 +23,7 @@ using namespace std;
 
 namespace Theta {
     bool TypeChecker::checkAST(shared_ptr<ASTNode> ast) {
-        bool hasOwnScope = isScoped(ast->getNodeType());
-
-        if (hasOwnScope) identifierTable.enterScope();
+        if (ast->hasOwnScope()) identifierTable.enterScope();
 
         if (ast->getNodeType() == ASTNode::CAPSULE) {
             hoistCapsuleDeclarations(dynamic_pointer_cast<CapsuleNode>(ast));
@@ -53,7 +51,7 @@ namespace Theta {
             }
         }
 
-        if (hasOwnScope) identifierTable.exitScope();
+        if (ast->hasOwnScope()) identifierTable.exitScope();
 
         return checkNode(ast);
     }
@@ -573,10 +571,16 @@ namespace Theta {
 
         for (int i = 0; i < capsuleTopLevelElements.size(); i++) {
             // TODO: Should also grab Struct definitions to make them exportable out of the capsule
-            if (capsuleTopLevelElements.at(i)->getNodeType() == ASTNode::ASSIGNMENT) {
+            ASTNode::Types nodeType = capsuleTopLevelElements.at(i)->getNodeType();
+
+            if (nodeType == ASTNode::ASSIGNMENT) {
                 if (capsuleTopLevelElements.at(i)->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
                     hoistFunction(capsuleTopLevelElements.at(i));
+                } else {
+                    hoistIdentifier(capsuleTopLevelElements.at(i));
                 }
+            } else if (nodeType == ASTNode::ENUM) {
+
             }
         }
     }
@@ -603,14 +607,8 @@ namespace Theta {
         capsuleDeclarationsTable.insert(uniqueFuncIdentifier, node->getRight());
     }
 
-    bool TypeChecker::isScoped(ASTNode::Types nodeType) {
-        array<ASTNode::Types, 3> SCOPED_NODE_TYPES = {
-            ASTNode::CAPSULE,
-            ASTNode::BLOCK,
-            ASTNode::FUNCTION_DECLARATION
-        };
-
-        return find(SCOPED_NODE_TYPES.begin(), SCOPED_NODE_TYPES.end(), nodeType) != SCOPED_NODE_TYPES.end();
+    void TypeChecker::hoistIdentifier(shared_ptr<ASTNode> node) {
+        // TODO
     }
 
     bool TypeChecker::isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2) {

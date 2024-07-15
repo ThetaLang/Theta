@@ -11,5 +11,7 @@ namespace Theta {
     class BlockNode : public ASTNodeList {
         public:
             BlockNode() : ASTNodeList(ASTNode::Types::BLOCK) {};
+            
+            bool hasOwnScope() override { return true; }
     };
 }
