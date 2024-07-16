@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include "../parser/ast/TypeDeclarationNode.hpp"
 #include "parser/ast/ASTNode.hpp"
@@ -17,7 +19,7 @@ namespace Theta {
 
             return nullptr;
         }
-    
+
     private:
         map<string, shared_ptr<ASTNode>> table;
     };

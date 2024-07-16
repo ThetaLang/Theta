@@ -2,6 +2,7 @@
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
 #include "compiler/TypeChecker.hpp"
+#include "compiler/ASTPreprocessor.hpp"
 
 using namespace std;
 
@@ -17,6 +18,12 @@ namespace Theta {
         isEmitWAT = emitWAT;
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
+
+        ASTPreprocessor preprocessor;
+        preprocessor.optimize(programAST);
+
+        cout << "FINISHED PREPROCESS" << endl;
+        cout << programAST->toJSON() << endl;
 
         TypeChecker typeChecker;
 
@@ -40,6 +47,9 @@ namespace Theta {
 
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
+
+        ASTPreprocessor preprocessor;
+        preprocessor.optimize(ast);
 
         TypeChecker typeChecker;
 

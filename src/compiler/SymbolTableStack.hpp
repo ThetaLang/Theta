@@ -1,3 +1,5 @@
+#pragma once
+
 #include "parser/ast/ASTNode.hpp"
 #include "SymbolTable.hpp"
 #include <stack>

@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
+#include <vector>
 
 using namespace std;
 
