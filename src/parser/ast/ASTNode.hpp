@@ -50,15 +50,15 @@ namespace Theta {
 
             virtual void setValue(shared_ptr<ASTNode> childNode) { value = childNode; }
 
-            virtual shared_ptr<ASTNode> getValue() { return value; }
+            virtual shared_ptr<ASTNode>& getValue() { return value; }
 
             virtual void setLeft(shared_ptr<ASTNode> childNode) { left = childNode; }
 
-            virtual shared_ptr<ASTNode> getLeft() { return left; }
+            virtual shared_ptr<ASTNode>& getLeft() { return left; }
 
             virtual void setRight(shared_ptr<ASTNode> childNode) { right = childNode; }
 
-            virtual shared_ptr<ASTNode> getRight() { return right; }
+            virtual shared_ptr<ASTNode>& getRight() { return right; }
 
             virtual bool hasMany() { return false; }
 

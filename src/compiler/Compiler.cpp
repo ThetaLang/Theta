@@ -22,11 +22,9 @@ namespace Theta {
         ASTPreprocessor preprocessor;
         preprocessor.optimize(programAST);
 
-        cout << "FINISHED PREPROCESS" << endl;
-        cout << programAST->toJSON() << endl;
+        outputAST(programAST, entrypoint);
 
         TypeChecker typeChecker;
-
         bool isTypeValid = typeChecker.checkAST(programAST);
 
         for (int i = 0; i < encounteredExceptions.size(); i++) {
@@ -51,8 +49,9 @@ namespace Theta {
         ASTPreprocessor preprocessor;
         preprocessor.optimize(ast);
 
-        TypeChecker typeChecker;
+        outputAST(ast, "ith");
 
+        TypeChecker typeChecker;
         bool isTypeValid = typeChecker.checkAST(ast);
 
         for (int i = 0; i < encounteredExceptions.size(); i++) {
@@ -95,14 +94,6 @@ namespace Theta {
 
         Theta::Parser parser;
         shared_ptr<Theta::ASTNode> parsedAST = parser.parse(lexer.tokens, source, fileName, filesByCapsuleName);
-
-        if (parsedAST && isEmitAST) {
-            cout << "Generated AST for \"" + fileName + "\":" << endl;
-            cout << parsedAST->toJSON() << endl;
-            cout << endl;
-        } else if (!parsedAST) {
-            cout << "Could not parse AST for file " + fileName << endl;
-        }
 
         return parsedAST;
     }
@@ -194,5 +185,15 @@ namespace Theta {
         }
 
         cout << "Compilation successful. Output: " + fileName << endl;
+    }
+
+    void Compiler::outputAST(shared_ptr<ASTNode> ast, string fileName) {
+        if (ast && isEmitAST) {
+            cout << "Generated AST for \"" + fileName + "\":" << endl;
+            cout << ast->toJSON() << endl;
+            cout << endl;
+        } else if (!ast) {
+            cout << "Could not parse AST for file " + fileName << endl;
+        }
     }
 }

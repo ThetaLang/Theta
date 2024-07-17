@@ -18,20 +18,13 @@ void ASTPreprocessor::optimize(shared_ptr<ASTNode> &ast) {
     }
 
     if (ast->getValue()) {
-        auto value = ast->getValue();
-        optimize(value);
-        ast->setValue(value);
+        optimize(ast->getValue());
     } else if (ast->getLeft()) {
-        auto left = ast->getLeft();
-        optimize(left);
-        ast->setLeft(left);
-
-        auto right = ast->getRight();
-        optimize(right);
-        ast->setRight(right);
+        optimize(ast->getLeft());
+        optimize(ast->getRight());
     } else if (ast->hasMany()) {
         shared_ptr<ASTNodeList> nodeList = dynamic_pointer_cast<ASTNodeList>(ast);
-        auto elements = nodeList->getElements();
+        vector<shared_ptr<ASTNode>> elements = nodeList->getElements();
         vector<shared_ptr<ASTNode>> newElements;
 
         for (int i = 0; i < elements.size(); i++) {
@@ -46,25 +39,21 @@ void ASTPreprocessor::optimize(shared_ptr<ASTNode> &ast) {
     } else if (ast->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
         shared_ptr<FunctionDeclarationNode> funcDecNode = dynamic_pointer_cast<FunctionDeclarationNode>(ast);
 
-        auto params = dynamic_pointer_cast<ASTNode>(funcDecNode->getParameters());
+        shared_ptr<ASTNode> params = dynamic_pointer_cast<ASTNode>(funcDecNode->getParameters());
         optimize(params);
-        funcDecNode->setParameters(dynamic_pointer_cast<ASTNodeList>(params));
 
-        auto def = funcDecNode->getDefinition();
-        optimize(def);
-        funcDecNode->setDefinition(def);
+        optimize(funcDecNode->getDefinition());
     }
 
     if (ast->hasOwnScope()) scopedIdentifierTable.exitScope();
 
-    substituteEnumValues(ast);
+    substituteLiterals(ast);
 }
 
-void ASTPreprocessor::substituteEnumValues(shared_ptr<ASTNode> &ast) {
+// Finds any number literals that are stored in variables / enums and substitutes them with their literal value. This speeds up typechecking
+void ASTPreprocessor::substituteLiterals(shared_ptr<ASTNode> &ast) {
     if (ast->getNodeType() == ASTNode::IDENTIFIER) {
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(ast);
-
-//        hoistedIdentifierTable.listKeys();
 
         shared_ptr<ASTNode> foundIdentifier = hoistedIdentifierTable.lookup(ident->getIdentifier());
 
@@ -74,15 +63,18 @@ void ASTPreprocessor::substituteEnumValues(shared_ptr<ASTNode> &ast) {
         }
 
         // Only optimize if we found the literal value we need to replace with
-        if (!foundIdentifier || foundIdentifier->getNodeType() != ASTNode::NUMBER_LITERAL) return;
-
-        cout << "FOUND IDENTIFIER: " + ident->getIdentifier() << endl;
+        if (
+            !foundIdentifier ||
+            !(
+                foundIdentifier->getNodeType() == ASTNode::NUMBER_LITERAL ||
+                foundIdentifier->getNodeType() == ASTNode::STRING_LITERAL ||
+                foundIdentifier->getNodeType() == ASTNode::BOOLEAN_LITERAL
+            )
+        ) return;
 
         shared_ptr<LiteralNode> enumValue = dynamic_pointer_cast<LiteralNode>(foundIdentifier);
 
         ast = make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, enumValue->getLiteralValue());
-
-        cout << ast->toJSON() << endl;
     } else if (ast->getNodeType() == ASTNode::ENUM) {
         shared_ptr<EnumNode> node = dynamic_pointer_cast<EnumNode>(ast);
 
@@ -91,6 +83,27 @@ void ASTPreprocessor::substituteEnumValues(shared_ptr<ASTNode> &ast) {
             dynamic_pointer_cast<ASTNodeList>(node)->getElements(),
             scopedIdentifierTable
         );
+
+        ast = nullptr;
+    } else if (
+        ast->getNodeType() == ASTNode::ASSIGNMENT &&
+        (
+            ast->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL ||
+            ast->getRight()->getNodeType() == ASTNode::STRING_LITERAL ||
+            ast->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL
+        )
+    ) {
+        string identifier = dynamic_pointer_cast<IdentifierNode>(ast->getLeft())->getIdentifier();
+
+        shared_ptr<ASTNode> foundIdentInScope = scopedIdentifierTable.lookup(identifier);
+
+        if (foundIdentInScope) {
+            // TODO: Reassignment error
+            cout << "CAN NOT REASSIGN IDENTIFIER IN SCOPE" << endl;
+            return;
+        }
+
+        scopedIdentifierTable.insert(identifier, ast->getRight());
 
         ast = nullptr;
     }
@@ -108,13 +121,32 @@ void ASTPreprocessor::hoistNecessary(shared_ptr<ASTNode> ast) {
         if (topLevelElements.at(i)->getNodeType() == ASTNode::ENUM) {
             shared_ptr<EnumNode> node = dynamic_pointer_cast<EnumNode>(topLevelElements.at(i));
  
-            cout << "HOISTING " << node->toJSON() << endl;
-
             unpackEnumElementsInScope(
                 dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier(),
                 dynamic_pointer_cast<ASTNodeList>(node)->getElements(),
                 hoistedIdentifierTable
             );
+            removeAtIndices.push_back(i);
+        } else if (
+            ast->getNodeType() == ASTNode::ASSIGNMENT &&
+            (
+                ast->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL ||
+                ast->getRight()->getNodeType() == ASTNode::STRING_LITERAL ||
+                ast->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL
+            )
+        ) {
+            string identifier = dynamic_pointer_cast<IdentifierNode>(ast->getLeft())->getIdentifier();
+
+            shared_ptr<ASTNode> foundIdent = hoistedIdentifierTable.lookup(identifier);
+
+            if (foundIdent) {
+                // TODO: Reassignment error
+                cout << "CAN NOT REASSIGN IDENTIFIER IN SCOPE" << endl;
+                return;
+            }
+
+            hoistedIdentifierTable.insert(identifier, ast->getRight());
+
             removeAtIndices.push_back(i);
         }
     }
@@ -133,8 +165,6 @@ void ASTPreprocessor::unpackEnumElementsInScope(string baseIdentifier, vector<sh
         shared_ptr<SymbolNode> elSymbol = dynamic_pointer_cast<SymbolNode>(enumElements.at(i));
 
         string enumElIdentifier = baseIdentifier + "." + elSymbol->getSymbol().substr(1);
-        
-        cout << "unpacking as " << enumElIdentifier << endl;
         
         shared_ptr<ASTNode> foundScopeIdentifier = scope.lookup(enumElIdentifier);
         if (foundScopeIdentifier) {

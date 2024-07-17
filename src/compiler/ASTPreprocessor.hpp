@@ -1,9 +1,7 @@
 #include "parser/ast/ASTNode.hpp"
 #include "SymbolTableStack.hpp"
-#include "parser/ast/EnumNode.hpp"
 #include <memory>
 #include <vector>
-#include <iostream>
 
 using namespace std;
 
@@ -16,7 +14,7 @@ namespace Theta {
         SymbolTableStack scopedIdentifierTable;
         SymbolTableStack hoistedIdentifierTable;
         
-        void substituteEnumValues(shared_ptr<ASTNode> &ast);
+        void substituteLiterals(shared_ptr<ASTNode> &ast);
 
         void hoistNecessary(shared_ptr<ASTNode> ast);
 

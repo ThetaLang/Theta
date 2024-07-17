@@ -122,5 +122,7 @@ namespace Theta {
              * @return The capsule name corresponding to the file.
              */
             string findCapsuleName(string file);
+
+            void outputAST(shared_ptr<ASTNode> ast, string fileName);
     };
 }

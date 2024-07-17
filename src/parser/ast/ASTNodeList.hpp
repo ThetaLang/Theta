@@ -16,7 +16,7 @@ namespace Theta {
 
             void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 
-            vector<shared_ptr<ASTNode>> getElements() { return elements; }
+            vector<shared_ptr<ASTNode>>& getElements() { return elements; }
 
             bool hasMany() override { return true; }
 
