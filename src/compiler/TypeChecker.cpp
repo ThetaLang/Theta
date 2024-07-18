@@ -11,7 +11,6 @@
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
-#include "parser/ast/LiteralNode.hpp"
 #include "parser/ast/StructDeclarationNode.hpp"
 #include "parser/ast/StructDefinitionNode.hpp"
 #include "parser/ast/SymbolNode.hpp"

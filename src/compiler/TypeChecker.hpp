@@ -18,7 +18,6 @@
 #include "parser/ast/StructDeclarationNode.hpp"
 #include "parser/ast/StructDefinitionNode.hpp"
 #include "parser/ast/TupleNode.hpp"
-#include "parser/ast/EnumNode.hpp"
 #include "SymbolTableStack.hpp"
 
 using namespace std;
