@@ -579,14 +579,25 @@ namespace Theta {
             // TODO: IllegalOperationError
             cout << "CANT REDEFINE EXISTING STRUCT" << endl;
         }
-        
+
         structNode->setResolvedType(make_shared<TypeDeclarationNode>(structNode->getName()));
 
         capsuleDeclarationsTable.insert(structNode->getName(), node);
     }
 
     void TypeChecker::hoistIdentifier(shared_ptr<ASTNode> node) {
-        // TODO
+        shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
+
+        shared_ptr<ASTNode> existingHoistedIdentifier = capsuleDeclarationsTable.lookup(identNode->getIdentifier());
+    
+        if (existingHoistedIdentifier) {
+            // TODO: IllegalOperationError
+            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+        }
+
+        identNode->setResolvedType(identNode->getValue());
+
+        capsuleDeclarationsTable.insert(identNode->getIdentifier(), identNode->getResolvedType());
     }
 
     bool TypeChecker::isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2) {
