@@ -108,8 +108,6 @@ namespace Theta {
             return checkStructDefinitionNode(dynamic_pointer_cast<StructDefinitionNode>(node));
         } else if (node->getNodeType() == ASTNode::STRUCT_DECLARATION) {
             return checkStructDeclarationNode(dynamic_pointer_cast<StructDeclarationNode>(node));
-        } else if (node->getNodeType() == ASTNode::ENUM) {
-            return checkEnumNode(dynamic_pointer_cast<EnumNode>(node));
         }
 
         return false;
@@ -118,8 +116,8 @@ namespace Theta {
     bool TypeChecker::checkTypeDeclarationNode(shared_ptr<TypeDeclarationNode> node) {
         if (isLanguageDataType(node->getType())) return true;
 
-        shared_ptr<ASTNode> customDataTypeInScope = identifierTable.lookup(node->getType());
-
+        shared_ptr<ASTNode> customDataTypeInScope = lookupInScope(node->getType());
+        
         if (!customDataTypeInScope) {
             // TODO: ReferenceError
             cout << "COULD NOT FIND CUSTOM TYPE: " + node->getType() << endl;
@@ -172,12 +170,7 @@ namespace Theta {
         // Auto return if the identifier comes with its own type declaration. This is for assignment nodes lhs
         if (node->getValue()) return true;
         
-        shared_ptr<ASTNode> foundReferencedIdentifier = capsuleDeclarationsTable.lookup(node->getIdentifier());
-
-        shared_ptr<ASTNode> existingIdentifierInScopeType = identifierTable.lookup(node->getIdentifier());
-        if (existingIdentifierInScopeType) {
-            foundReferencedIdentifier = existingIdentifierInScopeType;
-        }
+        shared_ptr<ASTNode> foundReferencedIdentifier = lookupInScope(node->getIdentifier());
 
         if (!foundReferencedIdentifier) {
             // TODO: ReferenceError
@@ -298,13 +291,8 @@ namespace Theta {
         string funcIdentifier = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
         string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(funcIdentifier, node);
 
-        shared_ptr<ASTNode> referencedFunction = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
+        shared_ptr<ASTNode> referencedFunction = lookupInScope(uniqueFuncIdentifier);
         
-        shared_ptr<ASTNode> localFunctionReference = identifierTable.lookup(uniqueFuncIdentifier);
-        if (localFunctionReference) {
-            referencedFunction = localFunctionReference;
-        }
-
         if (!referencedFunction) {
             // TODO: ReferenceError
             cout << "COULDNT FIND REFERENCED FUNCTION: " + uniqueFuncIdentifier << endl;
@@ -482,9 +470,9 @@ namespace Theta {
     }
 
     bool TypeChecker::checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node) {
-        shared_ptr<ASTNode> structDefinitionInScope = identifierTable.lookup(node->getStructType());
+        shared_ptr<ASTNode> foundDefinition = lookupInScope(node->getStructType());
 
-        if (!structDefinitionInScope) {
+        if (!foundDefinition) {
             // TODO: ReferenceError
             cout << "NO STRUCT DEFINITION FOUND" << endl;
             return false;
@@ -492,7 +480,7 @@ namespace Theta {
 
         shared_ptr<ASTNodeList> structDeclarationNode = dynamic_pointer_cast<ASTNodeList>(node->getValue());
 
-        shared_ptr<ASTNodeList> structDefinition = dynamic_pointer_cast<ASTNodeList>(structDefinitionInScope);
+        shared_ptr<ASTNodeList> structDefinition = dynamic_pointer_cast<ASTNodeList>(foundDefinition);
 
         map<string, shared_ptr<TypeDeclarationNode>> requiredStructFields;
         for (int i = 0; i < structDefinition->getElements().size(); i++) {
@@ -540,30 +528,6 @@ namespace Theta {
         return true;
     }
 
-    bool TypeChecker::checkEnumNode(shared_ptr<EnumNode> node) {
-        vector<shared_ptr<ASTNode>> enumVals = dynamic_pointer_cast<ASTNodeList>(node)->getElements();
-        
-        shared_ptr<TypeDeclarationNode> enumReturnType = make_shared<TypeDeclarationNode>(DataTypes::NUMBER);
-        
-        string enumName = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
-        for (int i = 0; i < enumVals.size(); i++) {
-            shared_ptr<SymbolNode> enumSymbol = dynamic_pointer_cast<SymbolNode>(enumVals.at(i));
-
-            string enumQualifiedIdentifierName = enumName + "." + enumSymbol->getSymbol().substr(1);
-
-            shared_ptr<ASTNode> foundIdentifierForName = identifierTable.lookup(enumQualifiedIdentifierName);
-            if (foundIdentifierForName) {
-                // TODO: IllegalOperationError
-                cout << "CANT REDEFINE IDENTIFIER" << endl;
-                return false;
-            }
-
-            identifierTable.insert(enumQualifiedIdentifierName, enumReturnType);
-        }
-
-        return true;
-    }
-
     void TypeChecker::hoistCapsuleDeclarations(shared_ptr<CapsuleNode> node) {
         vector<shared_ptr<ASTNode>> capsuleTopLevelElements = dynamic_pointer_cast<ASTNodeList>(node->getValue())->getElements();
 
@@ -579,8 +543,8 @@ namespace Theta {
                 } else {
                     hoistIdentifier(capsuleTopLevelElements.at(i));
                 }
-            } else if (nodeType == ASTNode::ENUM) {
-
+            } else if (nodeType == ASTNode::STRUCT_DEFINITION) {
+                hoistStructDefinition(capsuleTopLevelElements.at(i));
             }
         }
     }
@@ -592,9 +556,8 @@ namespace Theta {
         string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
 
         shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
-        shared_ptr<ASTNode> existingIdentifierInScope = capsuleDeclarationsTable.lookup(ident->getIdentifier());
 
-        if (existingIdentifierInScope || existingFuncIdentifierInScope) {
+        if (existingFuncIdentifierInScope) {
             // TODO: IllegalOperationError
             cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
         }
@@ -605,6 +568,21 @@ namespace Theta {
         node->getRight()->setResolvedType(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(ident->getValue())));
 
         capsuleDeclarationsTable.insert(uniqueFuncIdentifier, node->getRight());
+    }
+
+    void TypeChecker::hoistStructDefinition(shared_ptr<ASTNode> node) {
+        shared_ptr<StructDefinitionNode> structNode = dynamic_pointer_cast<StructDefinitionNode>(node);
+
+        shared_ptr<ASTNode> existingStructDefinitionInScope = capsuleDeclarationsTable.lookup(structNode->getName());
+        
+        if (existingStructDefinitionInScope) {
+            // TODO: IllegalOperationError
+            cout << "CANT REDEFINE EXISTING STRUCT" << endl;
+        }
+        
+        structNode->setResolvedType(make_shared<TypeDeclarationNode>(structNode->getName()));
+
+        capsuleDeclarationsTable.insert(structNode->getName(), node);
     }
 
     void TypeChecker::hoistIdentifier(shared_ptr<ASTNode> node) {
@@ -804,5 +782,15 @@ namespace Theta {
         }
 
         return copy;
+    }
+
+    shared_ptr<ASTNode> TypeChecker::lookupInScope(string identifierName) {
+        shared_ptr<ASTNode> foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);
+        shared_ptr<ASTNode> foundInLocalScope = identifierTable.lookup(identifierName);
+
+        // Local scope overrides capsule scope
+        if (foundInLocalScope) return foundInLocalScope;
+
+        return foundInCapsule;
     }
 }

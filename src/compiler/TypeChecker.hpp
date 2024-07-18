@@ -66,13 +66,15 @@ namespace Theta {
 
             bool checkStructDeclarationNode(shared_ptr<StructDeclarationNode> node);
 
-            bool checkEnumNode(shared_ptr<EnumNode> node);
-
             void hoistCapsuleDeclarations(shared_ptr<CapsuleNode> node);
 
             void hoistFunction(shared_ptr<ASTNode> node);
 
             void hoistIdentifier(shared_ptr<ASTNode> node);
+
+            void hoistStructDefinition(shared_ptr<ASTNode> node);
+
+            shared_ptr<ASTNode> lookupInScope(string identifier);
 
             static bool isHomogenous(vector<shared_ptr<TypeDeclarationNode>> types);
 
