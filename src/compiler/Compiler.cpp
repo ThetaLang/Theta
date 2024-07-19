@@ -2,7 +2,6 @@
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
 #include "compiler/TypeChecker.hpp"
-#include "compiler/ASTPreprocessor.hpp"
 
 using namespace std;
 
@@ -19,8 +18,7 @@ namespace Theta {
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 
-        ASTPreprocessor preprocessor;
-        preprocessor.optimize(programAST);
+        optimizeAST(programAST);
 
         outputAST(programAST, entrypoint);
 
@@ -45,9 +43,6 @@ namespace Theta {
 
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
-
-        ASTPreprocessor preprocessor;
-        preprocessor.optimize(ast);
 
         outputAST(ast, "ith");
 
@@ -163,6 +158,12 @@ namespace Theta {
         }
 
         return capsuleName;
+    }
+
+    void Compiler::optimizeAST(shared_ptr<ASTNode> &ast) {
+        for (auto &pass : optimizationPasses) {
+            pass->optimize(ast);
+        }
     }
 
     void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {

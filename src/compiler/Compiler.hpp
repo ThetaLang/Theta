@@ -15,6 +15,8 @@
 #include "../util/Exceptions.hpp"
 #include "TypeChecker.hpp"
 #include "CodeGen.hpp"
+#include "compiler/optimization/OptimizationPass.hpp"
+#include "compiler/optimization/LiteralInlinerPass.hpp"
 
 using namespace std;
 
@@ -91,6 +93,10 @@ namespace Theta {
             Compiler() {
                 filesByCapsuleName = make_shared<map<string, string>>();
                 discoverCapsules();
+
+                optimizationPasses = {
+                    make_shared<LiteralInlinerPass>()
+                };
             }
 
             // Delete copy constructor and assignment operator to enforce singleton pattern
@@ -103,6 +109,10 @@ namespace Theta {
             bool isEmitWAT = false;
             vector<shared_ptr<Theta::Error>> encounteredExceptions;
             map<string, shared_ptr<Theta::LinkNode>> parsedLinkASTs;
+
+            vector<shared_ptr<OptimizationPass>> optimizationPasses;
+
+            void optimizeAST(shared_ptr<ASTNode> &ast);
 
             void writeModuleToFile(BinaryenModuleRef &module, string file);
 

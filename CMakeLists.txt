@@ -12,6 +12,7 @@ set(COMPILER_DIR ${SRC_DIR}/compiler)
 set(PARSER_DIR ${SRC_DIR}/parser)
 set(UTIL_DIR ${SRC_DIR}/util)
 set(AST_DIR ${PARSER_DIR}/ast)
+set(OPTIMIZATION_DIR ${COMPILER_DIR}/optimization)
 set(TEST_DIR test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR lib/binaryen)
@@ -24,6 +25,7 @@ file(GLOB SRC_FILES
     "${UTIL_DIR}/*.cpp"
     "${COMPILER_DIR}/*.cpp"
     "${AST_DIR}/*.cpp"
+    "${OPTIMIZATION_DIR}/*.cpp"
 )
 list(REMOVE_ITEM SRC_FILES "${CMAKE_SOURCE_DIR}/theta.cpp")
 
