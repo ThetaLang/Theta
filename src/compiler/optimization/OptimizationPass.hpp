@@ -12,6 +12,8 @@ namespace Theta {
             SymbolTableStack localScope;
             SymbolTableStack hoistedScope;
 
+            shared_ptr<ASTNode> lookupInScope(string identifier);
+
         private:
             virtual void optimizeAST(shared_ptr<ASTNode> &ast) = 0;
             

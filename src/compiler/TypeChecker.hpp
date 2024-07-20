@@ -27,7 +27,7 @@ namespace Theta {
 
     class TypeChecker {
         public:
-            bool checkAST(shared_ptr<ASTNode> ast);
+            bool checkAST(shared_ptr<ASTNode> ast, vector<pair<string, shared_ptr<ASTNode>>> bindToScope = {});
 
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
 

@@ -1,9 +1,11 @@
 #include "LiteralInlinerPass.hpp"
+#include "compiler/DataTypes.hpp"
 #include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/EnumNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/LiteralNode.hpp"
 #include "parser/ast/SymbolNode.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
 #include <memory>
 #include <iostream>
 
@@ -13,6 +15,8 @@ using namespace Theta;
 void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast) {
     if (ast->getNodeType() == ASTNode::IDENTIFIER) {
         substituteIdentifiers(ast);
+    } else if (ast->getNodeType() == ASTNode::TYPE_DECLARATION) {
+        remapEnumTypeReferences(ast);
     } else if (ast->getNodeType() == ASTNode::ENUM) {
         unpackEnumElementsInScope(ast, localScope);
 
@@ -128,4 +132,19 @@ void LiteralInlinerPass::unpackEnumElementsInScope(shared_ptr<ASTNode> node, Sym
 
         scope.insert(enumElIdentifier, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(i)));
     }
+
+    // Insert the enum identifier itself into scope so we can remap types
+    scope.insert(baseIdentifier, make_shared<TypeDeclarationNode>(DataTypes::NUMBER));
+}
+
+void LiteralInlinerPass::remapEnumTypeReferences(shared_ptr<ASTNode> &ast) {
+    shared_ptr<TypeDeclarationNode> typeDef = dynamic_pointer_cast<TypeDeclarationNode>(ast);
+    
+    shared_ptr<ASTNode> remappedType = lookupInScope(typeDef->getType());
+
+    if (!remappedType) return;
+
+    shared_ptr<TypeDeclarationNode> remappedTypeDecl = dynamic_pointer_cast<TypeDeclarationNode>(remappedType);
+
+    typeDef->setType(remappedTypeDecl->getType());
 }

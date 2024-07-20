@@ -43,3 +43,12 @@ void OptimizationPass::optimize(shared_ptr<ASTNode> &ast) {
     optimizeAST(ast);
 }
 
+shared_ptr<ASTNode> OptimizationPass::lookupInScope(string identifierName) {
+    shared_ptr<ASTNode> foindHoisted = hoistedScope.lookup(identifierName);
+    shared_ptr<ASTNode> foundInLocalScope = localScope.lookup(identifierName);
+
+    // Local scope overrides capsule scope
+    if (foundInLocalScope) return foundInLocalScope;
+
+    return foindHoisted;
+}

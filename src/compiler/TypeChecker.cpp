@@ -21,8 +21,14 @@
 using namespace std;
 
 namespace Theta {
-    bool TypeChecker::checkAST(shared_ptr<ASTNode> ast) {
+    bool TypeChecker::checkAST(shared_ptr<ASTNode> ast, vector<pair<string, shared_ptr<ASTNode>>> bindToScope) {
         if (ast->hasOwnScope()) identifierTable.enterScope();
+
+        // Sometimes, like in the case of function declarations, we need to bind the parameters into the scope of the
+        // definition block
+        for (auto scopeBinding : bindToScope) {
+            identifierTable.insert(scopeBinding.first, scopeBinding.second);
+        }
 
         if (ast->getNodeType() == ASTNode::CAPSULE) {
             hoistCapsuleDeclarations(dynamic_pointer_cast<CapsuleNode>(ast));
@@ -265,15 +271,18 @@ namespace Theta {
     bool TypeChecker::checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node) {
         // "Typecheck" function params first to make them available within the scope of the definition
         vector<shared_ptr<ASTNode>> fnParams = dynamic_pointer_cast<ASTNodeList>(node->getParameters())->getElements();
+
+        vector<pair<string, shared_ptr<ASTNode>>> paramScopeBindings;
         for (auto param : fnParams) {
             // TODO: Handle assignment nodes for when we set a default value for parameters
             if (param->getNodeType() == ASTNode::IDENTIFIER) {
                 shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(param);
-                identifierTable.insert(ident->getIdentifier(), ident->getValue());
+
+                paramScopeBindings.push_back(make_pair(ident->getIdentifier(), ident->getValue()));
             }
         }
         
-        bool valid = checkAST(node->getDefinition());
+        bool valid = checkAST(node->getDefinition(), paramScopeBindings);
 
         if (!valid) return false;
 

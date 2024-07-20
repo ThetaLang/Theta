@@ -19,5 +19,7 @@ namespace Theta {
         void bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolTableStack &scope);
 
         void unpackEnumElementsInScope(shared_ptr<ASTNode> ast, SymbolTableStack &scope);
+
+        void remapEnumTypeReferences(shared_ptr<ASTNode> &ast);
     };
 }

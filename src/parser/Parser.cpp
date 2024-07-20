@@ -226,7 +226,20 @@ namespace Theta {
                     }
 
                     func_def->setParameters(dynamic_pointer_cast<ASTNodeList>(expr));
-                    func_def->setDefinition(parseBlock());
+
+                    shared_ptr<ASTNode> definitionBlock = parseBlock();
+
+                    // In the case of shorthand single-line function bodies, we still want to wrap them in a block within the ast
+                    // for scoping reasons
+                    if (definitionBlock->getNodeType() != ASTNode::BLOCK) {
+                        shared_ptr<BlockNode> block = make_shared<BlockNode>();
+
+                        block->setElements({ definitionBlock });
+
+                        definitionBlock = block;
+                    }
+
+                    func_def->setDefinition(definitionBlock);
 
                     expr = func_def;
                 }

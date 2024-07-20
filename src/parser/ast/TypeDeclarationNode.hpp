@@ -17,6 +17,8 @@ namespace Theta {
 
             string getType() { return type; }
 
+            void setType(string newType) { type = newType; }
+
             string toString(bool bare = false) {
                 string typeString;
 
