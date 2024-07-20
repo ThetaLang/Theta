@@ -263,11 +263,21 @@ namespace Theta {
     }
 
     bool TypeChecker::checkFunctionDeclarationNode(shared_ptr<FunctionDeclarationNode> node) {
+        // "Typecheck" function params first to make them available within the scope of the definition
+        vector<shared_ptr<ASTNode>> fnParams = dynamic_pointer_cast<ASTNodeList>(node->getParameters())->getElements();
+        for (auto param : fnParams) {
+            // TODO: Handle assignment nodes for when we set a default value for parameters
+            if (param->getNodeType() == ASTNode::IDENTIFIER) {
+                shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(param);
+                identifierTable.insert(ident->getIdentifier(), ident->getValue());
+            }
+        }
+        
         bool valid = checkAST(node->getDefinition());
 
         if (!valid) return false;
 
-        // A function might already have a resolvedType of Function<Uknown> if it was hoisted
+        // A function might already have a resolvedType if it was hoisted, we need to redefine it with the real return type
         if (node->getResolvedType()) {
             node->getResolvedType()->setValue(node->getDefinition()->getResolvedType());
         } else {
