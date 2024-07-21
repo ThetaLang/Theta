@@ -80,10 +80,19 @@ namespace Theta {
              */
             void clearExceptions();
 
-
+            /**
+             * @brief Returns a LinkNode for a given capsule name, if it exists
+             * @param capsuleName The name of the capsule
+             * @return A shared pointer to the LinkNode containing the parsed AST
+             */
             shared_ptr<Theta::LinkNode> getIfExistsParsedLinkAST(string capsuleName);
 
-            void addParsedLinkAST(string capsuleName, shared_ptr<Theta::LinkNode>);
+            /**
+             * @brief Adds a LinkNode to the map of parsed capsule ASTs
+             * @param capsuleName The name of the capsule
+             * @param linkNode A shared pointer to the LinkNode to add
+             */
+            void addParsedLinkAST(string capsuleName, shared_ptr<Theta::LinkNode> linkNode);
 
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:
@@ -112,8 +121,17 @@ namespace Theta {
 
             vector<shared_ptr<OptimizationPass>> optimizationPasses;
 
+            /**
+             * @brief Runs optimization passes on the AST (in-place)
+             * @param The AST to optimize
+             */
             void optimizeAST(shared_ptr<ASTNode> &ast);
 
+            /**
+             * @brief Outputs the contents of a given WASM module to the given file
+             * @param module The module to write
+             * @param file The filename to write the module to
+             */
             void writeModuleToFile(BinaryenModuleRef &module, string file);
 
             /**
@@ -133,6 +151,11 @@ namespace Theta {
              */
             string findCapsuleName(string file);
 
+            /**
+             * @brief Outputs a given AST to STDOUT
+             * @param ast The AST to output
+             * @param fileName The filename that appears as the "Source file" for the ast
+             */
             void outputAST(shared_ptr<ASTNode> ast, string fileName);
     };
 }
