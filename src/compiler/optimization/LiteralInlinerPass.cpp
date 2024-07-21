@@ -21,11 +21,7 @@ void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast) {
         unpackEnumElementsInScope(ast, localScope);
 
         ast = nullptr;
-    } else if (ast->getNodeType() == ASTNode::ASSIGNMENT && (
-        ast->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL ||
-        ast->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL ||
-        ast->getRight()->getNodeType() == ASTNode::STRING_LITERAL
-    )) {
+    } else if (isLiteralAssignment(ast)) {
         bindIdentifierToScope(ast, localScope);
 
         ast = nullptr;
@@ -73,8 +69,6 @@ void LiteralInlinerPass::bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolT
     }
 
     scope.insert(identifier, ast->getRight());
-
-    ast = nullptr;
 }
 
 void LiteralInlinerPass::hoistNecessary(shared_ptr<ASTNode> &ast) {
@@ -89,6 +83,9 @@ void LiteralInlinerPass::hoistNecessary(shared_ptr<ASTNode> &ast) {
         if (topLevelElements.at(i)->getNodeType() == ASTNode::ENUM) {
             unpackEnumElementsInScope(topLevelElements.at(i), hoistedScope);
 
+            // TODO: Revisit this when we do multi-capsule typechecking, we probably dont want to remove
+            // any ast nodes that are hoisted because they could get referenced in another capsule. Maybe
+            // we just need to persist the unpacked identifiers here instead
             removeAtIndices.push_back(i);
         } else if (
             ast->getNodeType() == ASTNode::ASSIGNMENT &&
@@ -99,8 +96,6 @@ void LiteralInlinerPass::hoistNecessary(shared_ptr<ASTNode> &ast) {
             )
         ) {
             bindIdentifierToScope(ast, hoistedScope);
-
-            removeAtIndices.push_back(i);
         }
     }
 
@@ -147,4 +142,16 @@ void LiteralInlinerPass::remapEnumTypeReferences(shared_ptr<ASTNode> &ast) {
     shared_ptr<TypeDeclarationNode> remappedTypeDecl = dynamic_pointer_cast<TypeDeclarationNode>(remappedType);
 
     typeDef->setType(remappedTypeDecl->getType());
+}
+
+bool LiteralInlinerPass::isLiteralAssignment(shared_ptr<ASTNode> ast) {
+    if (ast->getNodeType() != ASTNode::ASSIGNMENT) return false;
+
+    string identifierType = dynamic_pointer_cast<TypeDeclarationNode>(ast->getLeft()->getValue())->getType();
+
+    return (
+        (ast->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL && identifierType == DataTypes::BOOLEAN) ||
+        (ast->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL && identifierType == DataTypes::NUMBER) ||
+        (ast->getRight()->getNodeType() == ASTNode::STRING_LITERAL && identifierType == DataTypes::STRING)
+    );
 }

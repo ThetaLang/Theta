@@ -71,5 +71,14 @@ namespace Theta {
          * @param ast Reference to the shared pointer of the TypeDeclarationNode to be remapped.
          */
         void remapEnumTypeReferences(shared_ptr<ASTNode> &ast);
+
+        /**
+         * @brief Checks whether or not the given ast is an assignment of a literal
+         *
+         * @param ast The ast to check
+         * @return true If the node is an assignment node and the type of the LHS and RHS are both literal types
+         * @return false Otherwise
+         */
+        bool isLiteralAssignment(shared_ptr<ASTNode> ast);
     };
 }

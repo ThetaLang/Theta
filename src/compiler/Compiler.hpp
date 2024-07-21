@@ -12,7 +12,7 @@
 #include <binaryen-c.h>
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/LinkNode.hpp"
-#include "../util/Exceptions.hpp"
+#include "exceptions/Error.hpp"
 #include "TypeChecker.hpp"
 #include "CodeGen.hpp"
 #include "compiler/optimization/OptimizationPass.hpp"

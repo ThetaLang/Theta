@@ -10,7 +10,7 @@ set(SRC_DIR src)
 set(LEXER_DIR ${SRC_DIR}/lexer)
 set(COMPILER_DIR ${SRC_DIR}/compiler)
 set(PARSER_DIR ${SRC_DIR}/parser)
-set(UTIL_DIR ${SRC_DIR}/util)
+set(EXCEPTIONS_DIR ${SRC_DIR}/exceptions)
 set(AST_DIR ${PARSER_DIR}/ast)
 set(OPTIMIZATION_DIR ${COMPILER_DIR}/optimization)
 set(TEST_DIR test)
@@ -22,7 +22,7 @@ file(GLOB SRC_FILES
     "${SRC_DIR}/*.cpp"
     "${LEXER_DIR}/*.cpp"
     "${PARSER_DIR}/*.cpp"
-    "${UTIL_DIR}/*.cpp"
+    "${EXCEPTIONS_DIR}/*.cpp"
     "${COMPILER_DIR}/*.cpp"
     "${AST_DIR}/*.cpp"
     "${OPTIMIZATION_DIR}/*.cpp"

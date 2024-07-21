@@ -6,7 +6,8 @@
 #include <string>
 #include <utility>
 #include "DataTypes.hpp"
-#include "util/Exceptions.hpp"
+#include "exceptions/ReferenceError.hpp"
+#include "exceptions/TypeError.hpp"
 #include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
@@ -124,8 +125,7 @@ namespace Theta {
         shared_ptr<ASTNode> customDataTypeInScope = lookupInScope(node->getType());
         
         if (!customDataTypeInScope) {
-            // TODO: ReferenceError
-            cout << "COULD NOT FIND CUSTOM TYPE: " + node->getType() << endl;
+            Compiler::getInstance().addException(make_shared<ReferenceError>(node->getType()));
             return false;
         }
 
@@ -178,8 +178,7 @@ namespace Theta {
         shared_ptr<ASTNode> foundReferencedIdentifier = lookupInScope(node->getIdentifier());
 
         if (!foundReferencedIdentifier) {
-            // TODO: ReferenceError
-            cout << "CANT FIND IDENTIFIER: " + node->getIdentifier() << endl;
+            Compiler::getInstance().addException(make_shared<ReferenceError>(node->getIdentifier()));
             return false;
         }
 
@@ -312,8 +311,7 @@ namespace Theta {
         shared_ptr<ASTNode> referencedFunction = lookupInScope(uniqueFuncIdentifier);
         
         if (!referencedFunction) {
-            // TODO: ReferenceError
-            cout << "COULDNT FIND REFERENCED FUNCTION: " + uniqueFuncIdentifier << endl;
+            Compiler::getInstance().addException(make_shared<ReferenceError>(funcIdentifier));
             return false;
         }
 
@@ -496,8 +494,7 @@ namespace Theta {
         shared_ptr<ASTNode> foundDefinition = lookupInScope(node->getStructType());
 
         if (!foundDefinition) {
-            // TODO: ReferenceError
-            cout << "NO STRUCT DEFINITION FOUND" << endl;
+            Compiler::getInstance().addException(make_shared<ReferenceError>(node->getStructType()));
             return false;
         }
 

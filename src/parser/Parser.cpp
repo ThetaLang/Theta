@@ -4,7 +4,8 @@
 #include <map>
 #include <memory>
 #include "../lexer/Token.hpp"
-#include "../util/Exceptions.hpp"
+#include "exceptions/CompilationError.hpp"
+#include "exceptions/ParseError.hpp"
 #include "ast/AssignmentNode.hpp"
 #include "ast/ControlFlowNode.hpp"
 #include "ast/EnumNode.hpp"
