@@ -40,6 +40,7 @@ namespace Theta {
              * @return false If there are any type mismatches or errors.
              */
             bool checkAST(shared_ptr<ASTNode> ast, vector<pair<string, shared_ptr<ASTNode>>> bindToScope = {});
+
             /**
              * @brief Determines if two AST nodes represent the same type.
              * 
@@ -49,6 +50,16 @@ namespace Theta {
              * @return false Otherwise.
              */
             static bool isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2);
+
+            /**
+             * @brief Determines if a given type matches any of the types that are given as options
+             *
+             * @param type The type to check. Should be an ASTNode that is a TypeDeclatationNode
+             * @param options The options to check
+             * @return true If type matched one of the types in options
+             * @return false Otherwise
+             */
+            static bool isOneOfTypes(shared_ptr<ASTNode> type, vector<shared_ptr<ASTNode>> options);
 
         private:
             SymbolTableStack identifierTable;

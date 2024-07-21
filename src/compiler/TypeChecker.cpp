@@ -317,24 +317,6 @@ namespace Theta {
             return false;
         }
 
-        auto fnParams = dynamic_pointer_cast<FunctionDeclarationNode>(referencedFunction)->getParameters();
-
-        vector<shared_ptr<ASTNode>> expectedParameters = dynamic_pointer_cast<ASTNodeList>(fnParams)->getElements();
-
-        for (int i = 0; i < expectedParameters.size(); i++) {
-            if (!isSameType(expectedParameters.at(i), params.at(i))) {
-                Compiler::getInstance().addException(
-                    make_shared<TypeError>(
-                        "Mismatched types in function invocation",
-                        expectedParameters.at(i),
-                        params.at(i)
-                    )
-                );
-
-                return false;
-            } 
-        }
-
         node->setResolvedType(referencedFunction->getResolvedType()->getValue());
 
         return true;
@@ -352,7 +334,12 @@ namespace Theta {
 
                 shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN);
 
-                if (!validCondition || !isSameType(pair.first->getResolvedType(), boolType)) {
+                vector<shared_ptr<ASTNode>> typesThatCanBeInterpretedAsBooleans = {
+                    boolType,
+                    make_shared<TypeDeclarationNode>(DataTypes::NUMBER)
+                };
+
+                if (!validCondition || !isOneOfTypes(pair.first->getResolvedType(), typesThatCanBeInterpretedAsBooleans)) {
                     Compiler::getInstance().addException(
                         make_shared<TypeError>(
                             "Non-boolean expression in control flow condition",
@@ -634,6 +621,14 @@ namespace Theta {
         identNode->setResolvedType(identNode->getValue());
 
         capsuleDeclarationsTable.insert(identNode->getIdentifier(), identNode->getResolvedType());
+    }
+
+    bool TypeChecker::isOneOfTypes(shared_ptr<ASTNode> type, vector<shared_ptr<ASTNode>> options) {
+        for (auto option : options) {
+            if (isSameType(type, option)) return true;
+        }
+
+        return false;
     }
 
     bool TypeChecker::isSameType(shared_ptr<ASTNode> type1, shared_ptr<ASTNode> type2) {
