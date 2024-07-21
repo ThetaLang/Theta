@@ -1,5 +1,9 @@
 #include "OptimizationPass.hpp"
+#include "parser/ast/ControlFlowNode.hpp"
 #include "parser/ast/FunctionDeclarationNode.hpp"
+#include <memory>
+#include <iostream>
+#include <utility>
 
 using namespace Theta;
 
@@ -36,6 +40,21 @@ void OptimizationPass::optimize(shared_ptr<ASTNode> &ast) {
         optimize(params);
 
         optimize(funcDecNode->getDefinition());
+    } else if (ast->getNodeType() == ASTNode::CONTROL_FLOW) {
+        shared_ptr<ControlFlowNode> cFlowNode = dynamic_pointer_cast<ControlFlowNode>(ast);
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> newPairs;
+
+        for (auto conditionExpressionPair : cFlowNode->getConditionExpressionPairs()) {
+            shared_ptr<ASTNode> condition = conditionExpressionPair.first;
+            shared_ptr<ASTNode> expression = conditionExpressionPair.second;
+
+            optimize(condition);
+            optimize(expression);
+
+            newPairs.push_back(make_pair(condition, expression));
+        }
+
+        cFlowNode->setConditionExpressionPairs(newPairs);
     }
 
     if (ast->hasOwnScope()) localScope.exitScope();

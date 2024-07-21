@@ -317,6 +317,24 @@ namespace Theta {
             return false;
         }
 
+        auto fnParams = dynamic_pointer_cast<FunctionDeclarationNode>(referencedFunction)->getParameters();
+
+        vector<shared_ptr<ASTNode>> expectedParameters = dynamic_pointer_cast<ASTNodeList>(fnParams)->getElements();
+
+        for (int i = 0; i < expectedParameters.size(); i++) {
+            if (!isSameType(expectedParameters.at(i), params.at(i))) {
+                Compiler::getInstance().addException(
+                    make_shared<TypeError>(
+                        "Mismatched types in function invocation",
+                        expectedParameters.at(i),
+                        params.at(i)
+                    )
+                );
+
+                return false;
+            } 
+        }
+
         node->setResolvedType(referencedFunction->getResolvedType()->getValue());
 
         return true;
