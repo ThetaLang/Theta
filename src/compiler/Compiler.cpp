@@ -21,7 +21,7 @@ namespace Theta {
         if (!optimizeAST(programAST)) return;
 
         outputAST(programAST, entrypoint);
-
+    
         TypeChecker typeChecker;
         bool isTypeValid = typeChecker.checkAST(programAST);
 

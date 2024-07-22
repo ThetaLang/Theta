@@ -257,6 +257,8 @@ namespace Theta {
                     match(Token::Types::IDENTIFIER);
 
                     shared_ptr<StructDeclarationNode> str = make_shared<StructDeclarationNode>(currentToken.getLexeme());
+            
+                    match(Token::Types::BRACE_OPEN);
 
                     str->setValue(parseDict());
 
@@ -535,7 +537,8 @@ namespace Theta {
 
                 if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::Types::TUPLE) {
                    vector<shared_ptr<ASTNode>> el;
-                    el.push_back(expr);
+
+                    if (expr->getLeft()) el.push_back(expr);
 
                     while (match(Token::Types::COMMA)) {
                         el.push_back(parseKvPair().second);
@@ -568,6 +571,11 @@ namespace Theta {
                     expr = make_shared<TupleNode>();
                     expr->setLeft(left);
                     expr->setRight(parseExpression());
+                } else if (expr == nullptr) {
+                    // parseTuplen will return a nullptr if it just immediately encounters a BRACE_CLOSE. We can treat this
+                    // as a dict since a valid tuple must have 2 values in it.
+                    type = "kv";
+                    expr = make_shared<TupleNode>();
                 }
 
                 return make_pair(type, expr);
@@ -575,6 +583,8 @@ namespace Theta {
 
             shared_ptr<ASTNode> parseTuple() {
                 shared_ptr<ASTNode> expr;
+
+                if (match(Token::Types::BRACE_CLOSE)) return nullptr;
 
                 try {
                     expr = parseExpression();

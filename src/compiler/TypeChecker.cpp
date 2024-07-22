@@ -282,7 +282,7 @@ namespace Theta {
                 paramScopeBindings.push_back(make_pair(ident->getIdentifier(), ident->getValue()));
             }
         }
-        
+    
         bool valid = checkAST(node->getDefinition(), paramScopeBindings);
 
         if (!valid) return false;
@@ -398,8 +398,12 @@ namespace Theta {
         }
     
         shared_ptr<TypeDeclarationNode> listType = make_shared<TypeDeclarationNode>(DataTypes::LIST);
-
-        listType->setValue(returnTypes.at(0));
+        
+        if (returnTypes.size() == 0) {
+            listType->setValue(make_shared<TypeDeclarationNode>(DataTypes::UNKNOWN));
+        } else {
+            listType->setValue(returnTypes.at(0));
+        }
 
         node->setResolvedType(listType);
 
@@ -463,7 +467,12 @@ namespace Theta {
         }
 
         shared_ptr<TypeDeclarationNode> dictType = make_shared<TypeDeclarationNode>(DataTypes::DICT);
-        dictType->setValue(valueTypes.at(0));
+    
+        if (valueTypes.size() == 0) {
+            dictType->setValue(make_shared<TypeDeclarationNode>(DataTypes::UNKNOWN));
+        } else {
+            dictType->setValue(valueTypes.at(0));
+        }
 
         node->setResolvedType(dictType);
         
@@ -542,7 +551,7 @@ namespace Theta {
 
             requiredStructFields.erase(key->getSymbol());
         }
-    
+
         // Should be empty by the end. If its not, that means the declared struct doesnt match the definition
         if (requiredStructFields.size() > 0) {
             string missingFields = "";
@@ -649,6 +658,17 @@ namespace Theta {
         shared_ptr<TypeDeclarationNode> t2 = dynamic_pointer_cast<TypeDeclarationNode>(type2);
 
         if (!t1 && !t2) return true;
+
+        // For dicts or lists that are initialized to empty 
+        if (
+            t1 && t2 && 
+            (
+                (t1->getType() == DataTypes::DICT && t2->getType() == DataTypes::DICT) ||
+                (t1->getType() == DataTypes::LIST && t2->getType() == DataTypes::LIST)
+            ) && 
+            t1->getValue() &&
+            t2->getValue() && dynamic_pointer_cast<TypeDeclarationNode>(t2->getValue())->getType() == DataTypes::UNKNOWN
+        ) return true;
 
         if (
             (!t1 || !t2) ||
