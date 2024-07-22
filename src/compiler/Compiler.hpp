@@ -93,6 +93,13 @@ namespace Theta {
              * @param linkNode A shared pointer to the LinkNode to add
              */
             void addParsedLinkAST(string capsuleName, shared_ptr<Theta::LinkNode> linkNode);
+            
+            /**
+             * @brief Runs optimization passes on the AST (in-place)
+             * @param The AST to optimize
+             * @return true If all optimization passes succeeded
+             */
+            bool optimizeAST(shared_ptr<ASTNode> &ast);
 
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:
@@ -119,14 +126,7 @@ namespace Theta {
             vector<shared_ptr<Theta::Error>> encounteredExceptions;
             map<string, shared_ptr<Theta::LinkNode>> parsedLinkASTs;
 
-            vector<shared_ptr<OptimizationPass>> optimizationPasses;
-
-            /**
-             * @brief Runs optimization passes on the AST (in-place)
-             * @param The AST to optimize
-             * @return true If all optimization passes succeeded
-             */
-            bool optimizeAST(shared_ptr<ASTNode> &ast);
+            vector<shared_ptr<OptimizationPass>> optimizationPasses; 
 
             /**
              * @brief Outputs the contents of a given WASM module to the given file

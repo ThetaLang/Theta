@@ -582,7 +582,6 @@ namespace Theta {
         capsuleDeclarationsTable.enterScope();
 
         for (int i = 0; i < capsuleTopLevelElements.size(); i++) {
-            // TODO: Should also grab Struct definitions to make them exportable out of the capsule
             ASTNode::Types nodeType = capsuleTopLevelElements.at(i)->getNodeType();
 
             if (nodeType == ASTNode::ASSIGNMENT) {
