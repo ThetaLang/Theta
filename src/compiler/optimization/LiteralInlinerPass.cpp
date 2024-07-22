@@ -118,8 +118,7 @@ void LiteralInlinerPass::unpackEnumElementsInScope(shared_ptr<ASTNode> node, Sym
         
         shared_ptr<ASTNode> foundScopeIdentifier = scope.lookup(enumElIdentifier);
         if (foundScopeIdentifier) {
-            // TODO: Throw error
-            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(enumElIdentifier));
             return;
         }
 
