@@ -9,6 +9,7 @@
 #include "exceptions/IllegalReassignmentError.hpp"
 #include "exceptions/ReferenceError.hpp"
 #include "exceptions/TypeError.hpp"
+#include "exceptions/IntegrityError.hpp"
 #include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/DictionaryNode.hpp"
@@ -381,15 +382,17 @@ namespace Theta {
         }
 
         if (!isHomogenous(returnTypes)) {
-            // TODO: Loop through all the returnTypes and add an exception for each unmatching
-            // type 
-            Compiler::getInstance().addException(
-                make_shared<TypeError>(
-                    "Lists must be homogenous",
-                    returnTypes.at(0),
-                    returnTypes.at(1) // FIXME: This isn't always going to be the wrong type
-                )
-            );
+            for (auto type : returnTypes) {
+                if (!isSameType(type, returnTypes.at(0))) {
+                    Compiler::getInstance().addException(
+                        make_shared<TypeError>(
+                            "Lists must be homogenous",
+                            returnTypes.at(0),
+                            type
+                        )
+                    );
+                }
+            }
 
             return false;
         }
@@ -481,8 +484,7 @@ namespace Theta {
         shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(node->getName());
 
         if (existingIdentifierInScope) {
-            // TODO: IllegalOperationException
-            cout << "AN IDENTIFIER ALREADY EXISTS IN SCOPE" << endl;
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(node->getName()));
             return false;
         }
 
@@ -517,8 +519,12 @@ namespace Theta {
             auto it = requiredStructFields.find(key->getSymbol()); 
 
             if (it == requiredStructFields.end()) {
-                // TODO: ReferenceError
-                cout << "STRUCT DECLARATION CANT CONTAIN KEYS NOT IN DEFINITION" << endl;
+                Compiler::getInstance().addException(
+                    make_shared<IntegrityError>(
+                        "Struct declaration can't contain keys that are not in its definition. ",
+                        key->getSymbol() + " is not defined in struct " + node->getStructType()
+                    )
+                );
                 return false;
             }
 
@@ -539,8 +545,20 @@ namespace Theta {
     
         // Should be empty by the end. If its not, that means the declared struct doesnt match the definition
         if (requiredStructFields.size() > 0) {
-            // TODO: MissingSomethingException
-            cout << "STRUCT DECLARATION DOES NOT SATISFY ITS DEFINED REQUIREMENTS" << endl;
+            string missingFields = "";
+
+            for (auto field : requiredStructFields) {
+                if (missingFields.length() > 0) missingFields += ", ";
+                missingFields += field.first;
+            }
+
+            Compiler::getInstance().addException(
+                make_shared<IntegrityError>(
+                    "Struct declaration is missing required field(s) from definition",
+                    missingFields + " " + (requiredStructFields.size() == 1 ? "is" : "are") + " required in " + node->getStructType() + " but missing in declaration."
+                )
+            );
+
             return false;
         }
 
@@ -579,8 +597,7 @@ namespace Theta {
         shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
 
         if (existingFuncIdentifierInScope) {
-            // TODO: IllegalOperationError
-            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
         }
 
         // Initially set the function resolvedType to whatever the identifier type is specified. This will get
@@ -597,8 +614,7 @@ namespace Theta {
         shared_ptr<ASTNode> existingStructDefinitionInScope = capsuleDeclarationsTable.lookup(structNode->getName());
         
         if (existingStructDefinitionInScope) {
-            // TODO: IllegalOperationError
-            cout << "CANT REDEFINE EXISTING STRUCT" << endl;
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(structNode->getName()));
         }
 
         structNode->setResolvedType(make_shared<TypeDeclarationNode>(structNode->getName()));
@@ -612,8 +628,7 @@ namespace Theta {
         shared_ptr<ASTNode> existingHoistedIdentifier = capsuleDeclarationsTable.lookup(identNode->getIdentifier());
     
         if (existingHoistedIdentifier) {
-            // TODO: IllegalOperationError
-            cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identNode->getIdentifier()));
         }
 
         identNode->setResolvedType(identNode->getValue());
