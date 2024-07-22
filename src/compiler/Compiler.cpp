@@ -18,7 +18,7 @@ namespace Theta {
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 
-        optimizeAST(programAST);
+        if (!optimizeAST(programAST)) return;
 
         outputAST(programAST, entrypoint);
 
@@ -44,6 +44,8 @@ namespace Theta {
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
 
+        if (!optimizeAST(ast)) return nullptr;
+        
         outputAST(ast, "ith");
 
         TypeChecker typeChecker;
@@ -160,10 +162,21 @@ namespace Theta {
         return capsuleName;
     }
 
-    void Compiler::optimizeAST(shared_ptr<ASTNode> &ast) {
+    bool Compiler::optimizeAST(shared_ptr<ASTNode> &ast) {
         for (auto &pass : optimizationPasses) {
             pass->optimize(ast);
+
+            
+            if (encounteredExceptions.size() > 0) {
+                for (int i = 0; i < encounteredExceptions.size(); i++) {
+                    encounteredExceptions[i]->display();
+                }
+
+                return false;
+            }
         }
+
+        return true;
     }
 
     void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {

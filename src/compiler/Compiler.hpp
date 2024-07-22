@@ -124,8 +124,9 @@ namespace Theta {
             /**
              * @brief Runs optimization passes on the AST (in-place)
              * @param The AST to optimize
+             * @return true If all optimization passes succeeded
              */
-            void optimizeAST(shared_ptr<ASTNode> &ast);
+            bool optimizeAST(shared_ptr<ASTNode> &ast);
 
             /**
              * @brief Outputs the contents of a given WASM module to the given file
