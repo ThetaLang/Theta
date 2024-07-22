@@ -1,5 +1,7 @@
 #include "LiteralInlinerPass.hpp"
+#include "compiler/Compiler.hpp"
 #include "compiler/DataTypes.hpp"
+#include "exceptions/IllegalReassignmentError.hpp"
 #include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/EnumNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
@@ -21,16 +23,20 @@ void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast) {
         unpackEnumElementsInScope(ast, localScope);
 
         ast = nullptr;
-    } else if (isLiteralAssignment(ast)) {
+    } else if (ast->getNodeType() == ASTNode::ASSIGNMENT) {
         bindIdentifierToScope(ast, localScope);
 
-        ast = nullptr;
+        if (isLiteralAssignment(ast)) {
+            ast = nullptr;
+        }
     }
 }
 
 // When we have a variable being used somewhere (not assignment), we want to see if we can figure out what it referencing. If
 // it is referencing a literal, we can just replace the variable with the literal to save time during typechecking and during runtime
 void LiteralInlinerPass::substituteIdentifiers(shared_ptr<ASTNode> &ast) {
+    // We only want to substitute identifiers that are not the LHS of an assignment
+    if (ast->getValue() && ast->getValue()->getNodeType() == ASTNode::TYPE_DECLARATION) return;
     shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(ast);
 
     shared_ptr<ASTNode> foundIdentifier = hoistedScope.lookup(ident->getIdentifier());
@@ -63,8 +69,7 @@ void LiteralInlinerPass::bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolT
     shared_ptr<ASTNode> foundIdentInScope = scope.lookup(identifier);
 
     if (foundIdentInScope) {
-        // TODO: Reassignment error
-        cout << "CAN NOT REASSIGN IDENTIFIER IN SCOPE" << endl;
+        Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identifier));
         return;
     }
 
@@ -87,15 +92,8 @@ void LiteralInlinerPass::hoistNecessary(shared_ptr<ASTNode> &ast) {
             // any ast nodes that are hoisted because they could get referenced in another capsule. Maybe
             // we just need to persist the unpacked identifiers here instead
             removeAtIndices.push_back(i);
-        } else if (
-            ast->getNodeType() == ASTNode::ASSIGNMENT &&
-            (
-                ast->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL ||
-                ast->getRight()->getNodeType() == ASTNode::STRING_LITERAL ||
-                ast->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL
-            )
-        ) {
-            bindIdentifierToScope(ast, hoistedScope);
+        } else if (topLevelElements.at(i)->getNodeType() == ASTNode::ASSIGNMENT) {
+            bindIdentifierToScope(topLevelElements.at(i), hoistedScope);
         }
     }
 

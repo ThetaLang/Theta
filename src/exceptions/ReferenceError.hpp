@@ -16,7 +16,7 @@ namespace Theta {
         void display() override {
             cout << "  \033[1;31mReferenceError\033[0m: '" +
                 identifier +
-                "' does not exist in the scope where it was referenced.";
+                "' does not exist in the scope where it was referenced." << endl;
         }
     };
 }

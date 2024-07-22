@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include "DataTypes.hpp"
+#include "exceptions/IllegalReassignmentError.hpp"
 #include "exceptions/ReferenceError.hpp"
 #include "exceptions/TypeError.hpp"
 #include "parser/ast/ASTNodeList.hpp"
@@ -156,12 +157,12 @@ namespace Theta {
 
         string rhsType = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->getType();
         
+        // Function names can be overloaded, so functions don't need this check
         if (rhsType != DataTypes::FUNCTION) {
             shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
             if (existingIdentifierInScope) {
-                // TODO: IllegalOperationError
-                cout << "CANT REDEFINE EXISTING IDENTIFIER" << endl;
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
                 return false;
             }
 
