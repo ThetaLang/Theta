@@ -174,6 +174,8 @@ namespace Theta {
 
                 return false;
             }
+
+            pass->cleanup();
         }
 
         return true;

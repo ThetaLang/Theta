@@ -163,7 +163,7 @@ namespace Theta {
             shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
             if (existingIdentifierInScope) {
-            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
+                Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
                 return false;
             }
 
