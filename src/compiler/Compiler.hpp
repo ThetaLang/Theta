@@ -99,7 +99,7 @@ namespace Theta {
              * @param The AST to optimize
              * @return true If all optimization passes succeeded
              */
-            bool optimizeAST(shared_ptr<ASTNode> &ast);
+            bool optimizeAST(shared_ptr<ASTNode> &ast, bool silenceErrors = false);
 
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:

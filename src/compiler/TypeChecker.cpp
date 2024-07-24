@@ -464,6 +464,8 @@ namespace Theta {
                     valueTypes.at(1) // FIXME: This wont always be the incorrect type. Need to detect which values are mistyped
                 )
             );
+
+            return false;
         }
 
         shared_ptr<TypeDeclarationNode> dictType = make_shared<TypeDeclarationNode>(DataTypes::DICT);
@@ -606,6 +608,7 @@ namespace Theta {
 
         if (existingFuncIdentifierInScope) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
+            return;
         }
 
         // Initially set the function resolvedType to whatever the identifier type is specified. This will get
@@ -623,6 +626,7 @@ namespace Theta {
         
         if (existingStructDefinitionInScope) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(structNode->getName()));
+            return;
         }
 
         structNode->setResolvedType(make_shared<TypeDeclarationNode>(structNode->getName()));
@@ -637,6 +641,7 @@ namespace Theta {
     
         if (existingHoistedIdentifier) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identNode->getIdentifier()));
+            return;
         }
 
         identNode->setResolvedType(identNode->getValue());

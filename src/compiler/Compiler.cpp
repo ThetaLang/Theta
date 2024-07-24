@@ -162,16 +162,18 @@ namespace Theta {
         return capsuleName;
     }
 
-    bool Compiler::optimizeAST(shared_ptr<ASTNode> &ast) {
+    bool Compiler::optimizeAST(shared_ptr<ASTNode> &ast, bool silenceErrors) {
         for (auto &pass : optimizationPasses) {
             pass->optimize(ast);
 
-            
             if (encounteredExceptions.size() > 0) {
-                for (int i = 0; i < encounteredExceptions.size(); i++) {
-                    encounteredExceptions[i]->display();
+                if (!silenceErrors) {
+                    for (int i = 0; i < encounteredExceptions.size(); i++) {
+                        encounteredExceptions[i]->display();
+                    }
                 }
 
+                pass->cleanup();
                 return false;
             }
 

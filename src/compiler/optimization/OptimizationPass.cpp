@@ -48,7 +48,7 @@ void OptimizationPass::optimize(shared_ptr<ASTNode> &ast) {
             shared_ptr<ASTNode> condition = conditionExpressionPair.first;
             shared_ptr<ASTNode> expression = conditionExpressionPair.second;
 
-            optimize(condition);
+            if (condition) optimize(condition);
             optimize(expression);
 
             newPairs.push_back(make_pair(condition, expression));
