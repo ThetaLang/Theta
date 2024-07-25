@@ -46,6 +46,15 @@ namespace Theta {
          */
         shared_ptr<ASTNode> lookupInScope(string identifier);
 
+        /**
+         * @brief Generates a unique function identifier based on the function's name and its parameters to handle overloading.
+         * 
+         * @param variableName The base name of the function.
+         * @param declarationNode The function declaration node containing the parameters.
+         * @return string The unique identifier for the function.
+         */
+        string getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> node);
+
     private:
         /**
          * @brief Pure virtual function to be implemented by derived classes for performing specific optimizations on the AST.

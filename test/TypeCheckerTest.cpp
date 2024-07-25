@@ -358,6 +358,72 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
         REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
     }
 
+    SECTION("Throws if function arguments dont match parameter types") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                add<Function<Number>> = (x<Number>, y<Number>) -> x + y
+
+                doTheThing<Function<Number>> = () -> add(1, '4')
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(!isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
+    }
+
+    SECTION("Throws if function is called with too many arguments") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                add<Function<Number>> = (x<Number>, y<Number>) -> x + y
+
+                doTheThing<Function<Number>> = () -> add(1, 2, 4)
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(!isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
+    }
+
+    SECTION("Throws if function is called with too few arguments") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                add<Function<Number>> = (x<Number>, y<Number>) -> x + y
+
+                doTheThing<Function<Number>> = () -> add(1)
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(!isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
+    }
+
+    SECTION("Can typecheck function overloads correctly") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                add<Function<Number>> = (x<Number>) -> x
+                add<Function<Number>> = (x<Number>, y<Number>) -> x + y
+                add<Function<Number>> = (x<Number>, y<String>) -> x
+
+                doTheThing<Function<Number>> = () -> {
+                    add(1)
+                    add(1, 2)
+                    add(5, 'a')
+                }
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
+    }
+
     SECTION("Throws if trying to access a variable before defining it") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
@@ -418,6 +484,131 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
                 z<Number> = y
 
                 y<Number> = x
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
+    }
+
+    SECTION("Can typecheck struct definition and declaration correctly") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                struct Point {
+                    x<Number>
+                    y<Number>
+                }
+
+                addPoints<Function<Point>> = (p1<Point>, p2<Point>) -> {
+                    @Point {
+                        x: 4,
+                        y: 2
+                    }
+                }
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
+    }
+
+    SECTION("Throws if struct declaration is missing fields from definition") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                struct Point {
+                    x<Number>
+                    y<Number>
+                }
+
+                addPoints<Function<Point>> = (p1<Point>, p2<Point>) -> {
+                    @Point {
+                        x: 4
+                    }
+                }
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(!isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
+    }
+
+
+    SECTION("Throws if struct declaration contains fields that are not in definition") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                struct Point {
+                    x<Number>
+                    y<Number>
+                }
+
+                addPoints<Function<Point>> = (p1<Point>, p2<Point>) -> {
+                    @Point {
+                        x: 4,
+                        y: 3,
+                        z: 1
+                    }
+                }
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(!isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
+    }
+
+    SECTION("Throws if struct declaration field types dont match") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                struct Point {
+                    x<Number>
+                    y<Number>
+                }
+
+                addPoints<Function<Point>> = (p1<Point>, p2<Point>) -> {
+                    @Point {
+                        x: 4,
+                        y: '9'
+                    }
+                }
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(!isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
+    }
+
+    SECTION("Can typecheck references to outer-scoped variables from within inner scope") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                x<Number> = 5
+
+                add3ToX<Function<Number>> = () -> {
+                    x + 3
+                }
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
+    }
+
+    SECTION("Curried functions retain scope of parent functions") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                z<Number> = 5
+
+                add<Function<Function<Number>>> = (x<Number>) -> (y<Number>) -> x + y + z
             }
         )");
 

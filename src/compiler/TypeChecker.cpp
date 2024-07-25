@@ -159,7 +159,18 @@ namespace Theta {
         string rhsType = dynamic_pointer_cast<TypeDeclarationNode>(node->getRight()->getResolvedType())->getType();
         
         // Function names can be overloaded, so functions don't need this check
-        if (rhsType != DataTypes::FUNCTION) {
+        if (rhsType == DataTypes::FUNCTION) {
+            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
+
+            shared_ptr<ASTNode> existingFuncIdentifierInScope = identifierTable.lookup(uniqueFuncIdentifier);
+
+            if (existingFuncIdentifierInScope) {
+                Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
+                return false;
+            }
+
+            identifierTable.insert(uniqueFuncIdentifier, node->getRight());
+        } else {
             shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
             if (existingIdentifierInScope) {
@@ -318,7 +329,7 @@ namespace Theta {
         }
 
         node->setResolvedType(referencedFunction->getResolvedType()->getValue());
-
+    
         return true;
     }
 

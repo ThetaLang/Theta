@@ -23,11 +23,11 @@ void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast, bool isCapsuleDir
         unpackEnumElementsInScope(ast, localScope);
 
         ast = nullptr;
-    } else if (ast->getNodeType() == ASTNode::ASSIGNMENT) {
+    } else if (ast->getNodeType() == ASTNode::ASSIGNMENT && !isCapsuleDirectChild) {
         bindIdentifierToScope(ast, localScope);
 
         // We dont want to remove variables defined directly in capsules
-        if (isLiteralAssignment(ast) && !isCapsuleDirectChild) {
+        if (isLiteralAssignment(ast)) {
             ast = nullptr;
         }
     }
@@ -67,14 +67,27 @@ void LiteralInlinerPass::substituteIdentifiers(shared_ptr<ASTNode> &ast) {
 void LiteralInlinerPass::bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolTableStack &scope) {
     string identifier = dynamic_pointer_cast<IdentifierNode>(ast->getLeft())->getIdentifier();
 
-    shared_ptr<ASTNode> foundIdentInScope = scope.lookup(identifier);
+    if (ast->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(identifier, ast->getRight());
 
-    if (foundIdentInScope) {
-        Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identifier));
-        return;
+        shared_ptr<ASTNode> existingFuncIdentifierInScope = scope.lookup(uniqueFuncIdentifier);
+
+        if (existingFuncIdentifierInScope) {
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identifier));
+            return;
+        }
+
+        scope.insert(uniqueFuncIdentifier, ast->getRight());
+    } else {
+        shared_ptr<ASTNode> foundIdentInScope = scope.lookup(identifier);
+
+        if (foundIdentInScope) {
+            Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identifier));
+            return;
+        }
+
+        scope.insert(identifier, ast->getRight());
     }
-
-    scope.insert(identifier, ast->getRight());
 }
 
 void LiteralInlinerPass::hoistNecessary(shared_ptr<ASTNode> &ast) {
