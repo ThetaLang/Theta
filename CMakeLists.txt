@@ -3,14 +3,16 @@ project(Theta)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DBUILD_TESTS=OFF")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Define source directories
 set(SRC_DIR src)
 set(LEXER_DIR ${SRC_DIR}/lexer)
 set(COMPILER_DIR ${SRC_DIR}/compiler)
 set(PARSER_DIR ${SRC_DIR}/parser)
-set(UTIL_DIR ${SRC_DIR}/util)
+set(EXCEPTIONS_DIR ${SRC_DIR}/exceptions)
 set(AST_DIR ${PARSER_DIR}/ast)
+set(OPTIMIZATION_DIR ${COMPILER_DIR}/optimization)
 set(TEST_DIR test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR lib/binaryen)
@@ -20,9 +22,10 @@ file(GLOB SRC_FILES
     "${SRC_DIR}/*.cpp"
     "${LEXER_DIR}/*.cpp"
     "${PARSER_DIR}/*.cpp"
-    "${UTIL_DIR}/*.cpp"
+    "${EXCEPTIONS_DIR}/*.cpp"
     "${COMPILER_DIR}/*.cpp"
     "${AST_DIR}/*.cpp"
+    "${OPTIMIZATION_DIR}/*.cpp"
 )
 list(REMOVE_ITEM SRC_FILES "${CMAKE_SOURCE_DIR}/theta.cpp")
 

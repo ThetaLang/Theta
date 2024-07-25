@@ -1,16 +1,7 @@
-#include <cstddef>
-#include <vector>
-#include <deque>
-#include <string>
-#include <map>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <filesystem>
 #include "Compiler.hpp"
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
-#include "../parser/ast/ASTNode.hpp"
+#include "compiler/TypeChecker.hpp"
 
 using namespace std;
 
@@ -27,9 +18,18 @@ namespace Theta {
 
         shared_ptr<ASTNode> programAST = buildAST(entrypoint);
 
+        if (!optimizeAST(programAST)) return;
+
+        outputAST(programAST, entrypoint);
+    
+        TypeChecker typeChecker;
+        bool isTypeValid = typeChecker.checkAST(programAST);
+
         for (int i = 0; i < encounteredExceptions.size(); i++) {
-            encounteredExceptions[i].display();
+            encounteredExceptions[i]->display();
         }
+
+        if (!isTypeValid) return;
 
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(programAST);
 
@@ -44,9 +44,18 @@ namespace Theta {
     shared_ptr<ASTNode> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
 
+        if (!optimizeAST(ast)) return nullptr;
+        
+        outputAST(ast, "ith");
+
+        TypeChecker typeChecker;
+        bool isTypeValid = typeChecker.checkAST(ast);
+
         for (int i = 0; i < encounteredExceptions.size(); i++) {
-            encounteredExceptions[i].display();
+            encounteredExceptions[i]->display();
         }
+
+        if (!isTypeValid) return ast;
 
         BinaryenModuleRef module = CodeGen::generateWasmFromAST(ast);
 
@@ -83,22 +92,14 @@ namespace Theta {
         Theta::Parser parser;
         shared_ptr<Theta::ASTNode> parsedAST = parser.parse(lexer.tokens, source, fileName, filesByCapsuleName);
 
-        if (parsedAST && isEmitAST) {
-            cout << "Generated AST for \"" + fileName + "\":" << endl;
-            cout << parsedAST->toJSON() << endl;
-            cout << endl;
-        } else if (!parsedAST) {
-            cout << "Could not parse AST for file " + fileName << endl;
-        }
-
         return parsedAST;
     }
 
-    void Compiler::addException(Theta::CompilationError e) {
+    void Compiler::addException(shared_ptr<Theta::Error> e) {
         encounteredExceptions.push_back(e);
     }
 
-    vector<Theta::CompilationError> Compiler::getEncounteredExceptions() {
+    vector<shared_ptr<Theta::Error>> Compiler::getEncounteredExceptions() {
         return encounteredExceptions;
     }
 
@@ -161,6 +162,27 @@ namespace Theta {
         return capsuleName;
     }
 
+    bool Compiler::optimizeAST(shared_ptr<ASTNode> &ast, bool silenceErrors) {
+        for (auto &pass : optimizationPasses) {
+            pass->optimize(ast);
+
+            if (encounteredExceptions.size() > 0) {
+                if (!silenceErrors) {
+                    for (int i = 0; i < encounteredExceptions.size(); i++) {
+                        encounteredExceptions[i]->display();
+                    }
+                }
+
+                pass->cleanup();
+                return false;
+            }
+
+            pass->cleanup();
+        }
+
+        return true;
+    }
+
     void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {
         // TODO: This isnt the right way to do this. This will only allow 4k to be written.
         // Figure out a better way to decide on size
@@ -181,5 +203,15 @@ namespace Theta {
         }
 
         cout << "Compilation successful. Output: " + fileName << endl;
+    }
+
+    void Compiler::outputAST(shared_ptr<ASTNode> ast, string fileName) {
+        if (ast && isEmitAST) {
+            cout << "Generated AST for \"" + fileName + "\":" << endl;
+            cout << ast->toJSON() << endl;
+            cout << endl;
+        } else if (!ast) {
+            cout << "Could not parse AST for file " + fileName << endl;
+        }
     }
 }

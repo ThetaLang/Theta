@@ -1,4 +1,5 @@
 #include "Token.hpp"
+#include <sstream>
 
 Theta::Token::Token() {}
 

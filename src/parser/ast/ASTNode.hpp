@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <map>
 
 using namespace std;
 
@@ -43,26 +44,35 @@ namespace Theta {
             shared_ptr<ASTNode> value;
             shared_ptr<ASTNode> left;
             shared_ptr<ASTNode> right;
+            shared_ptr<ASTNode> resolvedType;
 
             ASTNode(ASTNode::Types type) : nodeType(type), value(nullptr) {};
 
             virtual void setValue(shared_ptr<ASTNode> childNode) { value = childNode; }
 
-            virtual shared_ptr<ASTNode> getValue() { return value; }
+            virtual shared_ptr<ASTNode>& getValue() { return value; }
 
             virtual void setLeft(shared_ptr<ASTNode> childNode) { left = childNode; }
 
-            virtual shared_ptr<ASTNode> getLeft() { return left; }
+            virtual shared_ptr<ASTNode>& getLeft() { return left; }
 
             virtual void setRight(shared_ptr<ASTNode> childNode) { right = childNode; }
 
-            virtual shared_ptr<ASTNode> getRight() { return right; }
+            virtual shared_ptr<ASTNode>& getRight() { return right; }
+
+            virtual bool hasMany() { return false; }
+
+            virtual bool hasOwnScope() { return false; }
 
             virtual ~ASTNode() = default;
 
+            void setResolvedType(shared_ptr<ASTNode> typeNode) { resolvedType = typeNode; }
+
+            shared_ptr<ASTNode> getResolvedType() { return resolvedType; }
+
             static string nodeTypeToString(ASTNode::Types nodeType) {
                 static map<ASTNode::Types, string> typesMap = {
-                    { ASTNode::Types::ASSIGNMENT, "Asignment" },
+                    { ASTNode::Types::ASSIGNMENT, "Assignment" },
                     { ASTNode::Types::AST_NODE_LIST, "ASTNodeList" },
                     { ASTNode::Types::BINARY_OPERATION, "BinaryOperation" },
                     { ASTNode::Types::BLOCK, "Block" },

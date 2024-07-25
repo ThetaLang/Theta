@@ -63,7 +63,7 @@ TEST_CASE("Parser") {
 
         shared_ptr<LiteralNode> childNode = dynamic_pointer_cast<LiteralNode>(parsedAST->getValue());
 
-        REQUIRE(childNode->getLiteralValue() == "'And his name is John Cena!'");
+        REQUIRE(childNode->getLiteralValue() == "And his name is John Cena!");
     }
 
     SECTION("Can parse symbols") {
@@ -100,7 +100,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(listNode->getElements().size() == 4);
 
-        vector<string> expectedValues = { "'Alex'", "'Tony'", "'John'", "'Denis'" };
+        vector<string> expectedValues = { "Alex", "Tony", "John", "Denis" };
 
         for (int i = 0; i < listNode->getElements().size(); i++) {
             shared_ptr<LiteralNode> literalNode = dynamic_pointer_cast<LiteralNode>(listNode->getElements()[i]);
@@ -133,15 +133,15 @@ TEST_CASE("Parser") {
         REQUIRE(listElement0->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listElement0->getElements()[1]->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listElement0->getElements()[2]->getNodeType() == ASTNode::Types::LIST);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0->getElements()[0])->getLiteralValue() == "'alex'");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0->getElements()[1])->getLiteralValue() == "'john'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0->getElements()[0])->getLiteralValue() == "alex");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0->getElements()[1])->getLiteralValue() == "john");
 
         shared_ptr<ListNode> listElement0Element2 = dynamic_pointer_cast<ListNode>(listElement0->getElements()[2]);
         REQUIRE(listElement0Element2->getElements().size() == 2);
         REQUIRE(listElement0Element2->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listElement0Element2->getElements()[1]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[0])->getLiteralValue() == "'jeremy'");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[1])->getLiteralValue() == "'pablo'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[0])->getLiteralValue() == "jeremy");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[1])->getLiteralValue() == "pablo");
 
         REQUIRE(listNode->getElements()[1]->getNodeType() == ASTNode::Types::LIST);
 
@@ -149,7 +149,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(listElement1->getElements().size() == 1);
         REQUIRE(listElement1->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement1->getElements()[0])->getLiteralValue() == "'clarinda'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement1->getElements()[0])->getLiteralValue() == "clarinda");
 
         REQUIRE(listNode->getElements()[2]->getNodeType() == ASTNode::Types::BINARY_OPERATION);
 
@@ -157,13 +157,13 @@ TEST_CASE("Parser") {
         REQUIRE(listElement2->getOperator() == "+");
         REQUIRE(listElement2->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listElement2->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement2->getLeft())->getLiteralValue() == "'den'");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement2->getRight())->getLiteralValue() == "'is'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement2->getLeft())->getLiteralValue() == "den");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement2->getRight())->getLiteralValue() == "is");
 
         REQUIRE(listNode->getElements()[3]->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(listNode->getElements()[4]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listNode->getElements()[3])->getLiteralValue() == "'jessica'");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(listNode->getElements()[4])->getLiteralValue() == "'ellis'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listNode->getElements()[3])->getLiteralValue() == "jessica");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(listNode->getElements()[4])->getLiteralValue() == "ellis");
     }
 
     SECTION("Can parse tuple") {
@@ -189,7 +189,7 @@ TEST_CASE("Parser") {
         shared_ptr<LiteralNode> secondNode = dynamic_pointer_cast<LiteralNode>(tupleNode->getRight());
         REQUIRE(secondNode != nullptr);
         REQUIRE(secondNode->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(secondNode->getLiteralValue() == "'Success'");
+        REQUIRE(secondNode->getLiteralValue() == "Success");
     }
     // --------- DATA STRUCTURES -----------
 
@@ -522,7 +522,7 @@ TEST_CASE("Parser") {
         REQUIRE(rightConcatOp->getOperator() == "+");
         REQUIRE(rightConcatOp->getLeft() == nullptr);
         REQUIRE(rightConcatOp->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(rightConcatOp->getRight())->getLiteralValue() == "' how are you'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(rightConcatOp->getRight())->getLiteralValue() == " how are you");
 
         shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
         REQUIRE(secondPipelineOp->getOperator() == "=>");
@@ -532,10 +532,10 @@ TEST_CASE("Parser") {
         REQUIRE(leftConcatOp->getOperator() == "+");
         REQUIRE(leftConcatOp->getLeft() == nullptr);
         REQUIRE(leftConcatOp->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(leftConcatOp->getRight())->getLiteralValue() == "' mike'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(leftConcatOp->getRight())->getLiteralValue() == " mike");
 
         REQUIRE(secondPipelineOp->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(secondPipelineOp->getLeft())->getLiteralValue() == "'hello'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(secondPipelineOp->getLeft())->getLiteralValue() == "hello");
     }
     // --------- PIPELINE OPERATOR ----------
 
@@ -557,7 +557,7 @@ TEST_CASE("Parser") {
         REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "message");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNode->getRight())->getLiteralValue() == "'Hello, World!'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNode->getRight())->getLiteralValue() == "Hello, World!");
     }
 
     SECTION("Can parse boolean assignment") {
@@ -709,9 +709,9 @@ TEST_CASE("Parser") {
         shared_ptr<BinaryOperationNode> binOpNode3 = dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[2]);
         REQUIRE(binOpNode3->getOperator() == "!=");
         REQUIRE(binOpNode3->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getLeft())->getLiteralValue() == "'meow'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getLeft())->getLiteralValue() == "meow");
         REQUIRE(binOpNode3->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getRight())->getLiteralValue() == "'cow'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getRight())->getLiteralValue() == "cow");
 
         // Checking fourth element: !gross
         shared_ptr<UnaryOperationNode> unaryOpNode = dynamic_pointer_cast<UnaryOperationNode>(listDefNode->getElements()[3]);
@@ -757,7 +757,7 @@ TEST_CASE("Parser") {
         // Checking bob's wife
         shared_ptr<TupleNode> bobWifeNode = dynamic_pointer_cast<TupleNode>(bobDictNode->getElements()[1]);
         REQUIRE(dynamic_pointer_cast<SymbolNode>(bobWifeNode->getLeft())->getSymbol() == ":wife");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(bobWifeNode->getRight())->getLiteralValue() == "'Janet'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(bobWifeNode->getRight())->getLiteralValue() == "Janet");
 
         // Checking bob's bald
         shared_ptr<TupleNode> bobBaldNode = dynamic_pointer_cast<TupleNode>(bobDictNode->getElements()[2]);
@@ -778,7 +778,7 @@ TEST_CASE("Parser") {
         // Checking mike's wife
         shared_ptr<TupleNode> mikeWifeNode = dynamic_pointer_cast<TupleNode>(mikeDictNode->getElements()[1]);
         REQUIRE(dynamic_pointer_cast<SymbolNode>(mikeWifeNode->getLeft())->getSymbol() == ":wife");
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(mikeWifeNode->getRight())->getLiteralValue() == "''");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(mikeWifeNode->getRight())->getLiteralValue() == "");
 
         // Checking mike's bald
         shared_ptr<TupleNode> mikeBaldNode = dynamic_pointer_cast<TupleNode>(mikeDictNode->getElements()[2]);
@@ -819,7 +819,7 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(thirdPipelineOp->getRight())->getIdentifier() == "reverse");
 
         REQUIRE(thirdPipelineOp->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(thirdPipelineOp->getLeft())->getLiteralValue() == "'hello'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(thirdPipelineOp->getLeft())->getLiteralValue() == "hello");
     }
 
     SECTION("Can parse control flow assignment") {
@@ -874,11 +874,11 @@ TEST_CASE("Parser") {
         shared_ptr<LiteralNode> rightString1 = dynamic_pointer_cast<LiteralNode>(right1);
 
         REQUIRE(leftIdentifier1->getIdentifier() == "name");
-        REQUIRE(rightString1->getLiteralValue() == "'Bob'");
+        REQUIRE(rightString1->getLiteralValue() == "Bob");
 
         REQUIRE(expression1->getNodeType() == ASTNode::Types::STRING_LITERAL);
         shared_ptr<LiteralNode> expressionString1 = dynamic_pointer_cast<LiteralNode>(expression1);
-        REQUIRE(expressionString1->getLiteralValue() == "'hello'");
+        REQUIRE(expressionString1->getLiteralValue() == "hello");
 
         // Check the second condition-expression pair
         shared_ptr<ASTNode> condition2 = conditionExpressionPairs[1].first;
@@ -888,7 +888,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(expression2->getNodeType() == ASTNode::Types::STRING_LITERAL);
         shared_ptr<LiteralNode> expressionString2 = dynamic_pointer_cast<LiteralNode>(expression2);
-        REQUIRE(expressionString2->getLiteralValue() == "'goodbye'");
+        REQUIRE(expressionString2->getLiteralValue() == "goodbye");
     }
 
     SECTION("Can parse tuple assignment") {
@@ -935,7 +935,7 @@ TEST_CASE("Parser") {
         shared_ptr<LiteralNode> secondNode = dynamic_pointer_cast<LiteralNode>(tupleNode->getRight());
         REQUIRE(secondNode != nullptr);
         REQUIRE(secondNode->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(secondNode->getLiteralValue() == "'Success'");
+        REQUIRE(secondNode->getLiteralValue() == "Success");
     }
     // --------- ASSIGNMENT ----------
 
@@ -1089,7 +1089,7 @@ TEST_CASE("Parser") {
         shared_ptr<LiteralNode> leftString = dynamic_pointer_cast<LiteralNode>(left);
         shared_ptr<IdentifierNode> rightIdentifier = dynamic_pointer_cast<IdentifierNode>(right);
 
-        REQUIRE(leftString->getLiteralValue() == "'hello'");
+        REQUIRE(leftString->getLiteralValue() == "hello");
         REQUIRE(rightIdentifier->getIdentifier() == "world");
 
         REQUIRE(expression->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
@@ -1176,7 +1176,7 @@ TEST_CASE("Parser") {
         shared_ptr<LiteralNode> rightString1 = dynamic_pointer_cast<LiteralNode>(right1);
 
         REQUIRE(leftIdentifier1->getIdentifier() == "name");
-        REQUIRE(rightString1->getLiteralValue() == "'Mike'");
+        REQUIRE(rightString1->getLiteralValue() == "Mike");
 
         REQUIRE(block1->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode1 = dynamic_pointer_cast<BlockNode>(block1);
@@ -1199,7 +1199,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(leftAssignIdentifier1->getIdentifier() == "lastName");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier1->getValue())->getType() == "String");
-        REQUIRE(rightAssignString1->getLiteralValue() == "'Wazowski'");
+        REQUIRE(rightAssignString1->getLiteralValue() == "Wazowski");
 
         // Check the second condition-expression pair
         shared_ptr<ASTNode> condition2 = conditionExpressionPairs[1].first;
@@ -1220,7 +1220,7 @@ TEST_CASE("Parser") {
         shared_ptr<LiteralNode> rightString2 = dynamic_pointer_cast<LiteralNode>(right2);
 
         REQUIRE(leftIdentifier2->getIdentifier() == "name");
-        REQUIRE(rightString2->getLiteralValue() == "'Michael'");
+        REQUIRE(rightString2->getLiteralValue() == "Michael");
 
         REQUIRE(block2->getNodeType() == ASTNode::Types::BLOCK);
         shared_ptr<BlockNode> blockNode2 = dynamic_pointer_cast<BlockNode>(block2);
@@ -1243,7 +1243,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(leftAssignIdentifier2->getIdentifier() == "lastName");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier2->getValue())->getType() == "String");
-        REQUIRE(rightAssignString2->getLiteralValue() == "'Jordan'");
+        REQUIRE(rightAssignString2->getLiteralValue() == "Jordan");
 
         // Check the third condition-expression pair
         shared_ptr<ASTNode> condition3 = conditionExpressionPairs[2].first;
@@ -1272,12 +1272,12 @@ TEST_CASE("Parser") {
 
         REQUIRE(leftAssignIdentifier3->getIdentifier() == "lastName");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier3->getValue())->getType() == "String");
-        REQUIRE(rightAssignString3->getLiteralValue() == "'Unknown'");
+        REQUIRE(rightAssignString3->getLiteralValue() == "Unknown");
     }
     // --------- CONTROL FLOW ---------
 
     // --------- FUNCTIONS ------------
-    SECTION("Can parse function declaration with no parens, single parameter, and expression definition") {
+    SECTION("Can parse function declaration with no parens, single parameter, and expression definition wrapped in a block") {
         string source = R"(
             greet<String> = name<String> -> 'hello' + name
         )";
@@ -1298,7 +1298,6 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
         shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
@@ -1306,13 +1305,17 @@ TEST_CASE("Parser") {
         REQUIRE(param->getIdentifier() == "name");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getElements().size() == 1);
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(binOpNode->getOperator() == "+");
         REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
         REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
 
         shared_ptr<LiteralNode> leftNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft());
-        REQUIRE(leftNode->getLiteralValue() == "'hello'");
+        REQUIRE(leftNode->getLiteralValue() == "hello");
 
         shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
         REQUIRE(rightNode->getIdentifier() == "name");
@@ -1483,7 +1486,7 @@ TEST_CASE("Parser") {
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
-    SECTION("Can parse function declaration with empty parameter list and binary operation definition") {
+    SECTION("Can parse function declaration with empty parameter list and binary operation definition wrapped in a block") {
         string source = R"(
             x<Boolean> = () -> y - 5 == 0
         )";
@@ -1504,10 +1507,13 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
         shared_ptr<FunctionDeclarationNode> funcDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclNode->getDefinition());
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getElements().size() == 1);
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "==");
 
@@ -1595,14 +1601,17 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
         shared_ptr<FunctionDeclarationNode> outerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
-
         REQUIRE(outerFuncDeclNode->getParameters()->getElements().size() == 1);
 
         shared_ptr<IdentifierNode> outerParam = dynamic_pointer_cast<IdentifierNode>(outerFuncDeclNode->getParameters()->getElements()[0]);
         REQUIRE(outerParam->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(outerParam->getValue())->getType() == "String");
 
-        shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerFuncDeclNode->getDefinition());
+        shared_ptr<BlockNode> outerBlockNode = dynamic_pointer_cast<BlockNode>(outerFuncDeclNode->getDefinition());
+        REQUIRE(outerBlockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(outerBlockNode->getElements().size() == 1);
+
+        shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerBlockNode->getElements()[0]);
         REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
 
         REQUIRE(innerFuncDeclNode->getParameters()->getElements().size() == 1);
@@ -1611,9 +1620,9 @@ TEST_CASE("Parser") {
         REQUIRE(innerParam->getIdentifier() == "y");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(innerParam->getValue())->getType() == "String");
 
-        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(innerFuncDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
-        REQUIRE(blockNode->getElements().size() == 0);
+        shared_ptr<BlockNode> innerBlockNode = dynamic_pointer_cast<BlockNode>(innerFuncDeclNode->getDefinition());
+        REQUIRE(innerBlockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(innerBlockNode->getElements().size() == 0);
     }
 
     SECTION("Can parse function invocation with no arguments") {
@@ -1697,7 +1706,7 @@ TEST_CASE("Parser") {
         REQUIRE(firstArgument->getIdentifier() == "names");
 
         shared_ptr<LiteralNode> secondArgument = dynamic_pointer_cast<LiteralNode>(arguments->getElements()[1]);
-        REQUIRE(secondArgument->getLiteralValue() == "'Hello, '");
+        REQUIRE(secondArgument->getLiteralValue() == "Hello, ");
     }
 
     SECTION("Can parse function invocation with a list argument") {
@@ -1731,13 +1740,13 @@ TEST_CASE("Parser") {
         REQUIRE(listElements.size() == 3);
 
         shared_ptr<LiteralNode> firstElement = dynamic_pointer_cast<LiteralNode>(listElements[0]);
-        REQUIRE(firstElement->getLiteralValue() == "'alex'");
+        REQUIRE(firstElement->getLiteralValue() == "alex");
 
         shared_ptr<LiteralNode> secondElement = dynamic_pointer_cast<LiteralNode>(listElements[1]);
-        REQUIRE(secondElement->getLiteralValue() == "'mike'");
+        REQUIRE(secondElement->getLiteralValue() == "mike");
 
         shared_ptr<LiteralNode> thirdElement = dynamic_pointer_cast<LiteralNode>(listElements[2]);
-        REQUIRE(thirdElement->getLiteralValue() == "'denis'");
+        REQUIRE(thirdElement->getLiteralValue() == "denis");
     }
 
     SECTION("Can parse function invocation with multiple list arguments") {
@@ -1772,13 +1781,13 @@ TEST_CASE("Parser") {
         REQUIRE(listElements1.size() == 3);
 
         shared_ptr<LiteralNode> firstElement1 = dynamic_pointer_cast<LiteralNode>(listElements1[0]);
-        REQUIRE(firstElement1->getLiteralValue() == "'alex'");
+        REQUIRE(firstElement1->getLiteralValue() == "alex");
 
         shared_ptr<LiteralNode> secondElement1 = dynamic_pointer_cast<LiteralNode>(listElements1[1]);
-        REQUIRE(secondElement1->getLiteralValue() == "'mike'");
+        REQUIRE(secondElement1->getLiteralValue() == "mike");
 
         shared_ptr<LiteralNode> thirdElement1 = dynamic_pointer_cast<LiteralNode>(listElements1[2]);
-        REQUIRE(thirdElement1->getLiteralValue() == "'denis'");
+        REQUIRE(thirdElement1->getLiteralValue() == "denis");
 
         // Second list argument
         shared_ptr<ListNode> listArgument2 = dynamic_pointer_cast<ListNode>(arguments->getElements()[1]);
@@ -1788,10 +1797,10 @@ TEST_CASE("Parser") {
         REQUIRE(listElements2.size() == 2);
 
         shared_ptr<LiteralNode> firstElement2 = dynamic_pointer_cast<LiteralNode>(listElements2[0]);
-        REQUIRE(firstElement2->getLiteralValue() == "'Hello'");
+        REQUIRE(firstElement2->getLiteralValue() == "Hello");
 
         shared_ptr<LiteralNode> secondElement2 = dynamic_pointer_cast<LiteralNode>(listElements2[1]);
-        REQUIRE(secondElement2->getLiteralValue() == "'Hi'");
+        REQUIRE(secondElement2->getLiteralValue() == "Hi");
     }
 
     SECTION("Can parse function invocation with dictionary argument") {
@@ -1834,7 +1843,7 @@ TEST_CASE("Parser") {
 
         shared_ptr<LiteralNode> secondElement = dynamic_pointer_cast<LiteralNode>(tupleElement->getRight());
         REQUIRE(secondElement->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(secondElement->getLiteralValue() == "'Alex'");
+        REQUIRE(secondElement->getLiteralValue() == "Alex");
     }
 
     SECTION("Can parse function invocation with function declaration argument") {
@@ -1852,7 +1861,6 @@ TEST_CASE("Parser") {
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
-
         REQUIRE(funcInvocationNode != nullptr);
 
         shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
@@ -1878,7 +1886,11 @@ TEST_CASE("Parser") {
         REQUIRE(param->getIdentifier() == "greeting");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclArg->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getElements().size() == 1);
+
+        shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "+");
 
@@ -1906,7 +1918,6 @@ TEST_CASE("Parser") {
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
-
         REQUIRE(funcInvocationNode != nullptr);
 
         shared_ptr<IdentifierNode> functionIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvocationNode->getIdentifier());
@@ -1937,7 +1948,11 @@ TEST_CASE("Parser") {
         REQUIRE(param2->getIdentifier() == "punctuation");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> outerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(funcDeclArg->getDefinition());
+        shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclArg->getDefinition());
+        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getElements().size() == 1);
+
+        shared_ptr<BinaryOperationNode> outerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(outerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
         REQUIRE(outerBinOpNode->getOperator() == "+");
 
@@ -1997,7 +2012,7 @@ TEST_CASE("Parser") {
         REQUIRE(tupleNode->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
         REQUIRE(dynamic_pointer_cast<SymbolNode>(tupleNode->getLeft())->getSymbol() == ":bob");
         REQUIRE(tupleNode->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(tupleNode->getRight())->getLiteralValue() == "'saget'");
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(tupleNode->getRight())->getLiteralValue() == "saget");
 
         // Check the second assignment within the block
         shared_ptr<AssignmentNode> assignmentNodeY = dynamic_pointer_cast<AssignmentNode>(blockExpressions[1]);
@@ -2052,7 +2067,7 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftNode1->getValue())->getType() == "String");
 
         shared_ptr<LiteralNode> rightNode1 = dynamic_pointer_cast<LiteralNode>(assignmentNode1->getRight());
-        REQUIRE(rightNode1->getLiteralValue() == "'Bobby'");
+        REQUIRE(rightNode1->getLiteralValue() == "Bobby");
 
         // Check second link
         shared_ptr<LinkNode> linkNode2 = dynamic_pointer_cast<LinkNode>(parsedAST->getLinks()[1]);
@@ -2088,7 +2103,7 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(nestedLeftNode2->getValue())->getType() == "String");
 
         shared_ptr<LiteralNode> nestedRightNode2 = dynamic_pointer_cast<LiteralNode>(nestedAssignmentNode2->getRight());
-        REQUIRE(nestedRightNode2->getLiteralValue() == "'Bobby'");
+        REQUIRE(nestedRightNode2->getLiteralValue() == "Bobby");
 
         // Check MyTestCapsule
         shared_ptr<CapsuleNode> mainCapsule = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());

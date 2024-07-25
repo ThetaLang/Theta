@@ -17,11 +17,11 @@ namespace Theta {
 
             void setParameters(shared_ptr<ASTNodeList> params) { parameters = params; }
 
-            shared_ptr<ASTNodeList> getParameters() { return parameters; }
+            shared_ptr<ASTNodeList>& getParameters() { return parameters; }
 
             void setDefinition(shared_ptr<ASTNode> def) { definition = def; }
 
-            shared_ptr<ASTNode> getDefinition() { return definition; }
+            shared_ptr<ASTNode>& getDefinition() { return definition; }
 
             string toJSON() const override {
                 ostringstream oss;

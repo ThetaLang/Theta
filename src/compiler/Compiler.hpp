@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <deque>
 #include <string>
@@ -11,8 +12,11 @@
 #include <binaryen-c.h>
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/LinkNode.hpp"
-#include "../util/Exceptions.hpp"
+#include "exceptions/Error.hpp"
+#include "TypeChecker.hpp"
 #include "CodeGen.hpp"
+#include "compiler/optimization/OptimizationPass.hpp"
+#include "compiler/optimization/LiteralInlinerPass.hpp"
 
 using namespace std;
 
@@ -63,23 +67,39 @@ namespace Theta {
              * @brief Adds an encountered exception to the list of exceptions to display later
              * @param e The exception to add
              */
-            void addException(Theta::CompilationError e);
+            void addException(shared_ptr<Theta::Error> e);
 
             /**
              * @brief Returns all the exceptions we encountered during the compilation process
              * @return A vector of compilation errors
              */
-            vector<Theta::CompilationError> getEncounteredExceptions();
+            vector<shared_ptr<Theta::Error>> getEncounteredExceptions();
 
             /**
              * @brief Clears the list of compilation errors
              */
             void clearExceptions();
 
-
+            /**
+             * @brief Returns a LinkNode for a given capsule name, if it exists
+             * @param capsuleName The name of the capsule
+             * @return A shared pointer to the LinkNode containing the parsed AST
+             */
             shared_ptr<Theta::LinkNode> getIfExistsParsedLinkAST(string capsuleName);
 
-            void addParsedLinkAST(string capsuleName, shared_ptr<Theta::LinkNode>);
+            /**
+             * @brief Adds a LinkNode to the map of parsed capsule ASTs
+             * @param capsuleName The name of the capsule
+             * @param linkNode A shared pointer to the LinkNode to add
+             */
+            void addParsedLinkAST(string capsuleName, shared_ptr<Theta::LinkNode> linkNode);
+            
+            /**
+             * @brief Runs optimization passes on the AST (in-place)
+             * @param The AST to optimize
+             * @return true If all optimization passes succeeded
+             */
+            bool optimizeAST(shared_ptr<ASTNode> &ast, bool silenceErrors = false);
 
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:
@@ -89,6 +109,10 @@ namespace Theta {
             Compiler() {
                 filesByCapsuleName = make_shared<map<string, string>>();
                 discoverCapsules();
+
+                optimizationPasses = {
+                    make_shared<LiteralInlinerPass>()
+                };
             }
 
             // Delete copy constructor and assignment operator to enforce singleton pattern
@@ -99,9 +123,16 @@ namespace Theta {
             bool isEmitTokens = false;
             bool isEmitAST = false;
             bool isEmitWAT = false;
-            vector<Theta::CompilationError> encounteredExceptions;
+            vector<shared_ptr<Theta::Error>> encounteredExceptions;
             map<string, shared_ptr<Theta::LinkNode>> parsedLinkASTs;
 
+            vector<shared_ptr<OptimizationPass>> optimizationPasses; 
+
+            /**
+             * @brief Outputs the contents of a given WASM module to the given file
+             * @param module The module to write
+             * @param file The filename to write the module to
+             */
             void writeModuleToFile(BinaryenModuleRef &module, string file);
 
             /**
@@ -120,5 +151,12 @@ namespace Theta {
              * @return The capsule name corresponding to the file.
              */
             string findCapsuleName(string file);
+
+            /**
+             * @brief Outputs a given AST to STDOUT
+             * @param ast The AST to output
+             * @param fileName The filename that appears as the "Source file" for the ast
+             */
+            void outputAST(shared_ptr<ASTNode> ast, string fileName);
     };
 }

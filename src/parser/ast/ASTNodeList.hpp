@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
+#include <vector>
 
 using namespace std;
 
@@ -15,7 +16,9 @@ namespace Theta {
 
             void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 
-            vector<shared_ptr<ASTNode>> getElements() { return elements; }
+            vector<shared_ptr<ASTNode>>& getElements() { return elements; }
+
+            bool hasMany() override { return true; }
 
             string toJSON() const override {
                 ostringstream oss;

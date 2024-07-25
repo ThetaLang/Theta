@@ -20,7 +20,7 @@ namespace Theta {
             }
 
         private:
-            // TODO: This won't work for negative values of an exponent like 10**-5. We need to check the sign and do division instead
+            // FIXME: This won't work for negative values of an exponent like 10**-5. We need to check the sign and do division instead
             // if the exponent is negative. It also won't work for negative base values. If the base is negative we need to multiply times
             // the absolute value of the base in order to get the correct answer. It also wont work for floating point exponents.
             static void registerMathPow(BinaryenModuleRef &module) {

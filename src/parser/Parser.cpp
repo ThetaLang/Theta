@@ -1,13 +1,11 @@
-#include <cstddef>
 #include <vector>
 #include <deque>
 #include <string>
 #include <map>
-#include <iostream>
 #include <memory>
-#include <filesystem>
 #include "../lexer/Token.hpp"
-#include "../util/Exceptions.hpp"
+#include "exceptions/CompilationError.hpp"
+#include "exceptions/ParseError.hpp"
 #include "ast/AssignmentNode.hpp"
 #include "ast/ControlFlowNode.hpp"
 #include "ast/EnumNode.hpp"
@@ -33,6 +31,7 @@
 #include "ast/ASTNodeList.hpp"
 #include "../compiler/Compiler.hpp"
 #include "../lexer/Lexemes.hpp"
+#include "../compiler/DataTypes.hpp"
 
 using namespace std;
 
@@ -50,7 +49,7 @@ namespace Theta {
                 // Throw parse errors for any remaining tokens after we've finished our parser run
                 for (int i = 0; i < tokens.size(); i++) {
                     Theta::Compiler::getInstance().addException(
-                        Theta::CompilationError(
+                        make_shared<Theta::CompilationError>(
                             "ParseError",
                             "Unparsed token " + tokens[i].getLexeme(),
                             tokens[i],
@@ -97,7 +96,7 @@ namespace Theta {
 
                 if (fileContainingLinkedCapsule == filesByCapsule->end()) {
                     Theta::Compiler::getInstance().addException(
-                        Theta::CompilationError(
+                        make_shared<Theta::CompilationError>(
                             "LinkageError",
                             "Could not find capsule " + currentToken.getLexeme() + " referenced",
                             currentToken,
@@ -148,7 +147,7 @@ namespace Theta {
 
                     if (!match(Token::Types::BRACE_OPEN)) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Expected open brace during struct definition",
                                 currentToken,
@@ -228,7 +227,20 @@ namespace Theta {
                     }
 
                     func_def->setParameters(dynamic_pointer_cast<ASTNodeList>(expr));
-                    func_def->setDefinition(parseBlock());
+
+                    shared_ptr<ASTNode> definitionBlock = parseBlock();
+
+                    // In the case of shorthand single-line function bodies, we still want to wrap them in a block within the ast
+                    // for scoping reasons
+                    if (definitionBlock->getNodeType() != ASTNode::BLOCK) {
+                        shared_ptr<BlockNode> block = make_shared<BlockNode>();
+
+                        block->setElements({ definitionBlock });
+
+                        definitionBlock = block;
+                    }
+
+                    func_def->setDefinition(definitionBlock);
 
                     expr = func_def;
                 }
@@ -245,6 +257,8 @@ namespace Theta {
                     match(Token::Types::IDENTIFIER);
 
                     shared_ptr<StructDeclarationNode> str = make_shared<StructDeclarationNode>(currentToken.getLexeme());
+            
+                    match(Token::Types::BRACE_OPEN);
 
                     str->setValue(parseDict());
 
@@ -263,7 +277,7 @@ namespace Theta {
 
                     if (!match(Token::Types::BRACE_OPEN)) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Expected opening brace during enum declaration",
                                 currentToken,
@@ -280,7 +294,7 @@ namespace Theta {
                     while (!match(Token::Types::BRACE_CLOSE)) {
                         if (!match(Token::Types::COLON)) {
                             Theta::Compiler::getInstance().addException(
-                                Theta::CompilationError(
+                                make_shared<Theta::CompilationError>(
                                     "SyntaxError",
                                     "Enum must only contain symbols",
                                     remainingTokens->front(),
@@ -523,7 +537,8 @@ namespace Theta {
 
                 if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::Types::TUPLE) {
                    vector<shared_ptr<ASTNode>> el;
-                    el.push_back(expr);
+
+                    if (expr->getLeft()) el.push_back(expr);
 
                     while (match(Token::Types::COMMA)) {
                         el.push_back(parseKvPair().second);
@@ -556,6 +571,11 @@ namespace Theta {
                     expr = make_shared<TupleNode>();
                     expr->setLeft(left);
                     expr->setRight(parseExpression());
+                } else if (expr == nullptr) {
+                    // parseTuplen will return a nullptr if it just immediately encounters a BRACE_CLOSE. We can treat this
+                    // as a dict since a valid tuple must have 2 values in it.
+                    type = "kv";
+                    expr = make_shared<TupleNode>();
                 }
 
                 return make_pair(type, expr);
@@ -563,6 +583,8 @@ namespace Theta {
 
             shared_ptr<ASTNode> parseTuple() {
                 shared_ptr<ASTNode> expr;
+
+                if (match(Token::Types::BRACE_CLOSE)) return nullptr;
 
                 try {
                     expr = parseExpression();
@@ -585,7 +607,7 @@ namespace Theta {
 
                     if (!match(Token::Types::BRACE_CLOSE)) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Expected closing brace after tuple definition",
                                 remainingTokens->front(),
@@ -649,12 +671,23 @@ namespace Theta {
             shared_ptr<ASTNode> parseType() {
                 match(Token::Types::IDENTIFIER);
 
-                shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(currentToken.getLexeme());
+                string typeName = currentToken.getLexeme();
+                shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(typeName);
 
                 if (match(Token::Types::OPERATOR, Lexemes::LT)) {
                     shared_ptr<ASTNode> l = parseType();
 
-                    if (match(Token::Types::COMMA)) {
+                    if (typeName == DataTypes::VARIADIC) {
+                        shared_ptr<TypeDeclarationNode> variadic = dynamic_pointer_cast<TypeDeclarationNode>(typ);
+                        vector<shared_ptr<ASTNode>> types;
+                        types.push_back(l);
+
+                        while (match(Token::Types::COMMA)) {
+                            types.push_back(parseType());
+                        }
+
+                        variadic->setElements(types);
+                    } else if (match(Token::Types::COMMA)) {
                         typ->setLeft(l);
                         typ->setRight(parseType());
                     } else {
@@ -675,7 +708,7 @@ namespace Theta {
                 }
 
                 Theta::Compiler::getInstance().addException(
-                    Theta::CompilationError(
+                    make_shared<Theta::CompilationError>(
                         "SyntaxError",
                         "Expected identifier as part of symbol declaration",
                         remainingTokens->front(),
@@ -726,7 +759,7 @@ namespace Theta {
 
                     if (isStartsWithDigit || isDisallowedChar) {
                         Theta::Compiler::getInstance().addException(
-                            Theta::CompilationError(
+                            make_shared<Theta::CompilationError>(
                                 "SyntaxError",
                                 "Invalid identifier \"" + token.getLexeme() + "\"",
                                 token,

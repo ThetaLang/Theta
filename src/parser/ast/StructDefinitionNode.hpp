@@ -13,5 +13,7 @@ namespace Theta {
             string name;
 
             StructDefinitionNode(string n) : ASTNodeList(ASTNode::Types::STRUCT_DEFINITION), name(n) {};
+
+            string getName() { return name; }
     };
 }

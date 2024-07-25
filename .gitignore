@@ -1,4 +1,9 @@
 *.out
 build/*
+lib/*
 *.gch
 .depend
+todo.txt
+.cache/*
+compile_commands.json
+.DS_Store
