@@ -14,7 +14,7 @@
 using namespace Theta;
 
 // Finds any number literals that are stored in variables / enums and substitutes them with their literal value. This speeds up typechecking
-void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast) {
+void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast, bool isCapsuleDirectChild) {
     if (ast->getNodeType() == ASTNode::IDENTIFIER) {
         substituteIdentifiers(ast);
     } else if (ast->getNodeType() == ASTNode::TYPE_DECLARATION) {
@@ -26,7 +26,8 @@ void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast) {
     } else if (ast->getNodeType() == ASTNode::ASSIGNMENT) {
         bindIdentifierToScope(ast, localScope);
 
-        if (isLiteralAssignment(ast)) {
+        // We dont want to remove variables defined directly in capsules
+        if (isLiteralAssignment(ast) && !isCapsuleDirectChild) {
             ast = nullptr;
         }
     }

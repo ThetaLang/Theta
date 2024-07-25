@@ -7,11 +7,27 @@
 
 using namespace Theta;
 
-void OptimizationPass::optimize(shared_ptr<ASTNode> &ast) {
+void OptimizationPass::optimize(shared_ptr<ASTNode> &ast, bool isCapsuleDirectChild) {
     if (ast->hasOwnScope()) localScope.enterScope();
 
     if (ast->getNodeType() == ASTNode::CAPSULE) {
         hoistNecessary(ast);
+
+        shared_ptr<ASTNodeList> capsuleBlock = dynamic_pointer_cast<ASTNodeList>(ast->getValue());
+        vector<shared_ptr<ASTNode>> elements = capsuleBlock->getElements();
+        vector<shared_ptr<ASTNode>> newElements;
+
+        for (int i = 0; i < elements.size(); i++) {
+            optimize(elements.at(i), true);
+
+            if (elements.at(i) != nullptr) {
+                newElements.push_back(elements.at(i));
+            }
+        }
+
+        capsuleBlock->setElements(newElements);
+
+        return;
     }
 
     if (ast->getValue()) {
@@ -59,7 +75,7 @@ void OptimizationPass::optimize(shared_ptr<ASTNode> &ast) {
 
     if (ast->hasOwnScope()) localScope.exitScope();
 
-    optimizeAST(ast);
+    optimizeAST(ast, isCapsuleDirectChild);
 }
 
 shared_ptr<ASTNode> OptimizationPass::lookupInScope(string identifierName) {

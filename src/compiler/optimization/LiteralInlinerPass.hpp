@@ -24,7 +24,7 @@ namespace Theta {
          *
          * @param ast Reference to the shared pointer of the AST node being optimized.
          */
-        void optimizeAST(shared_ptr<ASTNode> &ast) override;
+        void optimizeAST(shared_ptr<ASTNode> &ast, bool isCapsuleDirectChild) override;
 
         /**
          * @brief Hoists capsule-level definitions before traversing the ast

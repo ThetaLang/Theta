@@ -408,6 +408,25 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
         REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 1);
     }
 
+    SECTION("Can typecheck capsule hoisted elements correctly") {
+        shared_ptr<ASTNode> ast = setup(R"(
+            capsule Test {
+                myList<List<Number>> = [x, y, z]
+
+                x<Number> = 5
+
+                z<Number> = y
+
+                y<Number> = x
+            }
+        )");
+
+        bool isValid = typeChecker.checkAST(ast);
+
+        REQUIRE(isValid);
+        REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
+    }
+
     SECTION("Throws error when variable assignment doesnt pass typechecking") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {

@@ -20,8 +20,9 @@ namespace Theta {
          * entry point for the recursive optimization process.
          *
          * @param ast Reference to the shared pointer of the root AST node to be optimized.
+         * @param isCapsuleDirectChild Is this ast node the direct child of the capsule node?
          */
-        void optimize(shared_ptr<ASTNode> &ast);
+        void optimize(shared_ptr<ASTNode> &ast, bool isCapsuleDirectChild = false);
 
         /**
          * @brief Cleans up and resets scope variables for the pass. Should always be called after the optimization pass finishes
@@ -52,8 +53,9 @@ namespace Theta {
          * Each derived optimization pass class must implement this method to define its specific optimization behavior.
          *
          * @param ast Reference to the shared pointer of the AST node to be optimized.
+         * @param isCapsuleDirectChild Is this ast node the direct child of the capsule node?
          */
-        virtual void optimizeAST(shared_ptr<ASTNode> &ast) = 0;
+        virtual void optimizeAST(shared_ptr<ASTNode> &ast, bool isCapsuleDirectChild = false) = 0;
         
         /**
          * @brief Optionally implemented by derived classes to perform necessary hoisting of declarations to support 
