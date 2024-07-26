@@ -45,7 +45,7 @@ TEST_CASE("Parser") {
         parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName);
 
         REQUIRE(lexer.tokens.size() == 1);
-        REQUIRE(lexer.tokens[0].getType() == Token::Types::IDENTIFIER);
+        REQUIRE(lexer.tokens[0].getType() == Token::IDENTIFIER);
         REQUIRE(lexer.tokens[0].getLexeme() == ".4.");
     }
 

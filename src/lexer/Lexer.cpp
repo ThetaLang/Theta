@@ -52,7 +52,7 @@ namespace Theta {
                     if (!isAccumulatedToken(newToken.getType())) {
                         i += newToken.getLexeme().length();
                         currentColumn += newToken.getLexeme().length();
-                    } else if (newToken.getType() == Token::Types::MULTILINE_COMMENT) {
+                    } else if (newToken.getType() == Token::MULTILINE_COMMENT) {
                         i += 2;
                         currentColumn += 2;
                     } else {
@@ -67,20 +67,20 @@ namespace Theta {
             int currentColumn = 1;
 
             array<Token::Types, 4> NON_EMITTED_TOKENS = {
-                Token::Types::NEWLINE,
-                Token::Types::WHITESPACE,
-                Token::Types::COMMENT,
-                Token::Types::MULTILINE_COMMENT
+                Token::NEWLINE,
+                Token::WHITESPACE,
+                Token::COMMENT,
+                Token::MULTILINE_COMMENT
             };
 
             array<Token::Types, 7> ACCUMULATED_TOKENS = {
-                Token::Types::IDENTIFIER,
-                Token::Types::KEYWORD,
-                Token::Types::BOOLEAN,
-                Token::Types::COMMENT,
-                Token::Types::MULTILINE_COMMENT,
-                Token::Types::STRING,
-                Token::Types::NUMBER
+                Token::IDENTIFIER,
+                Token::KEYWORD,
+                Token::BOOLEAN,
+                Token::COMMENT,
+                Token::MULTILINE_COMMENT,
+                Token::STRING,
+                Token::NUMBER
             };
 
             array<string, 7> LANGUAGE_RESERVED_WORDS = {
@@ -115,39 +115,39 @@ namespace Theta {
                 // (e.g., multi-character operators) are prioritized over shorter ones, preventing
                 // misinterpretations and ensuring correct tokenization of the source code.
                 if (
-                    attemptLex(Lexemes::STRING_DELIMITER, Token::Types::STRING, token, currentChar, nextChar, source, i, Lexemes::STRING_DELIMITER) ||
-                    attemptLex(Lexemes::COMMENT, Token::Types::COMMENT, token, currentChar, nextChar, source, i, Lexemes::NEWLINE, false, false) ||
-                    attemptLex(Lexemes::MULTILINE_COMMENT_DELIMITER_START, Token::Types::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Lexemes::MULTILINE_COMMENT_DELIMITER_END) ||
-                    attemptLex(Lexemes::DIVISION, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::EQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::INEQUALITY, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::AT, Token::Types::AT, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::AND, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::OR, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::NOT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::PIPE, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::ASSIGNMENT, Token::Types::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::PLUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::PLUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::MINUS_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::FUNC_DECLARATION, Token::Types::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::MINUS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::MODULO, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::TIMES_EQUALS, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::EXPONENT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::TIMES, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::BRACE_OPEN, Token::Types::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::BRACE_CLOSE, Token::Types::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::PAREN_OPEN, Token::Types::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::PAREN_CLOSE, Token::Types::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::LTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::LT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::GTEQ, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::GT, Token::Types::OPERATOR, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::BRACKET_OPEN, Token::Types::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::BRACKET_CLOSE, Token::Types::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::COMMA, Token::Types::COMMA, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::COLON, Token::Types::COLON, token, currentChar, nextChar, source, i)
+                    attemptLex(Lexemes::STRING_DELIMITER, Token::STRING, token, currentChar, nextChar, source, i, Lexemes::STRING_DELIMITER) ||
+                    attemptLex(Lexemes::COMMENT, Token::COMMENT, token, currentChar, nextChar, source, i, Lexemes::NEWLINE, false, false) ||
+                    attemptLex(Lexemes::MULTILINE_COMMENT_DELIMITER_START, Token::MULTILINE_COMMENT, token, currentChar, nextChar, source, i, Lexemes::MULTILINE_COMMENT_DELIMITER_END) ||
+                    attemptLex(Lexemes::DIVISION, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::EQUALITY, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::INEQUALITY, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::AT, Token::AT, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::AND, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::OR, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::NOT, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::PIPE, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::ASSIGNMENT, Token::ASSIGNMENT, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::PLUS_EQUALS, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::PLUS, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::MINUS_EQUALS, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::FUNC_DECLARATION, Token::FUNC_DECLARATION, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::MINUS, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::MODULO, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::TIMES_EQUALS, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::EXPONENT, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::TIMES, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::BRACE_OPEN, Token::BRACE_OPEN, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::BRACE_CLOSE, Token::BRACE_CLOSE, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::PAREN_OPEN, Token::PAREN_OPEN, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::PAREN_CLOSE, Token::PAREN_CLOSE, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::LTEQ, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::LT, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::GTEQ, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::GT, Token::OPERATOR, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::BRACKET_OPEN, Token::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::BRACKET_CLOSE, Token::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::COMMA, Token::COMMA, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::COLON, Token::COLON, token, currentChar, nextChar, source, i)
                 ) {
                     return token;
                 }
@@ -155,7 +155,7 @@ namespace Theta {
                 if (currentChar == '\n') {
                     currentLine += 1;
                     currentColumn = 0;
-                    return Token(Token::Types::NEWLINE, Lexemes::NEWLINE);
+                    return Token(Token::NEWLINE, Lexemes::NEWLINE);
                 } else if (isdigit(currentChar)) {
                     int countDecimals = 0;
                     return accumulateUntilCondition(
@@ -168,7 +168,7 @@ namespace Theta {
                         },
                         source,
                         i,
-                        Token(Token::Types::NUMBER, { currentChar }),
+                        Token(Token::NUMBER, { currentChar }),
                         "",
                         false
                     );
@@ -178,23 +178,23 @@ namespace Theta {
                         " <>=/\\!?@#$%^&*()~`|,-+{}[]'\";:\n\r",
                         source,
                         i,
-                        Token(Token::Types::IDENTIFIER, { currentChar }),
+                        Token(Token::IDENTIFIER, { currentChar }),
                         "",
                         false
                     );
 
                     if (isLanguageKeyword(token.getLexeme())) {
-                        token.setType(Token::Types::KEYWORD);
+                        token.setType(Token::KEYWORD);
                     } else if (token.getLexeme() == "true" || token.getLexeme() == "false") {
-                        token.setType(Token::Types::BOOLEAN);
+                        token.setType(Token::BOOLEAN);
                     }
 
                     return token;
                 } else if (isspace(currentChar)) {
-                    return Token(Token::Types::WHITESPACE, { currentChar });
+                    return Token(Token::WHITESPACE, { currentChar });
                 } else {
                     cout << "UNHANDLED CHAR: " << currentChar << " \n";
-                    return Token(Token::Types::UNHANDLED, { currentChar });
+                    return Token(Token::UNHANDLED, { currentChar });
                 }
             }
 
