@@ -9,7 +9,7 @@ using namespace std;
 namespace Theta {
     class AssignmentNode : public ASTNode {
         public:
-            AssignmentNode() : ASTNode(ASTNode::Types::ASSIGNMENT) {};
+            AssignmentNode() : ASTNode(ASTNode::ASSIGNMENT) {};
 
             string toJSON() const override {
                 ostringstream oss;

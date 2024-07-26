@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string operatorSymbol;
 
-            BinaryOperationNode(string op) : operatorSymbol(op), ASTNode(ASTNode::Types::BINARY_OPERATION) {};
+            BinaryOperationNode(string op) : operatorSymbol(op), ASTNode(ASTNode::BINARY_OPERATION) {};
 
             string getOperator() { return operatorSymbol; }
 

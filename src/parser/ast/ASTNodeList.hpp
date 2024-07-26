@@ -12,7 +12,7 @@ namespace Theta {
         public:
             vector<shared_ptr<ASTNode>> elements;
 
-            ASTNodeList(ASTNode::Types type = ASTNode::Types::AST_NODE_LIST) : ASTNode(type) {};
+            ASTNodeList(ASTNode::Types type = ASTNode::AST_NODE_LIST) : ASTNode(type) {};
 
             void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 

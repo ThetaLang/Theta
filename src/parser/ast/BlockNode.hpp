@@ -10,7 +10,7 @@ using namespace std;
 namespace Theta {
     class BlockNode : public ASTNodeList {
         public:
-            BlockNode() : ASTNodeList(ASTNode::Types::BLOCK) {};
+            BlockNode() : ASTNodeList(ASTNode::BLOCK) {};
             
             bool hasOwnScope() override { return true; }
     };

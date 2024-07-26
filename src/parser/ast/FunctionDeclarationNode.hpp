@@ -13,7 +13,7 @@ namespace Theta {
             shared_ptr<ASTNodeList> parameters;
             shared_ptr<ASTNode> definition;
 
-            FunctionDeclarationNode() : ASTNode(ASTNode::Types::FUNCTION_DECLARATION) {};
+            FunctionDeclarationNode() : ASTNode(ASTNode::FUNCTION_DECLARATION) {};
 
             void setParameters(shared_ptr<ASTNodeList> params) { parameters = params; }
 

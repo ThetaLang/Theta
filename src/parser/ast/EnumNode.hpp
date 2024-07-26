@@ -13,7 +13,7 @@ namespace Theta {
         public:
             shared_ptr<ASTNode> identifier;
 
-            EnumNode() : ASTNodeList(ASTNode::Types::ENUM) {};
+            EnumNode() : ASTNodeList(ASTNode::ENUM) {};
 
             void setIdentifier(shared_ptr<ASTNode> ident) { identifier = ident; }
 

@@ -12,7 +12,7 @@ using namespace std;
 namespace Theta {
     class FunctionInvocationNode : public ASTNode {
         public:
-            FunctionInvocationNode() : ASTNode(ASTNode::Types::FUNCTION_INVOCATION) {};
+            FunctionInvocationNode() : ASTNode(ASTNode::FUNCTION_INVOCATION) {};
 
             shared_ptr<ASTNode> identifier;
             shared_ptr<ASTNodeList> arguments;

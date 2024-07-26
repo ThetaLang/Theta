@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string name;
 
-            CapsuleNode(string n) : name(n), ASTNode(ASTNode::Types::CAPSULE) {};
+            CapsuleNode(string n) : name(n), ASTNode(ASTNode::CAPSULE) {};
 
             string getName() { return name; }
 

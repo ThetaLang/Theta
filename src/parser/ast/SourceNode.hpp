@@ -11,7 +11,7 @@ namespace Theta {
         public:
             vector<shared_ptr<ASTNode>> links;
 
-            SourceNode() : ASTNode(ASTNode::Types::SOURCE) {};
+            SourceNode() : ASTNode(ASTNode::SOURCE) {};
 
             void setLinks(vector<shared_ptr<ASTNode>> ln) { links = ln; }
 

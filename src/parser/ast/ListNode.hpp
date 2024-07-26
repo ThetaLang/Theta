@@ -10,6 +10,6 @@ using namespace std;
 namespace Theta {
     class ListNode : public ASTNodeList {
         public:
-            ListNode() : ASTNodeList(ASTNode::Types::LIST) {};
+            ListNode() : ASTNodeList(ASTNode::LIST) {};
     };
 }

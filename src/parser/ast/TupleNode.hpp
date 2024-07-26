@@ -9,7 +9,7 @@ using namespace std;
 namespace Theta {
     class TupleNode : public ASTNode {
         public:
-            TupleNode() : ASTNode(ASTNode::Types::TUPLE) {};
+            TupleNode() : ASTNode(ASTNode::TUPLE) {};
 
             string toJSON() const override {
                 std::ostringstream oss;

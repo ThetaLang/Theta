@@ -46,7 +46,7 @@ namespace Theta {
         }
 
         // TODO: This wont work if we have nested operations on either side
-        if (binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL) {
+        if (binOpNode->getLeft()->getNodeType() == ASTNode::STRING_LITERAL) {
             return BinaryenStringConcat(
                 module,
                 binaryenLeft,
@@ -118,7 +118,7 @@ namespace Theta {
     }
 
     void CodeGen::generateSource(shared_ptr<SourceNode> sourceNode, BinaryenModuleRef &module) {
-        if (sourceNode->getValue()->getNodeType() != ASTNode::Types::CAPSULE) {
+        if (sourceNode->getValue()->getNodeType() != ASTNode::CAPSULE) {
             BinaryenExpressionRef body = generate(sourceNode->getValue(), module);
 
             if (!body) {

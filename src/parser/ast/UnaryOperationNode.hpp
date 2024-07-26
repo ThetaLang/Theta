@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string operatorSymbol;
 
-            UnaryOperationNode(string op) : ASTNode(ASTNode::Types::UNARY_OPERATION),  operatorSymbol(op) {};
+            UnaryOperationNode(string op) : ASTNode(ASTNode::UNARY_OPERATION),  operatorSymbol(op) {};
 
             string getOperator() { return operatorSymbol; }
 

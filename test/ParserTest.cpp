@@ -22,15 +22,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "*");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
 
         shared_ptr<LiteralNode> leftNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft());
         shared_ptr<LiteralNode> rightNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getRight());
@@ -57,9 +57,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<LiteralNode> childNode = dynamic_pointer_cast<LiteralNode>(parsedAST->getValue());
 
@@ -74,9 +74,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::SYMBOL);
 
         shared_ptr<SymbolNode> symbolNode = dynamic_pointer_cast<SymbolNode>(parsedAST->getValue());
         REQUIRE(symbolNode->getSymbol() == ":atomic_nuclei");
@@ -92,9 +92,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::LIST);
 
         shared_ptr<ListNode> listNode = dynamic_pointer_cast<ListNode>(parsedAST->getValue());
 
@@ -105,7 +105,7 @@ TEST_CASE("Parser") {
         for (int i = 0; i < listNode->getElements().size(); i++) {
             shared_ptr<LiteralNode> literalNode = dynamic_pointer_cast<LiteralNode>(listNode->getElements()[i]);
 
-            REQUIRE(literalNode->getNodeType() == ASTNode::Types::STRING_LITERAL);
+            REQUIRE(literalNode->getNodeType() == ASTNode::STRING_LITERAL);
             REQUIRE(literalNode->getLiteralValue() == expectedValues[i]);
         }
     }
@@ -118,50 +118,50 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::LIST);
 
         shared_ptr<ListNode> listNode = dynamic_pointer_cast<ListNode>(parsedAST->getValue());
 
         REQUIRE(listNode->getElements().size() == 5);
-        REQUIRE(listNode->getElements()[0]->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(listNode->getElements()[0]->getNodeType() == ASTNode::LIST);
 
         shared_ptr<ListNode> listElement0 = dynamic_pointer_cast<ListNode>(listNode->getElements()[0]);
 
         REQUIRE(listElement0->getElements().size() == 3);
-        REQUIRE(listElement0->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(listElement0->getElements()[1]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(listElement0->getElements()[2]->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(listElement0->getElements()[0]->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(listElement0->getElements()[1]->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(listElement0->getElements()[2]->getNodeType() == ASTNode::LIST);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0->getElements()[0])->getLiteralValue() == "alex");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0->getElements()[1])->getLiteralValue() == "john");
 
         shared_ptr<ListNode> listElement0Element2 = dynamic_pointer_cast<ListNode>(listElement0->getElements()[2]);
         REQUIRE(listElement0Element2->getElements().size() == 2);
-        REQUIRE(listElement0Element2->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(listElement0Element2->getElements()[1]->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(listElement0Element2->getElements()[0]->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(listElement0Element2->getElements()[1]->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[0])->getLiteralValue() == "jeremy");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement0Element2->getElements()[1])->getLiteralValue() == "pablo");
 
-        REQUIRE(listNode->getElements()[1]->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(listNode->getElements()[1]->getNodeType() == ASTNode::LIST);
 
         shared_ptr<ListNode> listElement1 = dynamic_pointer_cast<ListNode>(listNode->getElements()[1]);
 
         REQUIRE(listElement1->getElements().size() == 1);
-        REQUIRE(listElement1->getElements()[0]->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(listElement1->getElements()[0]->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement1->getElements()[0])->getLiteralValue() == "clarinda");
 
-        REQUIRE(listNode->getElements()[2]->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(listNode->getElements()[2]->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> listElement2 = dynamic_pointer_cast<BinaryOperationNode>(listNode->getElements()[2]);
         REQUIRE(listElement2->getOperator() == "+");
-        REQUIRE(listElement2->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(listElement2->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(listElement2->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(listElement2->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement2->getLeft())->getLiteralValue() == "den");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listElement2->getRight())->getLiteralValue() == "is");
 
-        REQUIRE(listNode->getElements()[3]->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(listNode->getElements()[4]->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(listNode->getElements()[3]->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(listNode->getElements()[4]->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listNode->getElements()[3])->getLiteralValue() == "jessica");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(listNode->getElements()[4])->getLiteralValue() == "ellis");
     }
@@ -174,21 +174,21 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
 
         shared_ptr<TupleNode> tupleNode = dynamic_pointer_cast<TupleNode>(parsedAST->getValue());
         REQUIRE(tupleNode != nullptr);
-        REQUIRE(tupleNode->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tupleNode->getNodeType() == ASTNode::TUPLE);
 
         shared_ptr<SymbolNode> firstNode = dynamic_pointer_cast<SymbolNode>(tupleNode->getLeft());
         REQUIRE(firstNode != nullptr);
-        REQUIRE(firstNode->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(firstNode->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(firstNode->getSymbol() == ":ok");
 
         shared_ptr<LiteralNode> secondNode = dynamic_pointer_cast<LiteralNode>(tupleNode->getRight());
         REQUIRE(secondNode != nullptr);
-        REQUIRE(secondNode->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(secondNode->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(secondNode->getLiteralValue() == "Success");
     }
     // --------- DATA STRUCTURES -----------
@@ -202,15 +202,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "+");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "100");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "7");
     }
@@ -223,15 +223,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "-");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "42");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "11");
     }
@@ -244,15 +244,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "*");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "10");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "11");
     }
@@ -265,15 +265,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "/");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "100");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "5");
     }
@@ -286,15 +286,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "**");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "2");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "3");
     }
@@ -307,15 +307,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "%");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "9");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "2");
     }
@@ -328,18 +328,18 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "-");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::UNARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "100.4");
 
-        REQUIRE(binOpNode->getRight()->getValue()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getValue()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<UnaryOperationNode>(binOpNode->getRight())->getOperator() == "-");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight()->getValue())->getLiteralValue() == "24");
     }
@@ -352,41 +352,41 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "+");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "12");
 
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode2 = dynamic_pointer_cast<BinaryOperationNode>(binOpNode->getRight());
 
         REQUIRE(binOpNode2->getOperator() == "*");
-        REQUIRE(binOpNode2->getLeft()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
-        REQUIRE(binOpNode2->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode2->getLeft()->getNodeType() == ASTNode::BINARY_OPERATION);
+        REQUIRE(binOpNode2->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode2LeftBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getLeft());
         shared_ptr<BinaryOperationNode> binOpNode2RightBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getRight());
 
         REQUIRE(binOpNode2LeftBinOpNode->getOperator() == "-");
-        REQUIRE(binOpNode2LeftBinOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode2LeftBinOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode2LeftBinOpNode->getLeft())->getLiteralValue() == "23");
-        REQUIRE(binOpNode2LeftBinOpNode->getRight()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
+        REQUIRE(binOpNode2LeftBinOpNode->getRight()->getNodeType() == ASTNode::UNARY_OPERATION);
 
         shared_ptr<UnaryOperationNode> unaryOpNode = dynamic_pointer_cast<UnaryOperationNode>(binOpNode2LeftBinOpNode->getRight());
 
         REQUIRE(unaryOpNode->getOperator() == "-");
-        REQUIRE(unaryOpNode->getValue()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(unaryOpNode->getValue()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(unaryOpNode->getValue())->getLiteralValue() == "1");
 
         REQUIRE(binOpNode2RightBinOpNode->getOperator() == "**");
-        REQUIRE(binOpNode2RightBinOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
-        REQUIRE(binOpNode2RightBinOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode2RightBinOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
+        REQUIRE(binOpNode2RightBinOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode2RightBinOpNode->getLeft())->getLiteralValue() == "7");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode2RightBinOpNode->getRight())->getLiteralValue() == "2.4");
     }
@@ -401,15 +401,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "&&");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "true");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "false");
     }
@@ -422,15 +422,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "&&");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::UNARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "true");
         REQUIRE(dynamic_pointer_cast<UnaryOperationNode>(binOpNode->getRight())->getOperator() == "!");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight()->getValue())->getLiteralValue() == "false");
@@ -444,15 +444,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "||");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::UNARY_OPERATION);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<UnaryOperationNode>(binOpNode->getLeft())->getOperator() == "!");
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft()->getValue())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight())->getIdentifier() == "y");
@@ -466,15 +466,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "==");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight())->getIdentifier() == "y");
     }
@@ -487,15 +487,15 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
 
         REQUIRE(binOpNode->getOperator() == "!=");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "true");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "false");
     }
@@ -510,31 +510,31 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> firstPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
         REQUIRE(firstPipelineOp->getOperator() == "=>");
-        REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> rightConcatOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getRight());
         REQUIRE(rightConcatOp->getOperator() == "+");
         REQUIRE(rightConcatOp->getLeft() == nullptr);
-        REQUIRE(rightConcatOp->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(rightConcatOp->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(rightConcatOp->getRight())->getLiteralValue() == " how are you");
 
         shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
         REQUIRE(secondPipelineOp->getOperator() == "=>");
-        REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
 
         shared_ptr<BinaryOperationNode> leftConcatOp = dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getRight());
         REQUIRE(leftConcatOp->getOperator() == "+");
         REQUIRE(leftConcatOp->getLeft() == nullptr);
-        REQUIRE(leftConcatOp->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(leftConcatOp->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(leftConcatOp->getRight())->getLiteralValue() == " mike");
 
-        REQUIRE(secondPipelineOp->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(secondPipelineOp->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(secondPipelineOp->getLeft())->getLiteralValue() == "hello");
     }
     // --------- PIPELINE OPERATOR ----------
@@ -548,13 +548,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "message");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNode->getRight())->getLiteralValue() == "Hello, World!");
@@ -568,13 +568,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "isOpen");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
         REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNode->getRight())->getLiteralValue() == "true");
@@ -588,24 +588,24 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "isOpen");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
 
         REQUIRE(binOpNode->getOperator() == "&&");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::UNARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<UnaryOperationNode>(binOpNode->getLeft())->getOperator() == "!");
-        REQUIRE(binOpNode->getLeft()->getValue()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getValue()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft()->getValue())->getLiteralValue() == "true");
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "false");
     }
 
@@ -617,22 +617,22 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "total");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Number");
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
 
         REQUIRE(binOpNode->getOperator() == "+");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "5");
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight())->getLiteralValue() == "3");
     }
 
@@ -644,24 +644,24 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "total");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Number");
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
 
         REQUIRE(binOpNode->getOperator() == "+");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft())->getLiteralValue() == "5");
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::UNARY_OPERATION);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::UNARY_OPERATION);
         REQUIRE(dynamic_pointer_cast<UnaryOperationNode>(binOpNode->getRight())->getOperator() == "-");
-        REQUIRE(binOpNode->getRight()->getValue()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode->getRight()->getValue()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode->getRight()->getValue())->getLiteralValue() == "3");
     }
 
@@ -673,13 +673,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::LIST);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
 
         shared_ptr<ListNode> listDefNode = dynamic_pointer_cast<ListNode>(assignmentNode->getRight());
@@ -688,9 +688,9 @@ TEST_CASE("Parser") {
         // Checking first element: x == y
         shared_ptr<BinaryOperationNode> binOpNode1 = dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[0]);
         REQUIRE(binOpNode1->getOperator() == "==");
-        REQUIRE(binOpNode1->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(binOpNode1->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode1->getLeft())->getIdentifier() == "x");
-        REQUIRE(binOpNode1->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(binOpNode1->getRight()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(binOpNode1->getRight())->getIdentifier() == "y");
 
         // Checking second element: y + 5 > 9
@@ -698,25 +698,25 @@ TEST_CASE("Parser") {
         REQUIRE(binOpNode2->getOperator() == ">");
         shared_ptr<BinaryOperationNode> innerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode2->getLeft());
         REQUIRE(innerBinOpNode->getOperator() == "+");
-        REQUIRE(innerBinOpNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(innerBinOpNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(innerBinOpNode->getLeft())->getIdentifier() == "y");
-        REQUIRE(innerBinOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(innerBinOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(innerBinOpNode->getRight())->getLiteralValue() == "5");
-        REQUIRE(binOpNode2->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(binOpNode2->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode2->getRight())->getLiteralValue() == "9");
 
         // Checking third element: 'meow' != 'cow'
         shared_ptr<BinaryOperationNode> binOpNode3 = dynamic_pointer_cast<BinaryOperationNode>(listDefNode->getElements()[2]);
         REQUIRE(binOpNode3->getOperator() == "!=");
-        REQUIRE(binOpNode3->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(binOpNode3->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getLeft())->getLiteralValue() == "meow");
-        REQUIRE(binOpNode3->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(binOpNode3->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(binOpNode3->getRight())->getLiteralValue() == "cow");
 
         // Checking fourth element: !gross
         shared_ptr<UnaryOperationNode> unaryOpNode = dynamic_pointer_cast<UnaryOperationNode>(listDefNode->getElements()[3]);
         REQUIRE(unaryOpNode->getOperator() == "!");
-        REQUIRE(unaryOpNode->getValue()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(unaryOpNode->getValue()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(unaryOpNode->getValue())->getIdentifier() == "gross");
     }
 
@@ -728,13 +728,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::DICTIONARY);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::DICTIONARY);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
 
         shared_ptr<TypeDeclarationNode> typeDeclNode = dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue());
@@ -794,31 +794,31 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
 
         shared_ptr<BinaryOperationNode> firstPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
         REQUIRE(firstPipelineOp->getOperator() == "=>");
-        REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(firstPipelineOp->getRight())->getIdentifier() == "print");
 
         shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
         REQUIRE(secondPipelineOp->getOperator() == "=>");
-        REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(secondPipelineOp->getRight())->getIdentifier() == "capitalize");
 
         shared_ptr<BinaryOperationNode> thirdPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getLeft());
         REQUIRE(thirdPipelineOp->getOperator() == "=>");
-        REQUIRE(thirdPipelineOp->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(thirdPipelineOp->getRight()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(thirdPipelineOp->getRight())->getIdentifier() == "reverse");
 
-        REQUIRE(thirdPipelineOp->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(thirdPipelineOp->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(thirdPipelineOp->getLeft())->getLiteralValue() == "hello");
     }
 
@@ -832,9 +832,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
         REQUIRE(assignmentNode != nullptr);
@@ -842,12 +842,12 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> leftAssign = assignmentNode->getLeft();
         shared_ptr<ASTNode> rightAssign = assignmentNode->getRight();
 
-        REQUIRE(leftAssign->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(leftAssign->getNodeType() == ASTNode::IDENTIFIER);
         shared_ptr<IdentifierNode> leftAssignIdentifier = dynamic_pointer_cast<IdentifierNode>(leftAssign);
         REQUIRE(leftAssignIdentifier->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(leftAssignIdentifier->getValue())->getType() == "String");
 
-        REQUIRE(rightAssign->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        REQUIRE(rightAssign->getNodeType() == ASTNode::CONTROL_FLOW);
         shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(rightAssign);
 
         REQUIRE(controlFlowNode != nullptr);
@@ -859,7 +859,7 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition1 = conditionExpressionPairs[0].first;
         shared_ptr<ASTNode> expression1 = conditionExpressionPairs[0].second;
 
-        REQUIRE(condition1->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(condition1->getNodeType() == ASTNode::BINARY_OPERATION);
         shared_ptr<BinaryOperationNode> binaryOperationNode1 = dynamic_pointer_cast<BinaryOperationNode>(condition1);
 
         REQUIRE(binaryOperationNode1->getOperator() == "==");
@@ -867,8 +867,8 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> left1 = binaryOperationNode1->getLeft();
         shared_ptr<ASTNode> right1 = binaryOperationNode1->getRight();
 
-        REQUIRE(left1->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(right1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(left1->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(right1->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftIdentifier1 = dynamic_pointer_cast<IdentifierNode>(left1);
         shared_ptr<LiteralNode> rightString1 = dynamic_pointer_cast<LiteralNode>(right1);
@@ -876,7 +876,7 @@ TEST_CASE("Parser") {
         REQUIRE(leftIdentifier1->getIdentifier() == "name");
         REQUIRE(rightString1->getLiteralValue() == "Bob");
 
-        REQUIRE(expression1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(expression1->getNodeType() == ASTNode::STRING_LITERAL);
         shared_ptr<LiteralNode> expressionString1 = dynamic_pointer_cast<LiteralNode>(expression1);
         REQUIRE(expressionString1->getLiteralValue() == "hello");
 
@@ -886,7 +886,7 @@ TEST_CASE("Parser") {
 
         REQUIRE(condition2 == nullptr);
 
-        REQUIRE(expression2->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(expression2->getNodeType() == ASTNode::STRING_LITERAL);
         shared_ptr<LiteralNode> expressionString2 = dynamic_pointer_cast<LiteralNode>(expression2);
         REQUIRE(expressionString2->getLiteralValue() == "goodbye");
     }
@@ -901,18 +901,18 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
         REQUIRE(assignmentNode != nullptr);
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
 
         shared_ptr<TypeDeclarationNode> typeNode = dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getValue());
         REQUIRE(typeNode != nullptr);
-        REQUIRE(typeNode->getNodeType() == ASTNode::Types::TYPE_DECLARATION);
+        REQUIRE(typeNode->getNodeType() == ASTNode::TYPE_DECLARATION);
         REQUIRE(typeNode->getType() == "Tuple");
 
         shared_ptr<TypeDeclarationNode> leftTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getLeft());
@@ -925,16 +925,16 @@ TEST_CASE("Parser") {
 
         shared_ptr<TupleNode> tupleNode = dynamic_pointer_cast<TupleNode>(assignmentNode->getRight());
         REQUIRE(tupleNode != nullptr);
-        REQUIRE(tupleNode->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tupleNode->getNodeType() == ASTNode::TUPLE);
 
         shared_ptr<SymbolNode> firstNode = dynamic_pointer_cast<SymbolNode>(tupleNode->getLeft());
         REQUIRE(firstNode != nullptr);
-        REQUIRE(firstNode->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(firstNode->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(firstNode->getSymbol() == ":ok");
 
         shared_ptr<LiteralNode> secondNode = dynamic_pointer_cast<LiteralNode>(tupleNode->getRight());
         REQUIRE(secondNode != nullptr);
-        REQUIRE(secondNode->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(secondNode->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(secondNode->getLiteralValue() == "Success");
     }
     // --------- ASSIGNMENT ----------
@@ -952,9 +952,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CONTROL_FLOW);
 
         shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
 
@@ -966,18 +966,18 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
         shared_ptr<ASTNode> block = conditionExpressionPairs[0].second;
 
-        REQUIRE(condition->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(condition->getNodeType() == ASTNode::IDENTIFIER);
         shared_ptr<IdentifierNode> conditionIdentifier = dynamic_pointer_cast<IdentifierNode>(condition);
         REQUIRE(conditionIdentifier->getIdentifier() == "isOpen");
 
-        REQUIRE(block->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(block->getNodeType() == ASTNode::BLOCK);
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(block);
 
         vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getElements();
         REQUIRE(blockExpressions.size() == 1);
 
         shared_ptr<ASTNode> binaryOperation = blockExpressions[0];
-        REQUIRE(binaryOperation->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binaryOperation->getNodeType() == ASTNode::BINARY_OPERATION);
         shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(binaryOperation);
 
         REQUIRE(binaryOperationNode->getOperator() == "==");
@@ -985,8 +985,8 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> left = binaryOperationNode->getLeft();
         shared_ptr<ASTNode> right = binaryOperationNode->getRight();
 
-        REQUIRE(left->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(right->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(left->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(right->getNodeType() == ASTNode::IDENTIFIER);
 
         shared_ptr<IdentifierNode> leftIdentifier = dynamic_pointer_cast<IdentifierNode>(left);
         shared_ptr<IdentifierNode> rightIdentifier = dynamic_pointer_cast<IdentifierNode>(right);
@@ -1007,9 +1007,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CONTROL_FLOW);
 
         shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
 
@@ -1021,7 +1021,7 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
         shared_ptr<ASTNode> block = conditionExpressionPairs[0].second;
 
-        REQUIRE(condition->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(condition->getNodeType() == ASTNode::BINARY_OPERATION);
         shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(condition);
 
         REQUIRE(binaryOperationNode->getOperator() == "==");
@@ -1029,8 +1029,8 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> left = binaryOperationNode->getLeft();
         shared_ptr<ASTNode> right = binaryOperationNode->getRight();
 
-        REQUIRE(left->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(right->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(left->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(right->getNodeType() == ASTNode::NUMBER_LITERAL);
 
         shared_ptr<IdentifierNode> leftIdentifier = dynamic_pointer_cast<IdentifierNode>(left);
         shared_ptr<LiteralNode> rightNumber = dynamic_pointer_cast<LiteralNode>(right);
@@ -1038,14 +1038,14 @@ TEST_CASE("Parser") {
         REQUIRE(leftIdentifier->getIdentifier() == "x");
         REQUIRE(rightNumber->getLiteralValue() == "10");
 
-        REQUIRE(block->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(block->getNodeType() == ASTNode::BLOCK);
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(block);
 
         vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getElements();
         REQUIRE(blockExpressions.size() == 1);
 
         shared_ptr<ASTNode> booleanLiteral = blockExpressions[0];
-        REQUIRE(booleanLiteral->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(booleanLiteral->getNodeType() == ASTNode::BOOLEAN_LITERAL);
 
         shared_ptr<LiteralNode> booleanLiteralNode = dynamic_pointer_cast<LiteralNode>(booleanLiteral);
         REQUIRE(booleanLiteralNode->getLiteralValue() == "true");
@@ -1061,9 +1061,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CONTROL_FLOW);
 
         shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
 
@@ -1075,7 +1075,7 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
         shared_ptr<ASTNode> expression = conditionExpressionPairs[0].second;
 
-        REQUIRE(condition->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(condition->getNodeType() == ASTNode::BINARY_OPERATION);
         shared_ptr<BinaryOperationNode> binaryOperationNode = dynamic_pointer_cast<BinaryOperationNode>(condition);
 
         REQUIRE(binaryOperationNode->getOperator() == "==");
@@ -1083,8 +1083,8 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> left = binaryOperationNode->getLeft();
         shared_ptr<ASTNode> right = binaryOperationNode->getRight();
 
-        REQUIRE(left->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(right->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(left->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(right->getNodeType() == ASTNode::IDENTIFIER);
 
         shared_ptr<LiteralNode> leftString = dynamic_pointer_cast<LiteralNode>(left);
         shared_ptr<IdentifierNode> rightIdentifier = dynamic_pointer_cast<IdentifierNode>(right);
@@ -1092,7 +1092,7 @@ TEST_CASE("Parser") {
         REQUIRE(leftString->getLiteralValue() == "hello");
         REQUIRE(rightIdentifier->getIdentifier() == "world");
 
-        REQUIRE(expression->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(expression->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         shared_ptr<LiteralNode> booleanLiteralNode = dynamic_pointer_cast<LiteralNode>(expression);
         REQUIRE(booleanLiteralNode->getLiteralValue() == "false");
     }
@@ -1107,9 +1107,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CONTROL_FLOW);
 
         shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
 
@@ -1121,11 +1121,11 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition = conditionExpressionPairs[0].first;
         shared_ptr<ASTNode> expression = conditionExpressionPairs[0].second;
 
-        REQUIRE(condition->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(condition->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         shared_ptr<LiteralNode> conditionBoolean = dynamic_pointer_cast<LiteralNode>(condition);
         REQUIRE(conditionBoolean->getLiteralValue() == "true");
 
-        REQUIRE(expression->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(expression->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         shared_ptr<LiteralNode> expressionBoolean = dynamic_pointer_cast<LiteralNode>(expression);
         REQUIRE(expressionBoolean->getLiteralValue() == "false");
     }
@@ -1146,9 +1146,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CONTROL_FLOW);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CONTROL_FLOW);
 
         shared_ptr<ControlFlowNode> controlFlowNode = dynamic_pointer_cast<ControlFlowNode>(parsedAST->getValue());
 
@@ -1161,7 +1161,7 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition1 = conditionExpressionPairs[0].first;
         shared_ptr<ASTNode> block1 = conditionExpressionPairs[0].second;
 
-        REQUIRE(condition1->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(condition1->getNodeType() == ASTNode::BINARY_OPERATION);
         shared_ptr<BinaryOperationNode> binaryOperationNode1 = dynamic_pointer_cast<BinaryOperationNode>(condition1);
 
         REQUIRE(binaryOperationNode1->getOperator() == "==");
@@ -1169,8 +1169,8 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> left1 = binaryOperationNode1->getLeft();
         shared_ptr<ASTNode> right1 = binaryOperationNode1->getRight();
 
-        REQUIRE(left1->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(right1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(left1->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(right1->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftIdentifier1 = dynamic_pointer_cast<IdentifierNode>(left1);
         shared_ptr<LiteralNode> rightString1 = dynamic_pointer_cast<LiteralNode>(right1);
@@ -1178,21 +1178,21 @@ TEST_CASE("Parser") {
         REQUIRE(leftIdentifier1->getIdentifier() == "name");
         REQUIRE(rightString1->getLiteralValue() == "Mike");
 
-        REQUIRE(block1->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(block1->getNodeType() == ASTNode::BLOCK);
         shared_ptr<BlockNode> blockNode1 = dynamic_pointer_cast<BlockNode>(block1);
 
         vector<shared_ptr<ASTNode>> blockExpressions1 = blockNode1->getElements();
         REQUIRE(blockExpressions1.size() == 1);
 
         shared_ptr<ASTNode> assignment1 = blockExpressions1[0];
-        REQUIRE(assignment1->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(assignment1->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode1 = dynamic_pointer_cast<AssignmentNode>(assignment1);
         shared_ptr<ASTNode> leftAssign1 = assignmentNode1->getLeft();
         shared_ptr<ASTNode> rightAssign1 = assignmentNode1->getRight();
 
-        REQUIRE(leftAssign1->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(rightAssign1->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(leftAssign1->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(rightAssign1->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftAssignIdentifier1 = dynamic_pointer_cast<IdentifierNode>(leftAssign1);
         shared_ptr<LiteralNode> rightAssignString1 = dynamic_pointer_cast<LiteralNode>(rightAssign1);
@@ -1205,7 +1205,7 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> condition2 = conditionExpressionPairs[1].first;
         shared_ptr<ASTNode> block2 = conditionExpressionPairs[1].second;
 
-        REQUIRE(condition2->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(condition2->getNodeType() == ASTNode::BINARY_OPERATION);
         shared_ptr<BinaryOperationNode> binaryOperationNode2 = dynamic_pointer_cast<BinaryOperationNode>(condition2);
 
         REQUIRE(binaryOperationNode2->getOperator() == "==");
@@ -1213,8 +1213,8 @@ TEST_CASE("Parser") {
         shared_ptr<ASTNode> left2 = binaryOperationNode2->getLeft();
         shared_ptr<ASTNode> right2 = binaryOperationNode2->getRight();
 
-        REQUIRE(left2->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(right2->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(left2->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(right2->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftIdentifier2 = dynamic_pointer_cast<IdentifierNode>(left2);
         shared_ptr<LiteralNode> rightString2 = dynamic_pointer_cast<LiteralNode>(right2);
@@ -1222,21 +1222,21 @@ TEST_CASE("Parser") {
         REQUIRE(leftIdentifier2->getIdentifier() == "name");
         REQUIRE(rightString2->getLiteralValue() == "Michael");
 
-        REQUIRE(block2->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(block2->getNodeType() == ASTNode::BLOCK);
         shared_ptr<BlockNode> blockNode2 = dynamic_pointer_cast<BlockNode>(block2);
 
         vector<shared_ptr<ASTNode>> blockExpressions2 = blockNode2->getElements();
         REQUIRE(blockExpressions2.size() == 1);
 
         shared_ptr<ASTNode> assignment2 = blockExpressions2[0];
-        REQUIRE(assignment2->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(assignment2->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode2 = dynamic_pointer_cast<AssignmentNode>(assignment2);
         shared_ptr<ASTNode> leftAssign2 = assignmentNode2->getLeft();
         shared_ptr<ASTNode> rightAssign2 = assignmentNode2->getRight();
 
-        REQUIRE(leftAssign2->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(rightAssign2->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(leftAssign2->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(rightAssign2->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftAssignIdentifier2 = dynamic_pointer_cast<IdentifierNode>(leftAssign2);
         shared_ptr<LiteralNode> rightAssignString2 = dynamic_pointer_cast<LiteralNode>(rightAssign2);
@@ -1251,21 +1251,21 @@ TEST_CASE("Parser") {
 
         REQUIRE(condition3 == nullptr);
 
-        REQUIRE(block3->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(block3->getNodeType() == ASTNode::BLOCK);
         shared_ptr<BlockNode> blockNode3 = dynamic_pointer_cast<BlockNode>(block3);
 
         vector<shared_ptr<ASTNode>> blockExpressions3 = blockNode3->getElements();
         REQUIRE(blockExpressions3.size() == 1);
 
         shared_ptr<ASTNode> assignment3 = blockExpressions3[0];
-        REQUIRE(assignment3->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(assignment3->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode3 = dynamic_pointer_cast<AssignmentNode>(assignment3);
         shared_ptr<ASTNode> leftAssign3 = assignmentNode3->getLeft();
         shared_ptr<ASTNode> rightAssign3 = assignmentNode3->getRight();
 
-        REQUIRE(leftAssign3->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(rightAssign3->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(leftAssign3->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(rightAssign3->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftAssignIdentifier3 = dynamic_pointer_cast<IdentifierNode>(leftAssign3);
         shared_ptr<LiteralNode> rightAssignString3 = dynamic_pointer_cast<LiteralNode>(rightAssign3);
@@ -1287,13 +1287,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "greet");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
 
@@ -1301,18 +1301,18 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
         shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
-        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "name");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
         REQUIRE(binOpNode->getOperator() == "+");
-        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::Types::STRING_LITERAL);
-        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(binOpNode->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(binOpNode->getRight()->getNodeType() == ASTNode::IDENTIFIER);
 
         shared_ptr<LiteralNode> leftNode = dynamic_pointer_cast<LiteralNode>(binOpNode->getLeft());
         REQUIRE(leftNode->getLiteralValue() == "hello");
@@ -1331,13 +1331,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1346,12 +1346,12 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
         shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
-        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
@@ -1365,13 +1365,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1380,12 +1380,12 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 1);
 
         shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
-        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
@@ -1399,13 +1399,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1414,17 +1414,17 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 2);
 
         shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[0]);
-        REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param1->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param1->getIdentifier() == "meow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
 
         shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(funcDeclNode->getParameters()->getElements()[1]);
-        REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param2->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param2->getIdentifier() == "cow");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
@@ -1438,13 +1438,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1453,7 +1453,7 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
@@ -1467,13 +1467,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1482,7 +1482,7 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 0);
     }
 
@@ -1496,13 +1496,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1510,17 +1510,17 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
-        REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "==");
 
         shared_ptr<BinaryOperationNode> leftBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(binOpNode->getLeft());
         REQUIRE(leftBinOpNode->getOperator() == "-");
-        REQUIRE(leftBinOpNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(leftBinOpNode->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(leftBinOpNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(leftBinOpNode->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
 
         shared_ptr<IdentifierNode> identifierNode = dynamic_pointer_cast<IdentifierNode>(leftBinOpNode->getLeft());
         REQUIRE(identifierNode->getIdentifier() == "y");
@@ -1542,13 +1542,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1566,11 +1566,11 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
-        REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "==");
 
         shared_ptr<IdentifierNode> leftIdentifierNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft());
@@ -1590,13 +1590,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ASSIGNMENT);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(parsedAST->getValue());
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "Boolean");
 
@@ -1608,11 +1608,11 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(outerParam->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> outerBlockNode = dynamic_pointer_cast<BlockNode>(outerFuncDeclNode->getDefinition());
-        REQUIRE(outerBlockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(outerBlockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(outerBlockNode->getElements().size() == 1);
 
         shared_ptr<FunctionDeclarationNode> innerFuncDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(outerBlockNode->getElements()[0]);
-        REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(innerFuncDeclNode->getNodeType() == ASTNode::FUNCTION_DECLARATION);
 
         REQUIRE(innerFuncDeclNode->getParameters()->getElements().size() == 1);
 
@@ -1621,7 +1621,7 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(innerParam->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> innerBlockNode = dynamic_pointer_cast<BlockNode>(innerFuncDeclNode->getDefinition());
-        REQUIRE(innerBlockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(innerBlockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(innerBlockNode->getElements().size() == 0);
     }
 
@@ -1635,9 +1635,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
@@ -1660,9 +1660,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
@@ -1688,9 +1688,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
@@ -1719,9 +1719,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
@@ -1734,7 +1734,7 @@ TEST_CASE("Parser") {
         REQUIRE(arguments->getElements().size() == 1);
 
         shared_ptr<ListNode> listArgument = dynamic_pointer_cast<ListNode>(arguments->getElements()[0]);
-        REQUIRE(listArgument->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(listArgument->getNodeType() == ASTNode::LIST);
 
         vector<shared_ptr<ASTNode>> listElements = listArgument->getElements();
         REQUIRE(listElements.size() == 3);
@@ -1759,9 +1759,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
@@ -1775,7 +1775,7 @@ TEST_CASE("Parser") {
 
         // First list argument
         shared_ptr<ListNode> listArgument1 = dynamic_pointer_cast<ListNode>(arguments->getElements()[0]);
-        REQUIRE(listArgument1->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(listArgument1->getNodeType() == ASTNode::LIST);
 
         vector<shared_ptr<ASTNode>> listElements1 = listArgument1->getElements();
         REQUIRE(listElements1.size() == 3);
@@ -1791,7 +1791,7 @@ TEST_CASE("Parser") {
 
         // Second list argument
         shared_ptr<ListNode> listArgument2 = dynamic_pointer_cast<ListNode>(arguments->getElements()[1]);
-        REQUIRE(listArgument2->getNodeType() == ASTNode::Types::LIST);
+        REQUIRE(listArgument2->getNodeType() == ASTNode::LIST);
 
         vector<shared_ptr<ASTNode>> listElements2 = listArgument2->getElements();
         REQUIRE(listElements2.size() == 2);
@@ -1813,9 +1813,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
 
@@ -1829,20 +1829,20 @@ TEST_CASE("Parser") {
 
         // Dictionary argument
         shared_ptr<DictionaryNode> dictArgument = dynamic_pointer_cast<DictionaryNode>(arguments->getElements()[0]);
-        REQUIRE(dictArgument->getNodeType() == ASTNode::Types::DICTIONARY);
+        REQUIRE(dictArgument->getNodeType() == ASTNode::DICTIONARY);
 
         vector<shared_ptr<ASTNode>> dictElements = dictArgument->getElements();
         REQUIRE(dictElements.size() == 1);
 
         shared_ptr<TupleNode> tupleElement = dynamic_pointer_cast<TupleNode>(dictElements[0]);
-        REQUIRE(tupleElement->getNodeType() == ASTNode::Types::TUPLE);
+        REQUIRE(tupleElement->getNodeType() == ASTNode::TUPLE);
 
         shared_ptr<SymbolNode> firstElement = dynamic_pointer_cast<SymbolNode>(tupleElement->getLeft());
-        REQUIRE(firstElement->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(firstElement->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(firstElement->getSymbol() == ":name");
 
         shared_ptr<LiteralNode> secondElement = dynamic_pointer_cast<LiteralNode>(tupleElement->getRight());
-        REQUIRE(secondElement->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(secondElement->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(secondElement->getLiteralValue() == "Alex");
     }
 
@@ -1856,9 +1856,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
         REQUIRE(funcInvocationNode != nullptr);
@@ -1871,35 +1871,35 @@ TEST_CASE("Parser") {
 
         // First argument (name)
         shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getElements()[0]);
-        REQUIRE(firstArg->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(firstArg->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(firstArg->getIdentifier() == "name");
 
         // Second argument (function declaration)
         shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
-        REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(funcDeclArg->getNodeType() == ASTNode::FUNCTION_DECLARATION);
 
         shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
         REQUIRE(parameters->getElements().size() == 1);
 
         shared_ptr<IdentifierNode> param = dynamic_pointer_cast<IdentifierNode>(parameters->getElements()[0]);
-        REQUIRE(param->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param->getIdentifier() == "greeting");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclArg->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<BinaryOperationNode> binOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
-        REQUIRE(binOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(binOpNode->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(binOpNode->getOperator() == "+");
 
         shared_ptr<IdentifierNode> leftNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getLeft());
-        REQUIRE(leftNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(leftNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(leftNode->getIdentifier() == "greeting");
 
         shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(binOpNode->getRight());
-        REQUIRE(rightNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(rightNode->getIdentifier() == "name");
     }
 
@@ -1913,9 +1913,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::FUNCTION_INVOCATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::FUNCTION_INVOCATION);
 
         shared_ptr<FunctionInvocationNode> funcInvocationNode = dynamic_pointer_cast<FunctionInvocationNode>(parsedAST->getValue());
         REQUIRE(funcInvocationNode != nullptr);
@@ -1928,48 +1928,48 @@ TEST_CASE("Parser") {
 
         // First argument (name)
         shared_ptr<IdentifierNode> firstArg = dynamic_pointer_cast<IdentifierNode>(arguments->getElements()[0]);
-        REQUIRE(firstArg->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(firstArg->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(firstArg->getIdentifier() == "name");
 
         // Second argument (function declaration)
         shared_ptr<FunctionDeclarationNode> funcDeclArg = dynamic_pointer_cast<FunctionDeclarationNode>(arguments->getElements()[1]);
-        REQUIRE(funcDeclArg->getNodeType() == ASTNode::Types::FUNCTION_DECLARATION);
+        REQUIRE(funcDeclArg->getNodeType() == ASTNode::FUNCTION_DECLARATION);
 
         shared_ptr<ASTNodeList> parameters = funcDeclArg->getParameters();
         REQUIRE(parameters->getElements().size() == 2);
 
         shared_ptr<IdentifierNode> param1 = dynamic_pointer_cast<IdentifierNode>(parameters->getElements()[0]);
-        REQUIRE(param1->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param1->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param1->getIdentifier() == "greeting");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param1->getValue())->getType() == "String");
 
         shared_ptr<IdentifierNode> param2 = dynamic_pointer_cast<IdentifierNode>(parameters->getElements()[1]);
-        REQUIRE(param2->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(param2->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(param2->getIdentifier() == "punctuation");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(param2->getValue())->getType() == "String");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(funcDeclArg->getDefinition());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<BinaryOperationNode> outerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(blockNode->getElements()[0]);
-        REQUIRE(outerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(outerBinOpNode->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(outerBinOpNode->getOperator() == "+");
 
         shared_ptr<BinaryOperationNode> innerBinOpNode = dynamic_pointer_cast<BinaryOperationNode>(outerBinOpNode->getLeft());
-        REQUIRE(innerBinOpNode->getNodeType() == ASTNode::Types::BINARY_OPERATION);
+        REQUIRE(innerBinOpNode->getNodeType() == ASTNode::BINARY_OPERATION);
         REQUIRE(innerBinOpNode->getOperator() == "+");
 
         shared_ptr<IdentifierNode> leftNode = dynamic_pointer_cast<IdentifierNode>(innerBinOpNode->getLeft());
-        REQUIRE(leftNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(leftNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(leftNode->getIdentifier() == "greeting");
 
         shared_ptr<IdentifierNode> middleNode = dynamic_pointer_cast<IdentifierNode>(innerBinOpNode->getRight());
-        REQUIRE(middleNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(middleNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(middleNode->getIdentifier() == "name");
 
         shared_ptr<IdentifierNode> rightNode = dynamic_pointer_cast<IdentifierNode>(outerBinOpNode->getRight());
-        REQUIRE(rightNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(rightNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(rightNode->getIdentifier() == "punctuation");
     }
     // --------- FUNCTIONS ------------
@@ -1987,39 +1987,39 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CAPSULE);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CAPSULE);
 
         shared_ptr<CapsuleNode> capsuleNode = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());
         REQUIRE(capsuleNode->getName() == "TextCapsule");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(capsuleNode->getValue());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         vector<shared_ptr<ASTNode>> blockExpressions = blockNode->getElements();
         REQUIRE(blockExpressions.size() == 2);
 
         // Check the first assignment within the block
         shared_ptr<AssignmentNode> assignmentNodeX = dynamic_pointer_cast<AssignmentNode>(blockExpressions[0]);
-        REQUIRE(assignmentNodeX->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNodeX->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNodeX->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNodeX->getLeft()->getValue())->getType() == "Dict");
-        REQUIRE(assignmentNodeX->getRight()->getNodeType() == ASTNode::Types::DICTIONARY);
+        REQUIRE(assignmentNodeX->getRight()->getNodeType() == ASTNode::DICTIONARY);
 
         shared_ptr<DictionaryNode> dictNode = dynamic_pointer_cast<DictionaryNode>(assignmentNodeX->getRight());
         REQUIRE(dictNode->getElements().size() == 1);
         shared_ptr<TupleNode> tupleNode = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[0]);
-        REQUIRE(tupleNode->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(tupleNode->getLeft()->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(dynamic_pointer_cast<SymbolNode>(tupleNode->getLeft())->getSymbol() == ":bob");
-        REQUIRE(tupleNode->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(tupleNode->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(tupleNode->getRight())->getLiteralValue() == "saget");
 
         // Check the second assignment within the block
         shared_ptr<AssignmentNode> assignmentNodeY = dynamic_pointer_cast<AssignmentNode>(blockExpressions[1]);
-        REQUIRE(assignmentNodeY->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNodeY->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNodeY->getLeft())->getIdentifier() == "y");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNodeY->getLeft()->getValue())->getType() == "Number");
-        REQUIRE(assignmentNodeY->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(assignmentNodeY->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
         REQUIRE(dynamic_pointer_cast<LiteralNode>(assignmentNodeY->getRight())->getLiteralValue() == "432.11");
     }
 
@@ -2038,29 +2038,29 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 2);
 
         // Check first link
         shared_ptr<LinkNode> linkNode1 = dynamic_pointer_cast<LinkNode>(parsedAST->getLinks()[0]);
-        REQUIRE(linkNode1->getNodeType() == ASTNode::Types::LINK);
+        REQUIRE(linkNode1->getNodeType() == ASTNode::LINK);
         REQUIRE(linkNode1->capsule == "Theta.StringUtil");
 
         shared_ptr<SourceNode> linkedSource1 = dynamic_pointer_cast<SourceNode>(linkNode1->getValue());
-        REQUIRE(linkedSource1->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(linkedSource1->getNodeType() == ASTNode::SOURCE);
         REQUIRE(linkedSource1->getLinks().size() == 0);
 
         shared_ptr<CapsuleNode> linkedCapsule1 = dynamic_pointer_cast<CapsuleNode>(linkedSource1->getValue());
-        REQUIRE(linkedCapsule1->getNodeType() == ASTNode::Types::CAPSULE);
+        REQUIRE(linkedCapsule1->getNodeType() == ASTNode::CAPSULE);
         REQUIRE(linkedCapsule1->name == "Theta.StringUtil");
 
         shared_ptr<BlockNode> linkedBlock1 = dynamic_pointer_cast<BlockNode>(linkedCapsule1->getValue());
-        REQUIRE(linkedBlock1->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(linkedBlock1->getNodeType() == ASTNode::BLOCK);
         REQUIRE(linkedBlock1->getElements().size() == 1);
 
         shared_ptr<AssignmentNode> assignmentNode1 = dynamic_pointer_cast<AssignmentNode>(linkedBlock1->getElements()[0]);
-        REQUIRE(assignmentNode1->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(assignmentNode1->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(assignmentNode1->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(assignmentNode1->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> leftNode1 = dynamic_pointer_cast<IdentifierNode>(assignmentNode1->getLeft());
         REQUIRE(leftNode1->getIdentifier() == "name");
@@ -2071,32 +2071,32 @@ TEST_CASE("Parser") {
 
         // Check second link
         shared_ptr<LinkNode> linkNode2 = dynamic_pointer_cast<LinkNode>(parsedAST->getLinks()[1]);
-        REQUIRE(linkNode2->getNodeType() == ASTNode::Types::LINK);
+        REQUIRE(linkNode2->getNodeType() == ASTNode::LINK);
         REQUIRE(linkNode2->capsule == "Theta.StringTraversal");
 
         shared_ptr<SourceNode> linkedSource2 = dynamic_pointer_cast<SourceNode>(linkNode2->getValue());
-        REQUIRE(linkedSource2->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(linkedSource2->getNodeType() == ASTNode::SOURCE);
         REQUIRE(linkedSource2->getLinks().size() == 1);
 
         shared_ptr<LinkNode> nestedLinkNode2 = dynamic_pointer_cast<LinkNode>(linkedSource2->getLinks()[0]);
-        REQUIRE(nestedLinkNode2->getNodeType() == ASTNode::Types::LINK);
+        REQUIRE(nestedLinkNode2->getNodeType() == ASTNode::LINK);
         REQUIRE(nestedLinkNode2->capsule == "Theta.StringUtil");
 
         shared_ptr<SourceNode> nestedLinkedSource2 = dynamic_pointer_cast<SourceNode>(nestedLinkNode2->getValue());
-        REQUIRE(nestedLinkedSource2->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(nestedLinkedSource2->getNodeType() == ASTNode::SOURCE);
         REQUIRE(nestedLinkedSource2->getLinks().size() == 0);
 
         shared_ptr<CapsuleNode> nestedLinkedCapsule2 = dynamic_pointer_cast<CapsuleNode>(nestedLinkedSource2->getValue());
-        REQUIRE(nestedLinkedCapsule2->getNodeType() == ASTNode::Types::CAPSULE);
+        REQUIRE(nestedLinkedCapsule2->getNodeType() == ASTNode::CAPSULE);
         REQUIRE(nestedLinkedCapsule2->name == "Theta.StringUtil");
 
         shared_ptr<BlockNode> nestedLinkedBlock2 = dynamic_pointer_cast<BlockNode>(nestedLinkedCapsule2->getValue());
-        REQUIRE(nestedLinkedBlock2->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(nestedLinkedBlock2->getNodeType() == ASTNode::BLOCK);
         REQUIRE(nestedLinkedBlock2->getElements().size() == 1);
 
         shared_ptr<AssignmentNode> nestedAssignmentNode2 = dynamic_pointer_cast<AssignmentNode>(nestedLinkedBlock2->getElements()[0]);
-        REQUIRE(nestedAssignmentNode2->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(nestedAssignmentNode2->getRight()->getNodeType() == ASTNode::Types::STRING_LITERAL);
+        REQUIRE(nestedAssignmentNode2->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(nestedAssignmentNode2->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
 
         shared_ptr<IdentifierNode> nestedLeftNode2 = dynamic_pointer_cast<IdentifierNode>(nestedAssignmentNode2->getLeft());
         REQUIRE(nestedLeftNode2->getIdentifier() == "name");
@@ -2107,16 +2107,16 @@ TEST_CASE("Parser") {
 
         // Check MyTestCapsule
         shared_ptr<CapsuleNode> mainCapsule = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());
-        REQUIRE(mainCapsule->getNodeType() == ASTNode::Types::CAPSULE);
+        REQUIRE(mainCapsule->getNodeType() == ASTNode::CAPSULE);
         REQUIRE(mainCapsule->name == "MyTestCapsule");
 
         shared_ptr<BlockNode> mainBlock = dynamic_pointer_cast<BlockNode>(mainCapsule->getValue());
-        REQUIRE(mainBlock->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(mainBlock->getNodeType() == ASTNode::BLOCK);
         REQUIRE(mainBlock->getElements().size() == 1);
 
         shared_ptr<AssignmentNode> mainAssignmentNode = dynamic_pointer_cast<AssignmentNode>(mainBlock->getElements()[0]);
-        REQUIRE(mainAssignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
-        REQUIRE(mainAssignmentNode->getRight()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(mainAssignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
+        REQUIRE(mainAssignmentNode->getRight()->getNodeType() == ASTNode::IDENTIFIER);
 
         shared_ptr<IdentifierNode> mainLeftNode = dynamic_pointer_cast<IdentifierNode>(mainAssignmentNode->getLeft());
         REQUIRE(mainLeftNode->getIdentifier() == "x");
@@ -2141,9 +2141,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CAPSULE);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CAPSULE);
 
         shared_ptr<CapsuleNode> capsuleNode = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());
         REQUIRE(capsuleNode != nullptr);
@@ -2151,25 +2151,25 @@ TEST_CASE("Parser") {
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(capsuleNode->getValue());
         REQUIRE(blockNode != nullptr);
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<StructDefinitionNode> structNode = dynamic_pointer_cast<StructDefinitionNode>(blockNode->getElements()[0]);
         REQUIRE(structNode != nullptr);
-        REQUIRE(structNode->getNodeType() == ASTNode::Types::STRUCT_DEFINITION);
+        REQUIRE(structNode->getNodeType() == ASTNode::STRUCT_DEFINITION);
         REQUIRE(structNode->name == "Point");
 
         REQUIRE(structNode->getElements().size() == 2);
 
         shared_ptr<IdentifierNode> xNode = dynamic_pointer_cast<IdentifierNode>(structNode->getElements()[0]);
         REQUIRE(xNode != nullptr);
-        REQUIRE(xNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(xNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(xNode->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(xNode->getValue())->getType() == "Number");
 
         shared_ptr<IdentifierNode> yNode = dynamic_pointer_cast<IdentifierNode>(structNode->getElements()[1]);
         REQUIRE(yNode != nullptr);
-        REQUIRE(yNode->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(yNode->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(yNode->getIdentifier() == "y");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(yNode->getValue())->getType() == "Number");
     }
@@ -2184,9 +2184,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::STRUCT_DECLARATION);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::STRUCT_DECLARATION);
 
         shared_ptr<StructDeclarationNode> structDeclNode = dynamic_pointer_cast<StructDeclarationNode>(parsedAST->getValue());
         REQUIRE(structDeclNode != nullptr);
@@ -2194,14 +2194,14 @@ TEST_CASE("Parser") {
 
         shared_ptr<DictionaryNode> dictNode = dynamic_pointer_cast<DictionaryNode>(structDeclNode->getValue());
         REQUIRE(dictNode != nullptr);
-        REQUIRE(dictNode->getNodeType() == ASTNode::Types::DICTIONARY);
+        REQUIRE(dictNode->getNodeType() == ASTNode::DICTIONARY);
         REQUIRE(dictNode->getElements().size() == 2);
 
         shared_ptr<TupleNode> tuple1 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[0]);
         REQUIRE(tuple1 != nullptr);
-        REQUIRE(tuple1->getNodeType() == ASTNode::Types::TUPLE);
-        REQUIRE(tuple1->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
-        REQUIRE(tuple1->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(tuple1->getNodeType() == ASTNode::TUPLE);
+        REQUIRE(tuple1->getLeft()->getNodeType() == ASTNode::SYMBOL);
+        REQUIRE(tuple1->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
 
         shared_ptr<SymbolNode> symbol1 = dynamic_pointer_cast<SymbolNode>(tuple1->getLeft());
         REQUIRE(symbol1 != nullptr);
@@ -2213,9 +2213,9 @@ TEST_CASE("Parser") {
 
         shared_ptr<TupleNode> tuple2 = dynamic_pointer_cast<TupleNode>(dictNode->getElements()[1]);
         REQUIRE(tuple2 != nullptr);
-        REQUIRE(tuple2->getNodeType() == ASTNode::Types::TUPLE);
-        REQUIRE(tuple2->getLeft()->getNodeType() == ASTNode::Types::SYMBOL);
-        REQUIRE(tuple2->getRight()->getNodeType() == ASTNode::Types::NUMBER_LITERAL);
+        REQUIRE(tuple2->getNodeType() == ASTNode::TUPLE);
+        REQUIRE(tuple2->getLeft()->getNodeType() == ASTNode::SYMBOL);
+        REQUIRE(tuple2->getRight()->getNodeType() == ASTNode::NUMBER_LITERAL);
 
         shared_ptr<SymbolNode> symbol2 = dynamic_pointer_cast<SymbolNode>(tuple2->getLeft());
         REQUIRE(symbol2 != nullptr);
@@ -2240,13 +2240,13 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::ENUM);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ENUM);
 
         shared_ptr<EnumNode> enumNode = dynamic_pointer_cast<EnumNode>(parsedAST->getValue());
         REQUIRE(enumNode != nullptr);
-        REQUIRE(enumNode->getNodeType() == ASTNode::Types::ENUM);
+        REQUIRE(enumNode->getNodeType() == ASTNode::ENUM);
 
         shared_ptr<IdentifierNode> identifierNode = dynamic_pointer_cast<IdentifierNode>(enumNode->getIdentifier());
         REQUIRE(identifierNode != nullptr);
@@ -2258,19 +2258,19 @@ TEST_CASE("Parser") {
         // Check :LOW
         shared_ptr<SymbolNode> symbol1 = dynamic_pointer_cast<SymbolNode>(elements[0]);
         REQUIRE(symbol1 != nullptr);
-        REQUIRE(symbol1->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(symbol1->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(symbol1->getSymbol() == ":LOW");
 
         // Check :MEDIUM
         shared_ptr<SymbolNode> symbol2 = dynamic_pointer_cast<SymbolNode>(elements[1]);
         REQUIRE(symbol2 != nullptr);
-        REQUIRE(symbol2->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(symbol2->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(symbol2->getSymbol() == ":MEDIUM");
 
         // Check :HIGH
         shared_ptr<SymbolNode> symbol3 = dynamic_pointer_cast<SymbolNode>(elements[2]);
         REQUIRE(symbol3 != nullptr);
-        REQUIRE(symbol3->getNodeType() == ASTNode::Types::SYMBOL);
+        REQUIRE(symbol3->getNodeType() == ASTNode::SYMBOL);
         REQUIRE(symbol3->getSymbol() == ":HIGH");
     }
 
@@ -2288,21 +2288,21 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
-        REQUIRE(parsedAST->getNodeType() == ASTNode::Types::SOURCE);
+        REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
-        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::Types::CAPSULE);
+        REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::CAPSULE);
 
         shared_ptr<CapsuleNode> capsuleNode = dynamic_pointer_cast<CapsuleNode>(parsedAST->getValue());
         REQUIRE(capsuleNode != nullptr);
         REQUIRE(capsuleNode->getName() == "Math");
 
         shared_ptr<BlockNode> blockNode = dynamic_pointer_cast<BlockNode>(capsuleNode->getValue());
-        REQUIRE(blockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(blockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(blockNode->getElements().size() == 1);
 
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(blockNode->getElements()[0]);
         REQUIRE(assignmentNode != nullptr);
-        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::Types::IDENTIFIER);
+        REQUIRE(assignmentNode->getLeft()->getNodeType() == ASTNode::IDENTIFIER);
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
 
@@ -2311,16 +2311,16 @@ TEST_CASE("Parser") {
         REQUIRE(funcDeclNode->getParameters()->getElements().size() == 0);
 
         shared_ptr<BlockNode> funcBlockNode = dynamic_pointer_cast<BlockNode>(funcDeclNode->getDefinition());
-        REQUIRE(funcBlockNode->getNodeType() == ASTNode::Types::BLOCK);
+        REQUIRE(funcBlockNode->getNodeType() == ASTNode::BLOCK);
         REQUIRE(funcBlockNode->getElements().size() == 1);
 
         shared_ptr<ReturnNode> returnNode = dynamic_pointer_cast<ReturnNode>(funcBlockNode->getElements()[0]);
         REQUIRE(returnNode != nullptr);
-        REQUIRE(returnNode->getNodeType() == ASTNode::Types::RETURN);
+        REQUIRE(returnNode->getNodeType() == ASTNode::RETURN);
 
         shared_ptr<LiteralNode> returnValueNode = dynamic_pointer_cast<LiteralNode>(returnNode->getValue());
         REQUIRE(returnValueNode != nullptr);
-        REQUIRE(returnValueNode->getNodeType() == ASTNode::Types::BOOLEAN_LITERAL);
+        REQUIRE(returnValueNode->getNodeType() == ASTNode::BOOLEAN_LITERAL);
         REQUIRE(returnValueNode->getLiteralValue() == "true");
     }
 }

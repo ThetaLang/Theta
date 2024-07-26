@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string symbol;
 
-            SymbolNode(string sym) : symbol(":" + sym), ASTNode(ASTNode::Types::SYMBOL) {};
+            SymbolNode(string sym) : symbol(":" + sym), ASTNode(ASTNode::SYMBOL) {};
 
             string getSymbol() { return symbol; }
 

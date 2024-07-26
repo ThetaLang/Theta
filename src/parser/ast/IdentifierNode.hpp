@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string identifier;
 
-            IdentifierNode(string ident) : identifier(ident), ASTNode(ASTNode::Types::IDENTIFIER) {};
+            IdentifierNode(string ident) : identifier(ident), ASTNode(ASTNode::IDENTIFIER) {};
 
             string getIdentifier() { return identifier; }
 

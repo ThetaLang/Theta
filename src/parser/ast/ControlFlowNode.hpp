@@ -12,7 +12,7 @@ namespace Theta {
         public:
             vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs;
 
-            ControlFlowNode() : ASTNode(ASTNode::Types::CONTROL_FLOW) {};
+            ControlFlowNode() : ASTNode(ASTNode::CONTROL_FLOW) {};
 
             void setConditionExpressionPairs(vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> cnd) {
                 conditionExpressionPairs = cnd;

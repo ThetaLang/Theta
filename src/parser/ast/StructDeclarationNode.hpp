@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string structType;
 
-            StructDeclarationNode(string type) : structType(type), ASTNode(ASTNode::Types::STRUCT_DECLARATION) {};
+            StructDeclarationNode(string type) : structType(type), ASTNode(ASTNode::STRUCT_DECLARATION) {};
 
             string getStructType() { return structType; }
 

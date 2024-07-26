@@ -10,6 +10,6 @@ using namespace std;
 namespace Theta {
     class DictionaryNode : public ASTNodeList {
         public:
-            DictionaryNode() : ASTNodeList(ASTNode::Types::DICTIONARY) {};
+            DictionaryNode() : ASTNodeList(ASTNode::DICTIONARY) {};
     };
 }

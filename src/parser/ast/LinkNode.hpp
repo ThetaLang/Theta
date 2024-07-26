@@ -11,7 +11,7 @@ namespace Theta {
         public:
             string capsule;
 
-            LinkNode(string cap) : capsule(cap), ASTNode(ASTNode::Types::LINK) {};
+            LinkNode(string cap) : capsule(cap), ASTNode(ASTNode::LINK) {};
 
             string toJSON() const override {
                 ostringstream oss;

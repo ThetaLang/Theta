@@ -217,7 +217,7 @@ namespace Theta {
                 if (match(Token::FUNC_DECLARATION)) {
                     shared_ptr<FunctionDeclarationNode> func_def = make_shared<FunctionDeclarationNode>();
 
-                    if (expr && expr->getNodeType() != ASTNode::Types::AST_NODE_LIST) {
+                    if (expr && expr->getNodeType() != ASTNode::AST_NODE_LIST) {
                         shared_ptr<ASTNodeList> parameters = make_shared<ASTNodeList>();
                         parameters->setElements({ expr });
 
@@ -468,9 +468,9 @@ namespace Theta {
             shared_ptr<ASTNode> parsePrimary() {
                 if (match(Token::BOOLEAN) || match(Token::NUMBER) || match(Token::STRING)) {
                     map<Token::Types, ASTNode::Types> tokenTypeToAstTypeMap = {
-                        { Token::NUMBER, ASTNode::Types::NUMBER_LITERAL },
-                        { Token::BOOLEAN, ASTNode::Types::BOOLEAN_LITERAL },
-                        { Token::STRING, ASTNode::Types::STRING_LITERAL }
+                        { Token::NUMBER, ASTNode::NUMBER_LITERAL },
+                        { Token::BOOLEAN, ASTNode::BOOLEAN_LITERAL },
+                        { Token::STRING, ASTNode::STRING_LITERAL }
                     };
 
                     auto it = tokenTypeToAstTypeMap.find(currentToken.getType());
@@ -535,7 +535,7 @@ namespace Theta {
                 pair<string, shared_ptr<ASTNode>> p = parseKvPair();
                 shared_ptr<ASTNode> expr = p.second;
 
-                if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::Types::TUPLE) {
+                if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::TUPLE) {
                    vector<shared_ptr<ASTNode>> el;
 
                     if (expr->getLeft()) el.push_back(expr);
@@ -564,7 +564,7 @@ namespace Theta {
                     type = "kv";
                     shared_ptr<ASTNode> left = expr;
 
-                    if (left->getNodeType() == ASTNode::Types::IDENTIFIER) {
+                    if (left->getNodeType() == ASTNode::IDENTIFIER) {
                         left = make_shared<SymbolNode>(dynamic_pointer_cast<IdentifierNode>(left)->getIdentifier());
                     }
 
