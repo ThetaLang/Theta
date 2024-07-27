@@ -36,6 +36,11 @@ Thank you for your interest in contributing to the Theta programming language! H
   ```sh
   ./build.sh
   ```
+  or, if on Windows, create a `build` directory in the root, then navigate to it in your terminal:
+  ```sh
+  cmake .. -G "Unix MakeFiles"
+  make
+  ```
 
 ### Verifying the Installation
 To verify that Theta has been installed correctly, run the following command:
