@@ -38,7 +38,7 @@ Thank you for your interest in contributing to the Theta programming language! H
   ```
   or, if on Windows, create a `build` directory in the root, then navigate to it in your terminal:
   ```sh
-  cmake .. -G "Unix MakeFiles"
+  CC=clang CXX=clang++ cmake .. -G "Unix Makefiles"
   make
   ```
 
