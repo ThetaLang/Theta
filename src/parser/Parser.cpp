@@ -453,7 +453,7 @@ namespace Theta {
 
             shared_ptr<ASTNode> parseUnary(shared_ptr<ASTNode> passedLeftArg = nullptr) {
                 // Unary cant have a left arg, so if we get one passed in we can skip straight to primary
-                if (!passedLeftArg && match(Token::OPERATOR, Lexemes::NOT) || match(Token::OPERATOR, Lexemes::MINUS)) {
+                if (!passedLeftArg && (match(Token::OPERATOR, Lexemes::NOT) || match(Token::OPERATOR, Lexemes::MINUS))) {
                     shared_ptr<ASTNode> un = make_shared<UnaryOperationNode>(currentToken.getLexeme());
                     un->setValue(parseUnary(passedLeftArg));
 
