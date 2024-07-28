@@ -352,18 +352,14 @@ namespace Theta {
                 shared_ptr<ASTNode> expr = parseBooleanComparison();
 
                 while (match(Token::OPERATOR, Lexemes::PIPE)) {
-                    shared_ptr<ASTNode> left = expr;
-
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme());
-                    expr->setLeft(left);
-                    expr->setRight(parseBooleanComparison());
+                    expr = parseBooleanComparison(expr);
                 }
 
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseBooleanComparison() {
-                shared_ptr<ASTNode> expr = parseEquality();
+            shared_ptr<ASTNode> parseBooleanComparison(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                shared_ptr<ASTNode> expr = parseEquality(passedLeftArg);
 
                 while (match(Token::OPERATOR, Lexemes::OR) || match(Token::OPERATOR, Lexemes::AND)) {
                     shared_ptr<ASTNode> left = expr;
@@ -376,8 +372,8 @@ namespace Theta {
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseEquality() {
-                shared_ptr<ASTNode> expr = parseComparison();
+            shared_ptr<ASTNode> parseEquality(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                shared_ptr<ASTNode> expr = parseComparison(passedLeftArg);
 
                 while (match(Token::OPERATOR, Lexemes::EQUALITY) || match(Token::OPERATOR, Lexemes::INEQUALITY)) {
                     shared_ptr<ASTNode> left = expr;
@@ -390,8 +386,8 @@ namespace Theta {
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseComparison() {
-                shared_ptr<ASTNode> expr = parseTerm();
+            shared_ptr<ASTNode> parseComparison(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                shared_ptr<ASTNode> expr = parseTerm(passedLeftArg);
 
                 while (
                     match(Token::OPERATOR, Lexemes::GT) ||
@@ -409,8 +405,8 @@ namespace Theta {
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseTerm() {
-                shared_ptr<ASTNode> expr = parseFactor();
+            shared_ptr<ASTNode> parseTerm(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                shared_ptr<ASTNode> expr = parseFactor(passedLeftArg);
 
                 while (match(Token::OPERATOR, Lexemes::MINUS) || match(Token::OPERATOR, Lexemes::PLUS)) {
                     shared_ptr<ASTNode> left = expr;
@@ -423,8 +419,8 @@ namespace Theta {
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseFactor() {
-                shared_ptr<ASTNode> expr = parseExponent();
+            shared_ptr<ASTNode> parseFactor(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                shared_ptr<ASTNode> expr = parseExponent(passedLeftArg);
 
                 while (
                     match(Token::OPERATOR, Lexemes::DIVISION) ||
@@ -441,8 +437,8 @@ namespace Theta {
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseExponent() {
-                shared_ptr<ASTNode> expr = parseUnary();
+            shared_ptr<ASTNode> parseExponent(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                shared_ptr<ASTNode> expr = parseUnary(passedLeftArg);
 
                 while (match(Token::OPERATOR, Lexemes::EXPONENT)) {
                     shared_ptr<ASTNode> left = expr;
@@ -455,18 +451,25 @@ namespace Theta {
                 return expr;
             }
 
-            shared_ptr<ASTNode> parseUnary() {
-                if (match(Token::OPERATOR, Lexemes::NOT) || match(Token::OPERATOR, Lexemes::MINUS)) {
+            shared_ptr<ASTNode> parseUnary(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                // Unary cant have a left arg, so if we get one passed in we can skip straight to primary
+                if (!passedLeftArg && (match(Token::OPERATOR, Lexemes::NOT) || match(Token::OPERATOR, Lexemes::MINUS))) {
                     shared_ptr<ASTNode> un = make_shared<UnaryOperationNode>(currentToken.getLexeme());
-                    un->setValue(parseUnary());
+                    un->setValue(parseUnary(passedLeftArg));
 
                     return un;
                 }
 
-                return parsePrimary();
+                return parsePrimary(passedLeftArg);
             }
 
-            shared_ptr<ASTNode> parsePrimary() {
+            shared_ptr<ASTNode> parsePrimary(shared_ptr<ASTNode> passedLeftArg = nullptr) {
+                if (match(Token::IDENTIFIER)) {
+                    return parseFunctionInvocation(passedLeftArg);
+                }
+
+                if (passedLeftArg) return passedLeftArg;
+
                 if (match(Token::BOOLEAN) || match(Token::NUMBER) || match(Token::STRING)) {
                     map<Token::Types, ASTNode::Types> tokenTypeToAstTypeMap = {
                         { Token::NUMBER, ASTNode::NUMBER_LITERAL },
@@ -484,10 +487,6 @@ namespace Theta {
                     }
 
                     return make_shared<LiteralNode>(it->second, value);
-                }
-
-                if (match(Token::IDENTIFIER)) {
-                    return parseFunctionInvocation();
                 }
 
                 if (match(Token::COLON)) {
@@ -641,13 +640,21 @@ namespace Theta {
                 return listNode;
             }
 
-            shared_ptr<ASTNode> parseFunctionInvocation() {
+            shared_ptr<ASTNode> parseFunctionInvocation(shared_ptr<ASTNode> passedLeftArg = nullptr) {
                 shared_ptr<ASTNode> expr = parseIdentifier();
 
                 if (match(Token::PAREN_OPEN)) {
                     shared_ptr<FunctionInvocationNode> funcInvNode = make_shared<FunctionInvocationNode>();
                     funcInvNode->setIdentifier(expr);
-                    funcInvNode->setParameters(dynamic_pointer_cast<ASTNodeList>(parseExpressionList(true)));
+                    shared_ptr<ASTNodeList> arguments = dynamic_pointer_cast<ASTNodeList>(parseExpressionList(true));
+
+                    // This is used for pipeline operators pointing to function invocations. It takes the passed
+                    // left arg and sets it as the first argument to the function call
+                    if (passedLeftArg) {
+                        arguments->getElements().insert(arguments->getElements().begin(), passedLeftArg);
+                    }
+
+                    funcInvNode->setParameters(arguments);
 
                     expr = funcInvNode;
                 }

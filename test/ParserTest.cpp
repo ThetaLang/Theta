@@ -502,7 +502,7 @@ TEST_CASE("Parser") {
     // --------- LOGICAL OPERATORS ----------
 
     // --------- PIPELINE OPERATOR ----------
-    SECTION("Can parse pipeline operator with missing lefthand binary operation") {
+    SECTION("Can parse pipeline operator as syntactic sugar for binary operation") {
         string source = "'hello' => + ' mike' => + ' how are you'";
         lexer.lex(source);
 
@@ -514,28 +514,17 @@ TEST_CASE("Parser") {
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::BINARY_OPERATION);
 
-        shared_ptr<BinaryOperationNode> firstPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
-        REQUIRE(firstPipelineOp->getOperator() == "=>");
-        REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
+        shared_ptr<BinaryOperationNode> outerConcatOp = dynamic_pointer_cast<BinaryOperationNode>(parsedAST->getValue());
+        REQUIRE(outerConcatOp->getOperator() == "+");
+        REQUIRE(outerConcatOp->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(outerConcatOp->getRight())->getLiteralValue() == " how are you");
 
-        shared_ptr<BinaryOperationNode> rightConcatOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getRight());
-        REQUIRE(rightConcatOp->getOperator() == "+");
-        REQUIRE(rightConcatOp->getLeft() == nullptr);
-        REQUIRE(rightConcatOp->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(rightConcatOp->getRight())->getLiteralValue() == " how are you");
-
-        shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
-        REQUIRE(secondPipelineOp->getOperator() == "=>");
-        REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::BINARY_OPERATION);
-
-        shared_ptr<BinaryOperationNode> leftConcatOp = dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getRight());
-        REQUIRE(leftConcatOp->getOperator() == "+");
-        REQUIRE(leftConcatOp->getLeft() == nullptr);
-        REQUIRE(leftConcatOp->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(leftConcatOp->getRight())->getLiteralValue() == " mike");
-
-        REQUIRE(secondPipelineOp->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(secondPipelineOp->getLeft())->getLiteralValue() == "hello");
+        shared_ptr<BinaryOperationNode> innerConcatOp = dynamic_pointer_cast<BinaryOperationNode>(outerConcatOp->getLeft());
+        REQUIRE(innerConcatOp->getOperator() == "+");
+        REQUIRE(innerConcatOp->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(innerConcatOp->getLeft())->getLiteralValue() == "hello");
+        REQUIRE(innerConcatOp->getRight()->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(innerConcatOp->getRight())->getLiteralValue() == " mike");
     }
     // --------- PIPELINE OPERATOR ----------
 
@@ -787,7 +776,7 @@ TEST_CASE("Parser") {
     }
 
     SECTION("Can parse pipeline assignment") {
-        string source = "x<String> = 'hello' => reverse => capitalize => print";
+        string source = "x<String> = 'hello' => reverse() => capitalize() => print()";
         lexer.lex(source);
 
         shared_ptr<SourceNode> parsedAST = dynamic_pointer_cast<SourceNode>(
@@ -803,25 +792,19 @@ TEST_CASE("Parser") {
         REQUIRE(dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier() == "x");
         REQUIRE(dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getLeft()->getValue())->getType() == "String");
 
-        shared_ptr<BinaryOperationNode> firstPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(assignmentNode->getRight());
-        REQUIRE(firstPipelineOp->getOperator() == "=>");
-        REQUIRE(firstPipelineOp->getRight()->getNodeType() == ASTNode::IDENTIFIER);
-        REQUIRE(dynamic_pointer_cast<IdentifierNode>(firstPipelineOp->getRight())->getIdentifier() == "print");
+        shared_ptr<FunctionInvocationNode> printFuncInvocation = dynamic_pointer_cast<FunctionInvocationNode>(assignmentNode->getRight());
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(printFuncInvocation->getIdentifier())->getIdentifier() == "print");
 
-        shared_ptr<BinaryOperationNode> secondPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(firstPipelineOp->getLeft());
-        REQUIRE(secondPipelineOp->getOperator() == "=>");
-        REQUIRE(secondPipelineOp->getRight()->getNodeType() == ASTNode::IDENTIFIER);
-        REQUIRE(dynamic_pointer_cast<IdentifierNode>(secondPipelineOp->getRight())->getIdentifier() == "capitalize");
+        shared_ptr<FunctionInvocationNode> capitalizeFuncInvocation = dynamic_pointer_cast<FunctionInvocationNode>(printFuncInvocation->getParameters()->getElements()[0]);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(capitalizeFuncInvocation->getIdentifier())->getIdentifier() == "capitalize");
 
-        shared_ptr<BinaryOperationNode> thirdPipelineOp = dynamic_pointer_cast<BinaryOperationNode>(secondPipelineOp->getLeft());
-        REQUIRE(thirdPipelineOp->getOperator() == "=>");
-        REQUIRE(thirdPipelineOp->getRight()->getNodeType() == ASTNode::IDENTIFIER);
-        REQUIRE(dynamic_pointer_cast<IdentifierNode>(thirdPipelineOp->getRight())->getIdentifier() == "reverse");
+        shared_ptr<FunctionInvocationNode> reverseFuncInvocation = dynamic_pointer_cast<FunctionInvocationNode>(capitalizeFuncInvocation->getParameters()->getElements()[0]);
+        REQUIRE(dynamic_pointer_cast<IdentifierNode>(reverseFuncInvocation->getIdentifier())->getIdentifier() == "reverse");
 
-        REQUIRE(thirdPipelineOp->getLeft()->getNodeType() == ASTNode::STRING_LITERAL);
-        REQUIRE(dynamic_pointer_cast<LiteralNode>(thirdPipelineOp->getLeft())->getLiteralValue() == "hello");
+        REQUIRE(reverseFuncInvocation->getParameters()->getElements()[0]->getNodeType() == ASTNode::STRING_LITERAL);
+        REQUIRE(dynamic_pointer_cast<LiteralNode>(reverseFuncInvocation->getParameters()->getElements()[0])->getLiteralValue() == "hello");
     }
-
+    
     SECTION("Can parse control flow assignment") {
         string source = R"(
             x<String> = if (name == 'Bob') 'hello' else 'goodbye'
