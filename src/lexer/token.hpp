@@ -1,9 +1,9 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#import <string>
-#import <vector>
-#import <map>
+#include <string>
+#include <vector>
+#include <map>
 
 using namespace std;
 
