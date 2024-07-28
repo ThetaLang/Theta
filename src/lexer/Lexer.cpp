@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <functional>
 #include "Token.hpp"
 #include "Lexemes.hpp"
 

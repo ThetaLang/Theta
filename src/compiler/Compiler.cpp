@@ -120,7 +120,7 @@ namespace Theta {
     }
 
     void Compiler::discoverCapsules() {
-        for (const auto& entry : std::__fs::filesystem::recursive_directory_iterator(".")) {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(".")) {
             if (entry.is_regular_file() && entry.path().extension() == ".th") {
                 string capsuleName = findCapsuleName(entry.path().string());
 

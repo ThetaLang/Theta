@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(Theta)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DBUILD_TESTS=OFF")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DBUILD_TESTS=OFF -Wno-maybe-uninitialized")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Define source directories
@@ -39,7 +39,22 @@ file(GLOB TEST_SRC_FILES "${TEST_DIR}/*.cpp")
 add_executable(theta ${SRC_FILES} ${MAIN_SRC})
 
 # Add the readline library
-target_link_libraries(theta readline)
+if (WIN32)
+    # Add the readline library
+    set(READLINE_INCLUDE_DIR "C:/msys64/mingw64/include")
+    set(READLINE_LIBRARY "C:/msys64/mingw64/lib/libreadline.dll.a")
+
+    # Check if readline is found
+    if (EXISTS ${READLINE_INCLUDE_DIR}/readline/readline.h AND EXISTS ${READLINE_LIBRARY})
+        include_directories(${READLINE_INCLUDE_DIR})
+        link_directories("C:/msys64/mingw64/lib")
+        target_link_libraries(theta ${READLINE_LIBRARY})
+    else ()
+        message(FATAL_ERROR "Readline library not found.")
+    endif()
+else()
+    target_link_libraries(theta readline)
+endif()
 
 # Add Binaryen
 add_subdirectory(${BINARYEN_DIR})
