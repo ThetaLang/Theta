@@ -36,10 +36,9 @@ Thank you for your interest in contributing to the Theta programming language! H
   ```sh
   ./build.sh
   ```
-  or, if on Windows, create a `build` directory in the root, then navigate to it in your terminal:
+  or, if on Windows:
   ```sh
-  CC=clang CXX=clang++ cmake .. -G "Unix Makefiles"
-  make
+  ./build-windows.sh
   ```
 
 ### Verifying the Installation
