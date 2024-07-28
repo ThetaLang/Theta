@@ -7,6 +7,14 @@
 
 using namespace std;
 
+#ifdef RETURN
+#undef RETURN
+#endif
+
+#ifdef NEWLINE
+#undef NEWLINE
+#endif
+
 namespace Theta {
     class ASTNode {
         public:

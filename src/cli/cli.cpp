@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "../../version.h"

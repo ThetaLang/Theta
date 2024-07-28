@@ -1,4 +1,5 @@
 #include <vector>
+#include <algorithm>
 #include <deque>
 #include <string>
 #include <map>
