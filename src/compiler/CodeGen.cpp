@@ -1,4 +1,14 @@
+#include <iostream>
+#include <memory>
+#include "binaryen-c.h"
+#include "lexer/Lexemes.hpp"
+#include "StandardLibrary.hpp"
+#include "parser/ast/ASTNodeList.hpp"
+#include "parser/ast/FunctionDeclarationNode.hpp"
+#include "parser/ast/IdentifierNode.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
 #include "CodeGen.hpp"
+#include "DataTypes.hpp"
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
@@ -10,12 +20,20 @@ namespace Theta {
 
         generate(ast, module);
 
+        BinaryenModuleAutoDrop(module);
+
         return module;
     }
 
     BinaryenExpressionRef CodeGen::generate(shared_ptr<ASTNode> node, BinaryenModuleRef &module) {
         if (node->getNodeType() == ASTNode::SOURCE) {
             generateSource(dynamic_pointer_cast<SourceNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::CAPSULE) {
+            return generateCapsule(dynamic_pointer_cast<CapsuleNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::BLOCK) {
+            return generateBlock(dynamic_pointer_cast<ASTNodeList>(node), module);
+        } else if (node->getNodeType() == ASTNode::RETURN) {
+            return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
         } else if (node->getNodeType() == ASTNode::BINARY_OPERATION) {
             return generateBinaryOperation(dynamic_pointer_cast<BinaryOperationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::UNARY_OPERATION) {
@@ -29,6 +47,60 @@ namespace Theta {
         }
 
         return nullptr;
+    }
+
+    BinaryenExpressionRef CodeGen::generateCapsule(shared_ptr<CapsuleNode> capsuleNode, BinaryenModuleRef &module) {
+        vector<shared_ptr<ASTNode>> capsuleElements = dynamic_pointer_cast<ASTNodeList>(capsuleNode->getValue())->getElements();
+
+        for (auto elem : capsuleElements) {
+            string elemType = dynamic_pointer_cast<TypeDeclarationNode>(elem->getResolvedType())->getType();
+            if (elem->getNodeType() == ASTNode::ASSIGNMENT) {
+                shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(elem->getLeft());
+
+                if (elemType == DataTypes::FUNCTION) {
+                    shared_ptr<FunctionDeclarationNode> fnDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(elem->getRight());
+
+
+                    string functionName = capsuleNode->getName() + "." + identNode->getIdentifier();
+                    
+                    cout << "it is" << functionName.c_str() << "  " << functionName.c_str() << endl;
+
+                    BinaryenExpressionRef body = generate(fnDeclNode->getDefinition(), module);
+
+                    BinaryenFunctionRef fn = BinaryenAddFunction(
+                        module,
+                        functionName.c_str(),
+                        BinaryenTypeNone(),
+                        getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
+                        NULL,
+                        0,
+                        body
+                    );
+
+                    BinaryenAddFunctionExport(module, functionName.c_str(), functionName.c_str());
+                }
+            }
+        }
+    }
+
+    BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, BinaryenModuleRef &module) {
+        BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[blockNode->getElements().size()];
+
+        for (int i = 0; i < blockNode->getElements().size(); i++) {
+            blockExpressions[i] = generate(blockNode->getElements().at(i), module);
+        }
+
+        return BinaryenBlock(
+            module,
+            NULL,
+            blockExpressions,
+            blockNode->getElements().size(),
+            BinaryenTypeNone()
+        );
+    }
+
+    BinaryenExpressionRef CodeGen::generateReturn(shared_ptr<ReturnNode> returnNode, BinaryenModuleRef &module) {
+        return BinaryenReturn(module, generate(returnNode->getValue(), module));
     }
 
     BinaryenExpressionRef CodeGen::generateBinaryOperation(shared_ptr<BinaryOperationNode> binOpNode, BinaryenModuleRef &module) {
@@ -122,16 +194,16 @@ namespace Theta {
             BinaryenExpressionRef body = generate(sourceNode->getValue(), module);
 
             if (!body) {
-                throw std::runtime_error("Invalid body type for source node");
+                throw runtime_error("Invalid body type for source node");
             }
+
+            shared_ptr<TypeDeclarationNode> returnType = dynamic_pointer_cast<TypeDeclarationNode>(sourceNode->getValue()->getResolvedType());
 
             BinaryenFunctionRef mainFn = BinaryenAddFunction(
                 module,
                 "main",
                 BinaryenTypeNone(),
-                // BinaryenTypeStringref(),
-                // BinaryenTypeInt64(),
-                BinaryenTypeInt32(),
+                getBinaryenTypeFromTypeDeclaration(returnType),
                 NULL,
                 0,
                 body
@@ -139,7 +211,7 @@ namespace Theta {
 
             BinaryenAddFunctionExport(module, "main", "main");
         } else {
-            // generate(sourceNode->getValue(), module);
+            generate(sourceNode->getValue(), module);
         }
     }
 
@@ -151,7 +223,24 @@ namespace Theta {
         if (op == Lexemes::TIMES) return BinaryenMulInt64();
         if (op == Lexemes::MODULO) return BinaryenRemSInt64();
 
+        string resolvedType = dynamic_pointer_cast<TypeDeclarationNode>(binOpNode->getLeft()->getResolvedType())->getType();
+
+        if (op == Lexemes::EQUALITY && resolvedType == DataTypes::NUMBER) return BinaryenEqInt64();
+        if (op == Lexemes::EQUALITY && resolvedType == DataTypes::BOOLEAN) return BinaryenEqInt32();
+        if (op == Lexemes::EQUALITY && resolvedType == DataTypes::STRING) return BinaryenStringEqEqual();
+        if (op == Lexemes::INEQUALITY && resolvedType == DataTypes::NUMBER) return BinaryenNeInt64();
+        if (op == Lexemes::INEQUALITY && resolvedType == DataTypes::BOOLEAN) return BinaryenEqInt32();
+        if (op == Lexemes::INEQUALITY && resolvedType == DataTypes::STRING) return BinaryenStringEqEqual(); // FIXME: This is a stub
+        if (op == Lexemes::LT && resolvedType == DataTypes::NUMBER) return BinaryenLtSInt64();
+        if (op == Lexemes::GT && resolvedType == DataTypes::NUMBER) return BinaryenGtSInt64();
+
 
         // if (op == "**") return
+    }
+
+    BinaryenType CodeGen::getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> typeDeclaration) {
+        if (typeDeclaration->getType() == DataTypes::NUMBER) return BinaryenTypeInt64();
+        if (typeDeclaration->getType() == DataTypes::STRING) return BinaryenTypeStringref();
+        if (typeDeclaration->getType() == DataTypes::BOOLEAN) return BinaryenTypeInt32();
     }
 }

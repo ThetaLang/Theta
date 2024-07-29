@@ -258,6 +258,15 @@ namespace Theta {
             static bool isLanguageDataType(string type);
 
             /**
+             * @brief Checks if a given operator returns a boolean.
+             * 
+             * @param op The operator to check.
+             * @return true If the operator returns a boolean.
+             * @return false Otherwise.
+             */
+            static bool isBooleanOperator(string op);
+
+            /**
              * @brief Finds all AST nodes of a specific type within the tree rooted at a given node.
              * 
              * @param node The root node to search from.

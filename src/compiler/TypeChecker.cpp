@@ -20,6 +20,7 @@
 #include "parser/ast/TupleNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
+#include "lexer/Lexemes.hpp"
 
 using namespace std;
 
@@ -214,7 +215,11 @@ namespace Theta {
             return false;
         }
 
-        node->setResolvedType(node->getLeft()->getResolvedType());
+        if (isBooleanOperator(node->getOperator())) {
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN));
+        } else {
+            node->setResolvedType(node->getLeft()->getResolvedType());
+        }
 
         return true;
     }
@@ -798,6 +803,21 @@ namespace Theta {
         };
 
         return find(LANGUAGE_DATATYPES.begin(), LANGUAGE_DATATYPES.end(), type) != LANGUAGE_DATATYPES.end();
+    }
+
+    bool TypeChecker::isBooleanOperator(string op) {
+        array<string, 9> BOOLEAN_OPERATORS = {
+            Lexemes::EQUALITY,
+            Lexemes::INEQUALITY,
+            Lexemes::LT,
+            Lexemes::LTEQ,
+            Lexemes::GT,
+            Lexemes::GTEQ,
+            Lexemes::AND,
+            Lexemes::OR
+        };
+
+        return find(BOOLEAN_OPERATORS.begin(), BOOLEAN_OPERATORS.end(), op) != BOOLEAN_OPERATORS.end();
     }
 
     shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types) {

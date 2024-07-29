@@ -9,7 +9,6 @@
 #include "parser/ast/SymbolNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 #include <memory>
-#include <iostream>
 
 using namespace Theta;
 
