@@ -1,10 +1,5 @@
 ![ThetaLang](https://github.com/user-attachments/assets/fd4238c5-096a-43a6-96c7-40343572b4d4)
 
-I started this project knowing nothing about C++ and thought it would be fun to learn the language by creating my own programming language, Theta. The language has no real purpose and was built purely for educational purposes
-
-# Theta Language Specification
-
-## Introduction
 Theta is a strongly typed, functional, compiled programming language designed to be data-driven and composable, with built-in support for pattern matching and modular organization through capsules. The language aims to provide a clean and expressive syntax while ensuring type safety and functional programming paradigms.
 
 [Click here to view the formal language grammar in BNF format](doc/theta_grammar.bnf)
@@ -73,6 +68,9 @@ run Theta code in the browser.
 
 ### Reporting Issues
 If you encounter any issues or have suggestions for improvements, please use the [Issues page](https://github.com/alexdovzhanyn/ThetaLang/issues) to report them. Thank you for contributing to Theta!
+
+
+# Theta Language Specification
 
 ## 1. Basic Concepts
 
