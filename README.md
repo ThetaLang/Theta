@@ -1,34 +1,92 @@
+
 ![ThetaLang](https://github.com/user-attachments/assets/fd4238c5-096a-43a6-96c7-40343572b4d4)
 
-Theta is a strongly typed, functional, compiled programming language designed to be data-driven and composable, with built-in support for pattern matching and modular organization through capsules. The language aims to provide a clean and expressive syntax while ensuring type safety and functional programming paradigms.
+## Introduction
 
-[Click here to view the formal language grammar in BNF format](doc/theta_grammar.bnf)
+Welcome to Theta! If you're into modern, functional programming languages with a clean syntax and powerful features, you're in the right place. Theta combines the best of functional programming with a strong type system and expressive syntax to help you write clean, efficient, and maintainable code. Whether you're building data-driven applications or just tinkering with new ideas, Theta is here to make your coding experience smoother and more enjoyable.
+
+[View the formal language grammar in BNF, if you're into that kind of thing.](doc/theta_grammar.bnf)
+
+## Table of Contents
+
+1. [Features](#features)
+2. [Example Code](#example-code)
+3. [Building Theta](#building-theta)
+4. [Contributing](#contributing)
+5. [Reporting Issues](#reporting-issues)
+6. [Language Specification](#theta-language-specification)
 
 ---
 
-## Contributing
-Thank you for your interest in contributing to the Theta programming language! Here are some guidelines to help you get started:
+## Features
+
+- **Strong Typing**: Catch errors early and ensure type safety throughout your codebase.
+- **Functional Paradigms**: Enjoy first-class functions, immutability, and higher-order functions.
+- **Pattern Matching**: Simplify your code with built-in pattern matching and destructuring.
+- **Modular Design**: Organize your code into reusable modules, known as capsules.
+- **Interactive REPL**: Experiment with code in real-time using the Interactive Theta (ITH) REPL.
+
+## Example Code
+
+Check out some Theta code to get a feel for its clean and expressive syntax:
+
+### Function Definition and Pattern Matching
+
+```theta
+capsule MathFunctions {
+    add<Function<Number>> = (a<Number>, b<Number>) -> a + b
+
+    factorial<Function<Number>> = (n<Number>) -> {
+        match (n) {
+            0 -> 1
+            n -> n * factorial(n - 1)
+        }
+    }
+}
+```
+
+### Structs and Lists
+
+```theta
+link Theta.IO
+
+capsule DataStructures {
+    struct Point {
+        x<Number>
+        y<Number>
+    }
+
+    distance<Function<Number>> = (p1<Point>, p2<Point>) -> {
+        return Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+    }
+
+    main<Function<String>> -> {
+        points<List<Point>> = [
+          @Point{ x: 0, y: 0 },
+          @Point{ x: 3, y: 4 }
+        ]
+
+        dist<Number> = distance(points[0], points[1])
+        Theta.IO.println("Distance: " + dist)
+    }
+}
+```
+
+## Building Theta
 
 ### Prerequisites
+- **C++ Compiler**: Make sure you have a compiler that supports C++17.
 
-- **Git Submodules**: We use submodules to manage some dependencies. Make sure to initialize and update the submodules by running:
-  ```sh
-  git submodule update --init --recursive
-  ```
-- C++ Compiler: Ensure you have a compiler that supports C++17.
-
-### Building Theta
-
-1. **Clone the Repository**: If you haven't already, clone the repository:
+1. **Clone the Repository**: 
   ```sh
   git clone https://github.com/alexdovzhanyn/ThetaLang.git
   cd ThetaLang
   ```
-2. **Initialize Submodules**: Initialize and update the submodules for dependencies like Binaryen:
+2. **Initialize Submodules**:
   ```sh
   git submodule update --init --recursive
   ```
-3. **Build the Project**: Run the build script to compile Theta:
+3. **Build the Project**:
   ```sh
   ./build.sh
   ```
@@ -38,37 +96,41 @@ Thank you for your interest in contributing to the Theta programming language! H
   ```
 
 ### Verifying the Installation
-To verify that Theta has been installed correctly, run the following command:
+
+To make sure Theta is set up correctly, run:
 
 ```sh
 theta --version
 ```
 
-This should display the current version of Theta.
+You should see the current version of Theta displayed.
 
-### Contributing Code
+## Contributing
 
-1. **Fork the Repository**: Create a fork of this repository on GitHub.
-2. **Create a Branch**: Create a new branch for your feature or bug fix:
+Thanks for checking out Theta! We’re excited to have you contribute. Here’s how you can get started:
+
+1. **Fork the Repository**: Create a fork on GitHub.
+2. **Create a Branch**: 
   ```sh
   git checkout -b some-feature-branch
   ```
-3. **Make Changes**: Implement your changes and commit them to your branch.
-4. **Run the Tests**: Run `./build/LexerTest` and `./build/ParserTest` to make sure your changes didn't break any existing functionality
-5. **Submit a Pull Request**: Push your changes to your fork and submit a pull request to this repository.
+3. **Make Changes**: Implement your changes and commit them.
+4. **Run the Tests**: 
+  ```sh
+  ./build/LexerTest
+  ./build/ParserTest
+  ```
+5. **Submit a Pull Request**: Push your changes to your fork and open a pull request.
 
 ### Testing Changes
 
-Theta has an Interactive Theta (ITH) REPL that can be accessed by just typing `theta` into the terminal. Right now all expressions must fit on
-one line, because the REPL expects a newline to mean that you want to submit and compile the code. The REPL doesn't yet interpret the code,
-it will just show you the AST that is generated.
+Theta has an Interactive Theta (ITH) REPL. Just type `theta` into the terminal. Note that it currently only supports single-line expressions. The REPL will show you the AST generated from your code.
 
-To test and run Theta code, you can use the [Theta Browser Playground](https://github.com/alexdovzhanyn/theta-browser-playground) which will
-run Theta code in the browser.
+For running Theta code, you can use the [Theta Browser Playground](https://github.com/alexdovzhanyn/theta-browser-playground).
 
 ### Reporting Issues
-If you encounter any issues or have suggestions for improvements, please use the [Issues page](https://github.com/alexdovzhanyn/ThetaLang/issues) to report them. Thank you for contributing to Theta!
 
+If you find any issues or have suggestions, please use the [Issues page](https://github.com/alexdovzhanyn/ThetaLang/issues). We appreciate your feedback and contributions!
 
 # Theta Language Specification
 
@@ -290,10 +352,10 @@ Pattern matching allows for intuitive matching of data structures.
 
 ```theta
 match value {
-  pattern1 >> result1
-  pattern2 >> result2
+  pattern1 -> result1
+  pattern2 -> result2
   ...
-  _ => defaultResult
+  _ -> defaultResult
 }
 ```
 
@@ -301,9 +363,9 @@ Example:
 ```theta
 matchStatus<String> = status<Enum> -> {
   match status {
-    :SUCCESS >> 'Operation was successful'
-    :FAILURE >> 'Operation failed'
-    _ => 'Unknown status'
+    :SUCCESS -> 'Operation was successful'
+    :FAILURE -> 'Operation failed'
+    _ -> 'Unknown status'
   }
 }
 ```
@@ -362,17 +424,9 @@ capsule Math {
 link Math
 
 capsule Main {
-    import Math
-
     point1 = @Math.Point { x: 0, y: 0 }
     point2 = @Math.Point { x: 3, y: 4 }
 
     distance = Math.distance(point1, point2)
 }
 ```
-
----
-
-## Conclusion
-
-Theta is designed to be a modern, strongly typed, functional programming language that emphasizes modularity through capsules and clarity through its syntax and structure. This specification outlines the core features and syntax of Theta, providing a foundation for further development and refinement.
