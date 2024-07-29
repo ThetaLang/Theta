@@ -10,6 +10,7 @@
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/ReturnNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
+#include "parser/ast/FunctionInvocationNode.hpp"
 #include <binaryen-c.h>
 
 using namespace std;
@@ -24,6 +25,7 @@ namespace Theta {
             static BinaryenExpressionRef generateCapsule(shared_ptr<CapsuleNode> node, BinaryenModuleRef &module);
             static BinaryenExpressionRef generateBlock(shared_ptr<ASTNodeList> node, BinaryenModuleRef &module);
             static BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
+            static BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
             static BinaryenExpressionRef generateBinaryOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
             static BinaryenExpressionRef generateUnaryOperation(shared_ptr<UnaryOperationNode> node, BinaryenModuleRef &module);
             static BinaryenExpressionRef generateNumberLiteral(shared_ptr<LiteralNode> node, BinaryenModuleRef &module);

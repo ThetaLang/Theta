@@ -34,6 +34,8 @@ namespace Theta {
             return generateBlock(dynamic_pointer_cast<ASTNodeList>(node), module);
         } else if (node->getNodeType() == ASTNode::RETURN) {
             return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
+        } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
+            return generateFunctionInvocation(dynamic_pointer_cast<FunctionInvocationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BINARY_OPERATION) {
             return generateBinaryOperation(dynamic_pointer_cast<BinaryOperationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::UNARY_OPERATION) {
@@ -61,16 +63,29 @@ namespace Theta {
                     shared_ptr<FunctionDeclarationNode> fnDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(elem->getRight());
 
 
-                    string functionName = capsuleNode->getName() + "." + identNode->getIdentifier();
-                    
-                    cout << "it is" << functionName.c_str() << "  " << functionName.c_str() << endl;
+                    string functionName = identNode->getIdentifier();
 
                     BinaryenExpressionRef body = generate(fnDeclNode->getDefinition(), module);
+
+                    BinaryenType parameterType = BinaryenTypeNone();
+                    int totalParams = fnDeclNode->getParameters()->getElements().size();
+
+                    if (totalParams > 0) {
+                        BinaryenType* types = new BinaryenType[totalParams];
+                        
+                        for (int i = 0; i < totalParams; i++) {
+                            types[i] = getBinaryenTypeFromTypeDeclaration(
+                                dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getParameters()->getElements().at(i))
+                            );
+                        }
+
+                        parameterType = BinaryenTypeCreate(types, totalParams);
+                    }
 
                     BinaryenFunctionRef fn = BinaryenAddFunction(
                         module,
                         functionName.c_str(),
-                        BinaryenTypeNone(),
+                        parameterType,
                         getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
                         NULL,
                         0,
@@ -103,6 +118,24 @@ namespace Theta {
         return BinaryenReturn(module, generate(returnNode->getValue(), module));
     }
 
+    BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, BinaryenModuleRef &module) {
+        BinaryenExpressionRef* arguments = new BinaryenExpressionRef[funcInvNode->getParameters()->getElements().size()];
+
+        string funcName = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
+        
+        for (int i = 0; i < funcInvNode->getParameters()->getElements().size(); i++) {
+            arguments[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
+        }
+
+        return BinaryenCall(
+            module,
+            funcName.c_str(),
+            arguments,
+            funcInvNode->getParameters()->getElements().size(),
+            getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(funcInvNode->getResolvedType()))
+        );
+    }
+
     BinaryenExpressionRef CodeGen::generateBinaryOperation(shared_ptr<BinaryOperationNode> binOpNode, BinaryenModuleRef &module) {
         if (binOpNode->getOperator() == Lexemes::EXPONENT) {
             return generateExponentOperation(binOpNode, module);
@@ -112,6 +145,8 @@ namespace Theta {
 
         BinaryenExpressionRef binaryenLeft = generate(binOpNode->getLeft(), module);
         BinaryenExpressionRef binaryenRight = generate(binOpNode->getRight(), module);
+
+        cout << binOpNode->toJSON() << endl;
 
         if (!binaryenLeft || !binaryenRight) {
             throw runtime_error("Invalid operand types for binary operation");
