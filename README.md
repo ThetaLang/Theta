@@ -1,4 +1,5 @@
-# Theta
+![ThetaLang](https://github.com/user-attachments/assets/fd4238c5-096a-43a6-96c7-40343572b4d4)
+
 I started this project knowing nothing about C++ and thought it would be fun to learn the language by creating my own programming language, Theta. The language has no real purpose and was built purely for educational purposes
 
 # Theta Language Specification
