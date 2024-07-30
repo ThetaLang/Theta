@@ -31,7 +31,8 @@ namespace Theta {
 
         if (!isTypeValid) return;
 
-        BinaryenModuleRef module = CodeGen::generateWasmFromAST(programAST);
+        CodeGen codeGen;
+        BinaryenModuleRef module = codeGen.generateWasmFromAST(programAST);
 
         if (isEmitWAT) {
             cout << "Generated WAT for \"" + entrypoint + "\":" << endl;
@@ -57,7 +58,8 @@ namespace Theta {
 
         if (!isTypeValid) return ast;
 
-        BinaryenModuleRef module = CodeGen::generateWasmFromAST(ast);
+        CodeGen codeGen;
+        BinaryenModuleRef module = codeGen.generateWasmFromAST(ast);
 
         cout << "-> " + ast->toJSON() << endl;
         cout << "-> ";
@@ -213,5 +215,31 @@ namespace Theta {
         } else if (!ast) {
             cout << "Could not parse AST for file " + fileName << endl;
         }
+    }
+
+    string Compiler::getQualifiedFunctionIdentifier(string variableName, shared_ptr<ASTNode> node) {
+        vector<shared_ptr<ASTNode>> params;
+
+        if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
+            params = declarationNode->getParameters()->getElements();
+        } else {
+            shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
+            params = invocationNode->getParameters()->getElements();
+        }
+        
+        string functionIdentifier = variableName + to_string(params.size());
+
+        for (int i = 0; i < params.size(); i++) {
+            if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getValue());
+                functionIdentifier += paramType->getType();
+            } else {
+                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getResolvedType());
+                functionIdentifier += paramType->getType();
+            }
+        }
+
+        return functionIdentifier;
     }
 }

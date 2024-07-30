@@ -101,6 +101,16 @@ namespace Theta {
              */
             bool optimizeAST(shared_ptr<ASTNode> &ast, bool silenceErrors = false);
 
+            
+            /**
+             * @brief Generates a unique function identifier based on the function's name and its parameters to handle overloading.
+             * 
+             * @param variableName The base name of the function.
+             * @param declarationNode The function declaration node containing the parameters.
+             * @return string The unique identifier for the function.
+             */
+            static string getQualifiedFunctionIdentifier(string variableName, shared_ptr<ASTNode> node);
+
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:
             /**

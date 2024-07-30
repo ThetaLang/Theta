@@ -67,7 +67,7 @@ void LiteralInlinerPass::bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolT
     string identifier = dynamic_pointer_cast<IdentifierNode>(ast->getLeft())->getIdentifier();
 
     if (ast->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(identifier, ast->getRight());
+        string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(identifier, ast->getRight());
 
         shared_ptr<ASTNode> existingFuncIdentifierInScope = scope.lookup(uniqueFuncIdentifier);
 

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include "binaryen-c.h"
+#include "compiler/Compiler.hpp"
 #include "lexer/Lexemes.hpp"
 #include "StandardLibrary.hpp"
 #include "parser/ast/ASTNodeList.hpp"
@@ -26,6 +27,8 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generate(shared_ptr<ASTNode> node, BinaryenModuleRef &module) {
+        if (node->hasOwnScope()) scope.enterScope();
+
         if (node->getNodeType() == ASTNode::SOURCE) {
             generateSource(dynamic_pointer_cast<SourceNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CAPSULE) {
@@ -36,6 +39,8 @@ namespace Theta {
             return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
         } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
             return generateFunctionInvocation(dynamic_pointer_cast<FunctionInvocationNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::IDENTIFIER) {
+            return generateIdentifier(dynamic_pointer_cast<IdentifierNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BINARY_OPERATION) {
             return generateBinaryOperation(dynamic_pointer_cast<BinaryOperationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::UNARY_OPERATION) {
@@ -48,11 +53,15 @@ namespace Theta {
             return generateBooleanLiteral(dynamic_pointer_cast<LiteralNode>(node), module);
         }
 
+        if (node->hasOwnScope()) scope.exitScope();
+
         return nullptr;
     }
 
     BinaryenExpressionRef CodeGen::generateCapsule(shared_ptr<CapsuleNode> capsuleNode, BinaryenModuleRef &module) {
         vector<shared_ptr<ASTNode>> capsuleElements = dynamic_pointer_cast<ASTNodeList>(capsuleNode->getValue())->getElements();
+
+        hoistCapsuleElements(capsuleElements);
 
         for (auto elem : capsuleElements) {
             string elemType = dynamic_pointer_cast<TypeDeclarationNode>(elem->getResolvedType())->getType();
@@ -60,42 +69,66 @@ namespace Theta {
                 shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(elem->getLeft());
 
                 if (elemType == DataTypes::FUNCTION) {
-                    shared_ptr<FunctionDeclarationNode> fnDeclNode = dynamic_pointer_cast<FunctionDeclarationNode>(elem->getRight());
-
-
-                    string functionName = identNode->getIdentifier();
-
-                    BinaryenExpressionRef body = generate(fnDeclNode->getDefinition(), module);
-
-                    BinaryenType parameterType = BinaryenTypeNone();
-                    int totalParams = fnDeclNode->getParameters()->getElements().size();
-
-                    if (totalParams > 0) {
-                        BinaryenType* types = new BinaryenType[totalParams];
-                        
-                        for (int i = 0; i < totalParams; i++) {
-                            types[i] = getBinaryenTypeFromTypeDeclaration(
-                                dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getParameters()->getElements().at(i))
-                            );
-                        }
-
-                        parameterType = BinaryenTypeCreate(types, totalParams);
-                    }
-
-                    BinaryenFunctionRef fn = BinaryenAddFunction(
+                    generateFunctionDeclaration(
+                        identNode->getIdentifier(),
+                        dynamic_pointer_cast<FunctionDeclarationNode>(elem->getRight()),
                         module,
-                        functionName.c_str(),
-                        parameterType,
-                        getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
-                        NULL,
-                        0,
-                        body
+                        true
                     );
-
-                    BinaryenAddFunctionExport(module, functionName.c_str(), functionName.c_str());
                 }
             }
         }
+    }
+
+    BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
+        string identifier,
+        shared_ptr<FunctionDeclarationNode> fnDeclNode,
+        BinaryenModuleRef &module,
+        bool addToExports
+    ) {
+        scope.enterScope();
+    
+        BinaryenType parameterType = BinaryenTypeNone();
+        int totalParams = fnDeclNode->getParameters()->getElements().size();
+
+        if (totalParams > 0) {
+            BinaryenType* types = new BinaryenType[totalParams];
+
+            for (int i = 0; i < totalParams; i++) {
+                shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(fnDeclNode->getParameters()->getElements().at(i));
+
+                identNode->setMappedBinaryenIndex(i);
+
+                scope.insert(identNode->getIdentifier(), identNode);
+                types[i] = getBinaryenTypeFromTypeDeclaration(
+
+                    dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getParameters()->getElements().at(i)->getValue())
+                );
+            }
+
+            parameterType = BinaryenTypeCreate(types, totalParams);
+        }
+
+        string functionName = Compiler::getQualifiedFunctionIdentifier(
+            identifier,
+            dynamic_pointer_cast<ASTNode>(fnDeclNode)
+        );
+
+        BinaryenFunctionRef fn = BinaryenAddFunction(
+            module,
+            functionName.c_str(),
+            parameterType,
+            getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
+            NULL,
+            0,
+            generate(fnDeclNode->getDefinition(), module)
+        );
+
+        if (addToExports) {
+            BinaryenAddFunctionExport(module, functionName.c_str(), functionName.c_str());
+        }
+
+        scope.exitScope();
     }
 
     BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, BinaryenModuleRef &module) {
@@ -121,8 +154,11 @@ namespace Theta {
     BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, BinaryenModuleRef &module) {
         BinaryenExpressionRef* arguments = new BinaryenExpressionRef[funcInvNode->getParameters()->getElements().size()];
 
-        string funcName = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
-        
+        string funcName = Compiler::getQualifiedFunctionIdentifier(
+            dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier(),
+            funcInvNode
+        );
+    
         for (int i = 0; i < funcInvNode->getParameters()->getElements().size(); i++) {
             arguments[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
         }
@@ -133,6 +169,16 @@ namespace Theta {
             arguments,
             funcInvNode->getParameters()->getElements().size(),
             getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(funcInvNode->getResolvedType()))
+        );
+    }
+
+    BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
+        shared_ptr<ASTNode> identInScope = scope.lookup(identNode->getIdentifier());
+
+        return BinaryenLocalGet(
+            module,
+            identInScope->getMappedBinaryenIndex(),
+            getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(identNode->getResolvedType()))
         );
     }
 
@@ -152,8 +198,7 @@ namespace Theta {
             throw runtime_error("Invalid operand types for binary operation");
         }
 
-        // TODO: This wont work if we have nested operations on either side
-        if (binOpNode->getLeft()->getNodeType() == ASTNode::STRING_LITERAL) {
+        if (dynamic_pointer_cast<TypeDeclarationNode>(binOpNode->getResolvedType())->getType() == DataTypes::STRING) {
             return BinaryenStringConcat(
                 module,
                 binaryenLeft,
@@ -277,5 +322,21 @@ namespace Theta {
         if (typeDeclaration->getType() == DataTypes::NUMBER) return BinaryenTypeInt64();
         if (typeDeclaration->getType() == DataTypes::STRING) return BinaryenTypeStringref();
         if (typeDeclaration->getType() == DataTypes::BOOLEAN) return BinaryenTypeInt32();
+    }
+
+    void CodeGen::hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements) {
+        scope.enterScope();
+
+        for (auto ast : elements) bindIdentifierToScope(ast);
+    }
+
+    void CodeGen::bindIdentifierToScope(shared_ptr<ASTNode> ast) {
+        string identifier = dynamic_pointer_cast<IdentifierNode>(ast->getLeft())->getIdentifier();
+
+        if (ast->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            identifier = Compiler::getQualifiedFunctionIdentifier(identifier, ast->getRight());
+        } 
+
+        scope.insert(identifier, ast->getRight());
     }
 }
