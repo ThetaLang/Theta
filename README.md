@@ -3,7 +3,7 @@
 
 ## Introduction
 
-Welcome to Theta! If you're into modern, functional programming languages with a clean syntax and powerful features, you're in the right place. Theta combines the best of functional programming with a strong type system and expressive syntax to help you write clean, efficient, and maintainable code. Whether you're building data-driven applications or just tinkering with new ideas, Theta is here to make your coding experience smoother and more enjoyable.
+Welcome to Theta! If you're into modern, functional programming languages with a clean syntax and powerful features, you're in the right place. Theta combines the best of functional programming with a strong type system and expressive syntax to help you write clean, efficient, and maintainable code. Whether you're building data-driven applications or just tinkering with new ideas, Theta is here to make your coding experience smoother and more enjoyable
 
 [View the formal language grammar in BNF, if you're into that kind of thing.](doc/theta_grammar.bnf)
 
