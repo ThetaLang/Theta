@@ -111,6 +111,15 @@ namespace Theta {
              */
             static string getQualifiedFunctionIdentifier(string variableName, shared_ptr<ASTNode> node);
 
+            /**
+             * @brief Finds all AST nodes of a specific type within the tree rooted at a given node.
+             * 
+             * @param node The root node to search from.
+             * @param type The type of nodes to find.
+             * @return vector<shared_ptr<ASTNode>> A vector of found nodes.
+             */
+            static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
+
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:
             /**

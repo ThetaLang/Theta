@@ -1,15 +1,14 @@
 #include <iostream>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
 #include "lexer/Lexemes.hpp"
 #include "StandardLibrary.hpp"
-#include "parser/ast/ASTNodeList.hpp"
-#include "parser/ast/FunctionDeclarationNode.hpp"
-#include "parser/ast/IdentifierNode.hpp"
-#include "parser/ast/TypeDeclarationNode.hpp"
 #include "CodeGen.hpp"
 #include "DataTypes.hpp"
+#include "parser/ast/AssignmentNode.hpp"
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
@@ -33,6 +32,8 @@ namespace Theta {
             generateSource(dynamic_pointer_cast<SourceNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CAPSULE) {
             return generateCapsule(dynamic_pointer_cast<CapsuleNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::ASSIGNMENT) {
+            return generateAssignment(dynamic_pointer_cast<AssignmentNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BLOCK) {
             return generateBlock(dynamic_pointer_cast<ASTNodeList>(node), module);
         } else if (node->getNodeType() == ASTNode::RETURN) {
@@ -80,6 +81,33 @@ namespace Theta {
         }
     }
 
+    BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> assignmentNode, BinaryenModuleRef &module) {
+        string assignmentIdentifier = dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier();
+
+        if (assignmentNode->getRight()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
+            // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
+            // local idx
+            shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
+            int idxOfAssignment = stoi(currentIdentIdx->getLiteralValue());
+
+            currentIdentIdx->setLiteralValue(to_string(idxOfAssignment + 1));
+            scope.insert(LOCAL_IDX_SCOPE_KEY, currentIdentIdx);
+
+            shared_ptr<ASTNode> assignmentRhs = assignmentNode->getRight();
+            assignmentRhs->setMappedBinaryenIndex(idxOfAssignment);
+            scope.insert(assignmentIdentifier, assignmentRhs);
+
+            return BinaryenLocalSet(
+                module,
+                idxOfAssignment,
+                generate(assignmentRhs, module)
+            );
+        }
+
+        // TODO: Functions will be defined as closures which take in the scope of the surrounding block as additional parameters
+        throw new runtime_error("Lambda functions are not yet implemented.");
+    }
+
     BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
         string identifier,
         shared_ptr<FunctionDeclarationNode> fnDeclNode,
@@ -106,7 +134,18 @@ namespace Theta {
                 );
             }
 
+            scope.insert("localIdxCounter", make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(totalParams)));
+
             parameterType = BinaryenTypeCreate(types, totalParams);
+        }
+
+        vector<shared_ptr<ASTNode>> localVariables = Compiler::findAllInTree(fnDeclNode->getDefinition(), ASTNode::ASSIGNMENT);
+
+        BinaryenType* localVariableTypes = new BinaryenType[localVariables.size()];
+        for (int i = 0; i < localVariables.size(); i++) {
+            localVariableTypes[i] = getBinaryenTypeFromTypeDeclaration(
+                dynamic_pointer_cast<TypeDeclarationNode>(localVariables.at(i)->getResolvedType())
+            );
         }
 
         string functionName = Compiler::getQualifiedFunctionIdentifier(
@@ -119,8 +158,8 @@ namespace Theta {
             functionName.c_str(),
             parameterType,
             getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
-            NULL,
-            0,
+            localVariableTypes,
+            localVariables.size(),
             generate(fnDeclNode->getDefinition(), module)
         );
 

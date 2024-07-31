@@ -242,4 +242,46 @@ namespace Theta {
 
         return functionIdentifier;
     }
+
+    vector<shared_ptr<ASTNode>> Compiler::findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types nodeType) {
+        if (node->getNodeType() == nodeType) return { node };
+
+        if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
+            vector<shared_ptr<ASTNode>> found;
+            shared_ptr<ControlFlowNode> cfNode = dynamic_pointer_cast<ControlFlowNode>(node);
+
+            for (int i = 0; i < cfNode->getConditionExpressionPairs().size(); i++) {
+                vector<shared_ptr<ASTNode>> foundInElem = findAllInTree(cfNode->getConditionExpressionPairs().at(i).second, nodeType);
+
+                found.insert(found.end(), foundInElem.begin(), foundInElem.end());
+            }
+
+            return found;
+        }
+
+        if (node->getValue()) return findAllInTree(node->getValue(), nodeType);
+
+        if (node->getLeft()) {
+            vector<shared_ptr<ASTNode>> found = findAllInTree(node->getLeft(), nodeType);
+            vector<shared_ptr<ASTNode>> rightFound = findAllInTree(node->getRight(), nodeType);
+
+            found.insert(found.end(), rightFound.begin(), rightFound.end());
+
+            return found;
+        }
+
+        if (node->hasMany()) {
+            vector<shared_ptr<ASTNode>> found;
+            shared_ptr<ASTNodeList> nodeList = dynamic_pointer_cast<ASTNodeList>(node);
+
+            for (int i = 0; i < nodeList->getElements().size(); i++) {
+                vector<shared_ptr<ASTNode>> foundInElem = findAllInTree(nodeList->getElements().at(i), nodeType);
+                found.insert(found.end(), foundInElem.begin(), foundInElem.end());
+            }
+
+            return found;
+        }
+
+        return {};
+    }
 }

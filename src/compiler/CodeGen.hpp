@@ -8,6 +8,7 @@
 #include "../parser/ast/SourceNode.hpp"
 #include "compiler/SymbolTableStack.hpp"
 #include "parser/ast/ASTNodeList.hpp"
+#include "parser/ast/AssignmentNode.hpp"
 #include "parser/ast/CapsuleNode.hpp"
 #include "parser/ast/FunctionDeclarationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
@@ -26,6 +27,7 @@ namespace Theta {
             BinaryenModuleRef generateWasmFromAST(shared_ptr<ASTNode> ast);
             BinaryenExpressionRef generate(shared_ptr<ASTNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateCapsule(shared_ptr<CapsuleNode> node, BinaryenModuleRef &module);
+            BinaryenExpressionRef generateAssignment(shared_ptr<AssignmentNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBlock(shared_ptr<ASTNodeList> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionDeclaration(string identifier, shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module, bool addToExports = false);
@@ -41,6 +43,8 @@ namespace Theta {
 
         private:
             SymbolTableStack scope;
+
+            string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
 
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
             static BinaryenType getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
