@@ -9,6 +9,8 @@
 #include "CodeGen.hpp"
 #include "DataTypes.hpp"
 #include "parser/ast/AssignmentNode.hpp"
+#include "parser/ast/IdentifierNode.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
@@ -67,14 +69,24 @@ namespace Theta {
         for (auto elem : capsuleElements) {
             string elemType = dynamic_pointer_cast<TypeDeclarationNode>(elem->getResolvedType())->getType();
             if (elem->getNodeType() == ASTNode::ASSIGNMENT) {
-                shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(elem->getLeft());
+                string identifier = dynamic_pointer_cast<IdentifierNode>(elem->getLeft())->getIdentifier();
 
                 if (elemType == DataTypes::FUNCTION) {
                     generateFunctionDeclaration(
-                        identNode->getIdentifier(),
+                        identifier,
                         dynamic_pointer_cast<FunctionDeclarationNode>(elem->getRight()),
                         module,
                         true
+                    );
+                } else {
+                    shared_ptr<ASTNode> assignmentRhs = elem->getRight();
+                    assignmentRhs->setMappedBinaryenIndex(-1); //Index of -1 means its a global
+                    scope.insert(identifier, assignmentRhs);
+
+                    BinaryenGlobalSet(
+                        module,
+                        identifier.c_str(),
+                        generate(assignmentRhs, module)
                     );
                 }
             }
@@ -84,6 +96,12 @@ namespace Theta {
     BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> assignmentNode, BinaryenModuleRef &module) {
         string assignmentIdentifier = dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier();
 
+        // Function declarations dont get generated generically like the rest of the AST elements, they are not part of the "generate" method,
+        // because they behave differently depending on where the function was declared. A function declared at the top level of capsule will
+        // be hoisted and will have no inherent scope bound to it. 
+        //
+        // A function declared within another function body OR within any other structure will be turned into a closure that contains the scope
+        // of anything outside of that function.
         if (assignmentNode->getRight()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
             // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
             // local idx
@@ -212,6 +230,16 @@ namespace Theta {
 
     BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
         shared_ptr<ASTNode> identInScope = scope.lookup(identNode->getIdentifier());
+
+        if (identInScope->getMappedBinaryenIndex() == -1) {
+            string identName = identNode->getIdentifier();
+        
+            return BinaryenGlobalGet(
+                module,
+                identName.c_str(),
+                getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(identInScope->getResolvedType()))
+            );
+        }
 
         return BinaryenLocalGet(
             module,
