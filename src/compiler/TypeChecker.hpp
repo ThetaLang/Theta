@@ -267,15 +267,6 @@ namespace Theta {
             static bool isBooleanOperator(string op);
 
             /**
-             * @brief Finds all AST nodes of a specific type within the tree rooted at a given node.
-             * 
-             * @param node The root node to search from.
-             * @param type The type of nodes to find.
-             * @return vector<shared_ptr<ASTNode>> A vector of found nodes.
-             */
-            static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
-
-            /**
              * @brief Creates a variadic type node from a vector of type declaration nodes, useful for functions that can return
              * multiple types.
              * 

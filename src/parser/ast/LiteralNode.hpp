@@ -15,6 +15,7 @@ namespace Theta {
             LiteralNode(ASTNode::Types typ, string val) : ASTNode(typ), literalValue(val) {};
 
             string getLiteralValue() { return literalValue; }
+            void setLiteralValue(string val) { literalValue = val; }
 
             string toJSON() const override {
                 ostringstream oss;

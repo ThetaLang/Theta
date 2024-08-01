@@ -1,15 +1,16 @@
 #include <iostream>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
 #include "lexer/Lexemes.hpp"
 #include "StandardLibrary.hpp"
-#include "parser/ast/ASTNodeList.hpp"
-#include "parser/ast/FunctionDeclarationNode.hpp"
-#include "parser/ast/IdentifierNode.hpp"
-#include "parser/ast/TypeDeclarationNode.hpp"
 #include "CodeGen.hpp"
 #include "DataTypes.hpp"
+#include "parser/ast/AssignmentNode.hpp"
+#include "parser/ast/IdentifierNode.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
@@ -33,6 +34,8 @@ namespace Theta {
             generateSource(dynamic_pointer_cast<SourceNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CAPSULE) {
             return generateCapsule(dynamic_pointer_cast<CapsuleNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::ASSIGNMENT) {
+            return generateAssignment(dynamic_pointer_cast<AssignmentNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BLOCK) {
             return generateBlock(dynamic_pointer_cast<ASTNodeList>(node), module);
         } else if (node->getNodeType() == ASTNode::RETURN) {
@@ -66,18 +69,61 @@ namespace Theta {
         for (auto elem : capsuleElements) {
             string elemType = dynamic_pointer_cast<TypeDeclarationNode>(elem->getResolvedType())->getType();
             if (elem->getNodeType() == ASTNode::ASSIGNMENT) {
-                shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(elem->getLeft());
+                string identifier = dynamic_pointer_cast<IdentifierNode>(elem->getLeft())->getIdentifier();
 
                 if (elemType == DataTypes::FUNCTION) {
                     generateFunctionDeclaration(
-                        identNode->getIdentifier(),
+                        identifier,
                         dynamic_pointer_cast<FunctionDeclarationNode>(elem->getRight()),
                         module,
                         true
                     );
+                } else {
+                    shared_ptr<ASTNode> assignmentRhs = elem->getRight();
+                    assignmentRhs->setMappedBinaryenIndex(-1); //Index of -1 means its a global
+                    scope.insert(identifier, assignmentRhs);
+
+                    BinaryenGlobalSet(
+                        module,
+                        identifier.c_str(),
+                        generate(assignmentRhs, module)
+                    );
                 }
             }
         }
+    }
+
+    BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> assignmentNode, BinaryenModuleRef &module) {
+        string assignmentIdentifier = dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier();
+
+        // Function declarations dont get generated generically like the rest of the AST elements, they are not part of the "generate" method,
+        // because they behave differently depending on where the function was declared. A function declared at the top level of capsule will
+        // be hoisted and will have no inherent scope bound to it. 
+        //
+        // A function declared within another function body OR within any other structure will be turned into a closure that contains the scope
+        // of anything outside of that function.
+        if (assignmentNode->getRight()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
+            // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
+            // local idx
+            shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
+            int idxOfAssignment = stoi(currentIdentIdx->getLiteralValue());
+
+            currentIdentIdx->setLiteralValue(to_string(idxOfAssignment + 1));
+            scope.insert(LOCAL_IDX_SCOPE_KEY, currentIdentIdx);
+
+            shared_ptr<ASTNode> assignmentRhs = assignmentNode->getRight();
+            assignmentRhs->setMappedBinaryenIndex(idxOfAssignment);
+            scope.insert(assignmentIdentifier, assignmentRhs);
+
+            return BinaryenLocalSet(
+                module,
+                idxOfAssignment,
+                generate(assignmentRhs, module)
+            );
+        }
+
+        // TODO: Functions will be defined as closures which take in the scope of the surrounding block as additional parameters
+        throw new runtime_error("Lambda functions are not yet implemented.");
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
@@ -87,9 +133,10 @@ namespace Theta {
         bool addToExports
     ) {
         scope.enterScope();
-    
         BinaryenType parameterType = BinaryenTypeNone();
         int totalParams = fnDeclNode->getParameters()->getElements().size();
+
+        scope.insert(LOCAL_IDX_SCOPE_KEY, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(totalParams)));
 
         if (totalParams > 0) {
             BinaryenType* types = new BinaryenType[totalParams];
@@ -109,6 +156,15 @@ namespace Theta {
             parameterType = BinaryenTypeCreate(types, totalParams);
         }
 
+        vector<shared_ptr<ASTNode>> localVariables = Compiler::findAllInTree(fnDeclNode->getDefinition(), ASTNode::ASSIGNMENT);
+
+        BinaryenType* localVariableTypes = new BinaryenType[localVariables.size()];
+        for (int i = 0; i < localVariables.size(); i++) {
+            localVariableTypes[i] = getBinaryenTypeFromTypeDeclaration(
+                dynamic_pointer_cast<TypeDeclarationNode>(localVariables.at(i)->getResolvedType())
+            );
+        }
+
         string functionName = Compiler::getQualifiedFunctionIdentifier(
             identifier,
             dynamic_pointer_cast<ASTNode>(fnDeclNode)
@@ -119,8 +175,8 @@ namespace Theta {
             functionName.c_str(),
             parameterType,
             getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
-            NULL,
-            0,
+            localVariableTypes,
+            localVariables.size(),
             generate(fnDeclNode->getDefinition(), module)
         );
 
@@ -175,6 +231,16 @@ namespace Theta {
     BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
         shared_ptr<ASTNode> identInScope = scope.lookup(identNode->getIdentifier());
 
+        if (identInScope->getMappedBinaryenIndex() == -1) {
+            string identName = identNode->getIdentifier();
+        
+            return BinaryenGlobalGet(
+                module,
+                identName.c_str(),
+                getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(identInScope->getResolvedType()))
+            );
+        }
+
         return BinaryenLocalGet(
             module,
             identInScope->getMappedBinaryenIndex(),
@@ -191,8 +257,6 @@ namespace Theta {
 
         BinaryenExpressionRef binaryenLeft = generate(binOpNode->getLeft(), module);
         BinaryenExpressionRef binaryenRight = generate(binOpNode->getRight(), module);
-
-        cout << binOpNode->toJSON() << endl;
 
         if (!binaryenLeft || !binaryenRight) {
             throw runtime_error("Invalid operand types for binary operation");
