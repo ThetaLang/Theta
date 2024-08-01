@@ -57,6 +57,11 @@ void OptimizationPass::optimize(shared_ptr<ASTNode> &ast, bool isCapsuleDirectCh
         optimize(params);
 
         optimize(funcDecNode->getDefinition());
+    } else if (ast->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
+        shared_ptr<FunctionInvocationNode> funcInvNode = dynamic_pointer_cast<FunctionInvocationNode>(ast);
+
+        shared_ptr<ASTNode> args = dynamic_pointer_cast<ASTNode>(funcInvNode->getParameters());
+        optimize(args);
     } else if (ast->getNodeType() == ASTNode::CONTROL_FLOW) {
         shared_ptr<ControlFlowNode> cFlowNode = dynamic_pointer_cast<ControlFlowNode>(ast);
         vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> newPairs;

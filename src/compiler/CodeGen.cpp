@@ -115,9 +115,10 @@ namespace Theta {
         bool addToExports
     ) {
         scope.enterScope();
-    
         BinaryenType parameterType = BinaryenTypeNone();
         int totalParams = fnDeclNode->getParameters()->getElements().size();
+
+        scope.insert(LOCAL_IDX_SCOPE_KEY, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(totalParams)));
 
         if (totalParams > 0) {
             BinaryenType* types = new BinaryenType[totalParams];
@@ -133,8 +134,6 @@ namespace Theta {
                     dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getParameters()->getElements().at(i)->getValue())
                 );
             }
-
-            scope.insert("localIdxCounter", make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(totalParams)));
 
             parameterType = BinaryenTypeCreate(types, totalParams);
         }
@@ -230,8 +229,6 @@ namespace Theta {
 
         BinaryenExpressionRef binaryenLeft = generate(binOpNode->getLeft(), module);
         BinaryenExpressionRef binaryenRight = generate(binOpNode->getRight(), module);
-
-        cout << binOpNode->toJSON() << endl;
 
         if (!binaryenLeft || !binaryenRight) {
             throw runtime_error("Invalid operand types for binary operation");
