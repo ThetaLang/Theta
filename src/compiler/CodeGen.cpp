@@ -42,6 +42,8 @@ namespace Theta {
             return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
         } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
             return generateFunctionInvocation(dynamic_pointer_cast<FunctionInvocationNode>(node), module);
+        } else if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
+            return generateControlFlow(dynamic_pointer_cast<ControlFlowNode>(node), module);
         } else if (node->getNodeType() == ASTNode::IDENTIFIER) {
             return generateIdentifier(dynamic_pointer_cast<IdentifierNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BINARY_OPERATION) {
@@ -228,6 +230,49 @@ namespace Theta {
         );
     }
 
+    BinaryenExpressionRef CodeGen::generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module) {
+        controlFlowNode->getConditionExpressionPairs();
+
+        BinaryenExpressionRef expr = NULL;
+
+        // WASM doesnt support else-if structured natively, so we merge the else-ifs into nested else blocks that have ifs
+        // inside of them. So the following:
+        // if (x == 1) {
+        // } else if (x == 2) {
+        // } else if (x == 3) {
+        // } else {
+        // }
+        //
+        // becomes this:
+        // if (x == 1) {
+        // } else {
+        //   if (x == 2) {
+        //   } else {
+        //     if (x == 3) {
+        //     } else {
+        //     }
+        //   }
+        // }
+        for (int i = controlFlowNode->getConditionExpressionPairs().size() - 1; i >= 0; i--) {
+            pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>> cndExprPair = controlFlowNode->getConditionExpressionPairs().at(i);
+
+            // Handle the else case
+            if (cndExprPair.first == nullptr) {
+                expr = generate(cndExprPair.second, module);
+                continue;
+            }
+
+            expr = BinaryenIf(
+                module,
+                generate(cndExprPair.first, module),
+                generate(cndExprPair.second, module),
+                expr
+            );
+        }
+
+        return expr;
+    }
+
     BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
         shared_ptr<ASTNode> identInScope = scope.lookup(identNode->getIdentifier());
 
@@ -253,8 +298,6 @@ namespace Theta {
             return generateExponentOperation(binOpNode, module);
         }
 
-        BinaryenOp op = getBinaryenOpFromBinOpNode(binOpNode);
-
         BinaryenExpressionRef binaryenLeft = generate(binOpNode->getLeft(), module);
         BinaryenExpressionRef binaryenRight = generate(binOpNode->getRight(), module);
 
@@ -262,13 +305,11 @@ namespace Theta {
             throw runtime_error("Invalid operand types for binary operation");
         }
 
-        if (dynamic_pointer_cast<TypeDeclarationNode>(binOpNode->getResolvedType())->getType() == DataTypes::STRING) {
-            return BinaryenStringConcat(
-                module,
-                binaryenLeft,
-                binaryenRight
-            );
-        }
+        if (dynamic_pointer_cast<TypeDeclarationNode>(binOpNode->getLeft()->getResolvedType())->getType() == DataTypes::STRING) {
+            return generateStringBinaryOperation(binOpNode->getOperator(), binaryenLeft, binaryenRight, module);
+        } 
+
+        BinaryenOp op = getBinaryenOpFromBinOpNode(binOpNode);
 
         return BinaryenBinary(
             module,
@@ -276,6 +317,22 @@ namespace Theta {
             binaryenLeft,
             binaryenRight
         );
+    }
+
+    BinaryenExpressionRef CodeGen::generateStringBinaryOperation(string op, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenModuleRef &module) {
+        if (op == Lexemes::PLUS) {
+            return BinaryenStringConcat(module, left, right);
+        } else if (op == Lexemes::INEQUALITY) {
+            // Binaryen supports string equality checks but not inequality checks, so we need to wrap an equality check
+            // in a unary NOT to achieve the same effect
+            return BinaryenUnary(
+                module,
+                BinaryenEqZInt32(),
+                BinaryenStringEq(module, BinaryenStringEqEqual(), left, right)
+            );
+        }
+
+        return BinaryenStringEq(module, BinaryenStringEqEqual(), left, right);
     }
 
     BinaryenExpressionRef CodeGen::generateUnaryOperation(shared_ptr<UnaryOperationNode> unaryOpNode, BinaryenModuleRef &module) {
@@ -361,25 +418,21 @@ namespace Theta {
 
     BinaryenOp CodeGen::getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> binOpNode) {
         string op = binOpNode->getOperator();
+
         if (op == Lexemes::PLUS) return BinaryenAddInt64();
         if (op == Lexemes::MINUS) return BinaryenSubInt64();
         if (op == Lexemes::DIVISION) return BinaryenDivSInt64();
         if (op == Lexemes::TIMES) return BinaryenMulInt64();
         if (op == Lexemes::MODULO) return BinaryenRemSInt64();
 
-        string resolvedType = dynamic_pointer_cast<TypeDeclarationNode>(binOpNode->getLeft()->getResolvedType())->getType();
+        string dataType = dynamic_pointer_cast<TypeDeclarationNode>(binOpNode->getLeft()->getResolvedType())->getType();
 
-        if (op == Lexemes::EQUALITY && resolvedType == DataTypes::NUMBER) return BinaryenEqInt64();
-        if (op == Lexemes::EQUALITY && resolvedType == DataTypes::BOOLEAN) return BinaryenEqInt32();
-        if (op == Lexemes::EQUALITY && resolvedType == DataTypes::STRING) return BinaryenStringEqEqual();
-        if (op == Lexemes::INEQUALITY && resolvedType == DataTypes::NUMBER) return BinaryenNeInt64();
-        if (op == Lexemes::INEQUALITY && resolvedType == DataTypes::BOOLEAN) return BinaryenEqInt32();
-        if (op == Lexemes::INEQUALITY && resolvedType == DataTypes::STRING) return BinaryenStringEqEqual(); // FIXME: This is a stub
-        if (op == Lexemes::LT && resolvedType == DataTypes::NUMBER) return BinaryenLtSInt64();
-        if (op == Lexemes::GT && resolvedType == DataTypes::NUMBER) return BinaryenGtSInt64();
-
-
-        // if (op == "**") return
+        if (op == Lexemes::EQUALITY && dataType == DataTypes::NUMBER) return BinaryenEqInt64();
+        if (op == Lexemes::EQUALITY && dataType == DataTypes::BOOLEAN) return BinaryenEqInt32();
+        if (op == Lexemes::INEQUALITY && dataType == DataTypes::NUMBER) return BinaryenNeInt64();
+        if (op == Lexemes::INEQUALITY && dataType == DataTypes::BOOLEAN) return BinaryenEqInt32();
+        if (op == Lexemes::LT && dataType == DataTypes::NUMBER) return BinaryenLtSInt64();
+        if (op == Lexemes::GT && dataType == DataTypes::NUMBER) return BinaryenGtSInt64();
     }
 
     BinaryenType CodeGen::getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> typeDeclaration) {
