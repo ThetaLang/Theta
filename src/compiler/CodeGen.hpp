@@ -15,6 +15,7 @@
 #include "parser/ast/ReturnNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
+#include "parser/ast/ControlFlowNode.hpp"
 #include <binaryen-c.h>
 
 using namespace std;
@@ -32,6 +33,7 @@ namespace Theta {
             BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionDeclaration(string identifier, shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module, bool addToExports = false);
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
+            BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBinaryOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateUnaryOperation(shared_ptr<UnaryOperationNode> node, BinaryenModuleRef &module);
@@ -46,6 +48,8 @@ namespace Theta {
 
             string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
 
+            BinaryenExpressionRef generateStringBinaryOperation(string op, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenModuleRef &module);
+        
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
             static BinaryenType getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
 
