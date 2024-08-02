@@ -16,6 +16,7 @@ namespace Theta {
         const string SYMBOL = "Symbol";
         const string TUPLE = "Tuple";
         const string UNKNOWN = "Unknown";
+        const string NIL = "Nil";
         const string VARIADIC = "Variadic";
     }
 }

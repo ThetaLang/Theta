@@ -340,6 +340,7 @@ namespace Theta {
 
     bool TypeChecker::checkControlFlowNode(shared_ptr<ControlFlowNode> node) {
         vector<shared_ptr<TypeDeclarationNode>> returnTypes;
+        bool hasElseBlock = false;
 
         for (int i = 0; i < node->getConditionExpressionPairs().size(); i++) {
             pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>> pair = node->getConditionExpressionPairs().at(i);
@@ -366,6 +367,8 @@ namespace Theta {
 
                     return false;
                 }
+            } else {
+                hasElseBlock = true;
             }
 
             bool validExpression = checkAST(pair.second);
@@ -374,6 +377,11 @@ namespace Theta {
 
             returnTypes.push_back(dynamic_pointer_cast<TypeDeclarationNode>(pair.second->getResolvedType()));
         }
+
+        // If we have an if without an else, thats fine, but that means we have a potential hole if we try to use this as
+        // a return value to something (like assigning a variable to the result of a control flow). We can return nil as part
+        // of the resolved type of the node, which will cause assignments without an else to fail (as they should)
+        if (!hasElseBlock) returnTypes.push_back(make_shared<TypeDeclarationNode>(DataTypes::NIL));
 
         if (returnTypes.size() == 1) {
             node->setResolvedType(returnTypes[0]);
