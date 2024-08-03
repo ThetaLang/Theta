@@ -23,8 +23,6 @@ using namespace std;
 namespace Theta {
     class CodeGen {
         public:
-            // using GenerateResult = std::variant<BinaryenExpressionRef, BinaryenLiteral, int>;
-
             BinaryenModuleRef generateWasmFromAST(shared_ptr<ASTNode> ast);
             BinaryenExpressionRef generate(shared_ptr<ASTNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateCapsule(shared_ptr<CapsuleNode> node, BinaryenModuleRef &module);
