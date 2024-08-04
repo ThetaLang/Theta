@@ -18,9 +18,13 @@ namespace Theta {
 
         BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
 
+        prepareFunctionTable(module);
+
         StandardLibrary::registerFunctions(module);
 
         generate(ast, module);
+
+        registerModuleFunctions(module);
 
         BinaryenModuleAutoDrop(module);
 
@@ -124,6 +128,8 @@ namespace Theta {
             );
         }
 
+        
+
         // TODO: Functions will be defined as closures which take in the scope of the surrounding block as additional parameters
         throw new runtime_error("Lambda functions are not yet implemented.");
     }
@@ -181,6 +187,8 @@ namespace Theta {
             localVariables.size(),
             generate(fnDeclNode->getDefinition(), module)
         );
+
+        fnNamesToAddToTable.push_back(functionName);
 
         if (addToExports) {
             BinaryenAddFunctionExport(module, functionName.c_str(), functionName.c_str());
@@ -455,5 +463,32 @@ namespace Theta {
         } 
 
         scope.insert(identifier, ast->getRight());
+    }
+
+    void CodeGen::prepareFunctionTable(BinaryenModuleRef &module) {
+        BinaryenAddTable(
+            module,
+            FN_TABLE_NAME.c_str(),
+            10,
+            1000,
+            BinaryenTypeFuncref()
+        );
+    }
+
+    void CodeGen::registerModuleFunctions(BinaryenModuleRef &module) {
+        const char** fnNames = new const char*[fnNamesToAddToTable.size()];
+
+        for (int i = 0; i < fnNamesToAddToTable.size(); i++) {
+            fnNames[i] = fnNamesToAddToTable.at(i).c_str();
+        }
+
+        BinaryenAddActiveElementSegment(
+            module,
+            FN_TABLE_NAME.c_str(),
+            "0",
+            fnNames,
+            fnNamesToAddToTable.size(),
+            BinaryenConst(module, BinaryenLiteralInt32(0))
+        );
     }
 }

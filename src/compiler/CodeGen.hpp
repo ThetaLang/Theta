@@ -43,8 +43,10 @@ namespace Theta {
 
         private:
             SymbolTableStack scope;
-
+            string FN_TABLE_NAME = "0";
+            vector<string> fnNamesToAddToTable;
             string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
+            string BOOTSTRAP_FUNC_NAME = "ThetaLang.bootstrap";
 
             BinaryenExpressionRef generateStringBinaryOperation(string op, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenModuleRef &module);
         
@@ -53,5 +55,7 @@ namespace Theta {
 
             void hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements);
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
+            void prepareFunctionTable(BinaryenModuleRef &module);
+            void registerModuleFunctions(BinaryenModuleRef &module);
     };
 }
