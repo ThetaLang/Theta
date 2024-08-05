@@ -61,6 +61,6 @@ namespace Theta {
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
             void registerModuleFunctions(BinaryenModuleRef &module);
 
-            deque<shared_ptr<ASTNode>> findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, deque<shared_ptr<ASTNode>> found = {});
+            vector<shared_ptr<ASTNode>> findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> found = {});
     };
 }

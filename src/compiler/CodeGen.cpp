@@ -1,4 +1,3 @@
-#include <deque>
 #include <iostream>
 #include <memory>
 #include <set>
@@ -46,6 +45,8 @@ namespace Theta {
             return generateBlock(dynamic_pointer_cast<ASTNodeList>(node), module);
         } else if (node->getNodeType() == ASTNode::RETURN) {
             return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
+        } else if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            generateClosure(dynamic_pointer_cast<FunctionDeclarationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
             return generateFunctionInvocation(dynamic_pointer_cast<FunctionInvocationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
@@ -142,8 +143,6 @@ namespace Theta {
         set<string> requiredScopeIdentifiers;
         set<string> paramIdentifiers;
 
-        cout << "GENERATING CLOSURE FOR FUNCTION, AST NODE ID: " << to_string(fnDeclNode->getId()) << endl;
-        
         for (auto param : fnDeclNode->getParameters()->getElements()) {
             paramIdentifiers.insert(dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier());
         }
@@ -163,20 +162,29 @@ namespace Theta {
             requiredScopeIdentifiers.insert(identifierName);
         }
     
-        // Find any identifiers that were passed in as parameters
-        deque<shared_ptr<ASTNode>> identifiersFromParams = findParameterizedIdentifiersFromAncestors(fnDeclNode, requiredScopeIdentifiers);
+        // Find any identifiers that were passed in as parameters, those need to be included in the new parameter set
+        vector<shared_ptr<ASTNode>> closureParameters = findParameterizedIdentifiersFromAncestors(fnDeclNode, requiredScopeIdentifiers);
+
+        closureParameters.insert(
+            closureParameters.end(),
+            fnDeclNode->getParameters()->getElements().begin(),
+            fnDeclNode->getParameters()->getElements().end()
+        );
 
         // If we've traversed the tree for parameters and we still have some missing identifiers, they must be defined in bodies
         if (requiredScopeIdentifiers.size() > 0) {
+            cout << "I STILL NEED MORE! DIDNT FIND: ";
+            for (auto i : requiredScopeIdentifiers) {
+                cout << i << ", ";
+            }
 
+            // TODO: scan ancestors for code relating to set variables. make sure to trace rhs to check if it gets assigned from
+            // a parameter
         }
     }
 
-    deque<shared_ptr<ASTNode>> CodeGen::findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, deque<shared_ptr<ASTNode>> found) {
+    vector<shared_ptr<ASTNode>> CodeGen::findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> found) {
         if (identifiersToFind.size() == 0 || node->getParent()->getNodeType() == ASTNode::CAPSULE) return found;
-
-        cout << "TEEHEE" << endl;
-        cout << "PARENT IS: " << node->getParent()->toJSON() << endl;
 
         if (node->getParent()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
             return findParameterizedIdentifiersFromAncestors(node->parent, identifiersToFind, found);
@@ -193,13 +201,16 @@ namespace Theta {
             ));
         }
 
-        for (auto ident : identifiersToFind) {
-            auto param = paramIdentifiers.find(ident);
+        for (auto it = identifiersToFind.begin(); it != identifiersToFind.end();) {
+            auto param = paramIdentifiers.find(*it);
 
-            if (param == paramIdentifiers.end()) continue;
+            if (param == paramIdentifiers.end()) {
+                it++;
+                continue;
+            }
 
-            found.push_front(param->second);
-            identifiersToFind.erase(ident);
+            found.push_back(param->second);
+            it = identifiersToFind.erase(it);
         }
 
         return findParameterizedIdentifiersFromAncestors(parent, identifiersToFind, found);
