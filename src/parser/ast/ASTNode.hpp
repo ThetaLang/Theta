@@ -45,9 +45,11 @@ namespace Theta {
                 UNARY_OPERATION
             };
 
+            static int nextId;
             virtual ASTNode::Types getNodeType() { return nodeType; }
             virtual string getNodeTypePretty() const { return nodeTypeToString(nodeType); }
             virtual string toJSON() const = 0;
+            int id;
             ASTNode::Types nodeType;
             shared_ptr<ASTNode> value;
             shared_ptr<ASTNode> left;
@@ -56,7 +58,12 @@ namespace Theta {
             shared_ptr<ASTNode> parent;
             int mappedBinaryenIndex;
         
-            ASTNode(ASTNode::Types type, shared_ptr<ASTNode> par) : nodeType(type), parent(par), value(nullptr) {};
+            ASTNode(ASTNode::Types type, shared_ptr<ASTNode> par) : nodeType(type), parent(par), value(nullptr) {
+                id = nextId;
+                nextId++;
+            };
+
+            virtual int getId() { return id; }
 
             virtual void setValue(shared_ptr<ASTNode> childNode) { value = childNode; }
             virtual shared_ptr<ASTNode>& getValue() { return value; }

@@ -18,6 +18,7 @@
 #include "parser/ast/FunctionInvocationNode.hpp"
 #include "parser/ast/ControlFlowNode.hpp"
 #include <binaryen-c.h>
+#include <set>
 #include <unordered_map>
 
 using namespace std;
@@ -32,6 +33,7 @@ namespace Theta {
             BinaryenExpressionRef generateBlock(shared_ptr<ASTNodeList> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionDeclaration(string identifier, shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module, bool addToExports = false);
+            void generateClosure(shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
@@ -58,5 +60,7 @@ namespace Theta {
             void hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements);
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
             void registerModuleFunctions(BinaryenModuleRef &module);
+
+            deque<shared_ptr<ASTNode>> findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, deque<shared_ptr<ASTNode>> found = {});
     };
 }

@@ -1,7 +1,10 @@
+#include <deque>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
 #include "lexer/Lexemes.hpp"
@@ -9,6 +12,7 @@
 #include "CodeGen.hpp"
 #include "DataTypes.hpp"
 #include "parser/ast/AssignmentNode.hpp"
+#include "parser/ast/FunctionDeclarationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 
@@ -126,10 +130,79 @@ namespace Theta {
             );
         }
 
-        
+        generateClosure(dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()), module);
 
         // TODO: Functions will be defined as closures which take in the scope of the surrounding block as additional parameters
         throw new runtime_error("Lambda functions are not yet implemented.");
+    }
+
+    // Transforms nested function declarations and generates an anonymous function in the function table
+    void CodeGen::generateClosure(shared_ptr<FunctionDeclarationNode> fnDeclNode, BinaryenModuleRef &module) {
+        // Capture the outer scope
+        set<string> requiredScopeIdentifiers;
+        set<string> paramIdentifiers;
+
+        cout << "GENERATING CLOSURE FOR FUNCTION, AST NODE ID: " << to_string(fnDeclNode->getId()) << endl;
+        
+        for (auto param : fnDeclNode->getParameters()->getElements()) {
+            paramIdentifiers.insert(dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier());
+        }
+
+        vector<shared_ptr<ASTNode>> identifiersInBody = Compiler::findAllInTree(fnDeclNode->getDefinition(), ASTNode::IDENTIFIER);
+    
+        for (auto ident : identifiersInBody) {
+            string identifierName = dynamic_pointer_cast<IdentifierNode>(ident)->getIdentifier();
+
+            // Only add identifiers that are not present in the function params
+            if (paramIdentifiers.find(identifierName) != paramIdentifiers.end()) continue;
+
+            // If an identifier is globally available we dont need to include it either
+            shared_ptr<ASTNode> inScope = scope.lookup(identifierName);
+            if (inScope->getMappedBinaryenIndex() == -1) continue;
+
+            requiredScopeIdentifiers.insert(identifierName);
+        }
+    
+        // Find any identifiers that were passed in as parameters
+        deque<shared_ptr<ASTNode>> identifiersFromParams = findParameterizedIdentifiersFromAncestors(fnDeclNode, requiredScopeIdentifiers);
+
+        // If we've traversed the tree for parameters and we still have some missing identifiers, they must be defined in bodies
+        if (requiredScopeIdentifiers.size() > 0) {
+
+        }
+    }
+
+    deque<shared_ptr<ASTNode>> CodeGen::findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, deque<shared_ptr<ASTNode>> found) {
+        if (identifiersToFind.size() == 0 || node->getParent()->getNodeType() == ASTNode::CAPSULE) return found;
+
+        cout << "TEEHEE" << endl;
+        cout << "PARENT IS: " << node->getParent()->toJSON() << endl;
+
+        if (node->getParent()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
+            return findParameterizedIdentifiersFromAncestors(node->parent, identifiersToFind, found);
+        }
+
+        shared_ptr<FunctionDeclarationNode> parent = dynamic_pointer_cast<FunctionDeclarationNode>(node->getParent());
+
+        unordered_map<string, shared_ptr<ASTNode>> paramIdentifiers;
+
+        for (auto param : parent->getParameters()->getElements()) {
+            paramIdentifiers.insert(make_pair(
+                dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier(),
+                param
+            ));
+        }
+
+        for (auto ident : identifiersToFind) {
+            auto param = paramIdentifiers.find(ident);
+
+            if (param == paramIdentifiers.end()) continue;
+
+            found.push_front(param->second);
+            identifiersToFind.erase(ident);
+        }
+
+        return findParameterizedIdentifiersFromAncestors(parent, identifiersToFind, found);
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
