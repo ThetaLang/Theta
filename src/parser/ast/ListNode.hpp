@@ -1,15 +1,14 @@
 #pragma once
 
-#include <string>
-#include <sstream>
 #include "ASTNode.hpp"
 #include "ASTNodeList.hpp"
+#include <memory>
 
 using namespace std;
 
 namespace Theta {
     class ListNode : public ASTNodeList {
         public:
-            ListNode() : ASTNodeList(ASTNode::LIST) {};
+            ListNode(shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::LIST) {};
     };
 }

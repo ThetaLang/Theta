@@ -273,7 +273,7 @@ namespace Theta {
              * @param types The vector of type declaration nodes.
              * @return shared_ptr<TypeDeclarationNode> The created variadic type node.
              */
-            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types);
+            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types, shared_ptr<ASTNode> parent);
     
             /**
              * @brief Generates a unique function identifier based on the function's name and its parameters to handle overloading.
@@ -291,6 +291,6 @@ namespace Theta {
              * @param original The original type declaration node to copy.
              * @return shared_ptr<TypeDeclarationNode> The deep-copied type declaration node.
              */
-            static shared_ptr<TypeDeclarationNode> deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
+            static shared_ptr<TypeDeclarationNode> deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> node, shared_ptr<ASTNode> parent);
     };
 }

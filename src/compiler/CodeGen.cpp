@@ -18,8 +18,6 @@ namespace Theta {
 
         BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
 
-        prepareFunctionTable(module);
-
         StandardLibrary::registerFunctions(module);
 
         generate(ast, module);
@@ -144,7 +142,7 @@ namespace Theta {
         BinaryenType parameterType = BinaryenTypeNone();
         int totalParams = fnDeclNode->getParameters()->getElements().size();
 
-        scope.insert(LOCAL_IDX_SCOPE_KEY, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(totalParams)));
+        scope.insert(LOCAL_IDX_SCOPE_KEY, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(totalParams), nullptr));
 
         if (totalParams > 0) {
             BinaryenType* types = new BinaryenType[totalParams];
@@ -188,7 +186,10 @@ namespace Theta {
             generate(fnDeclNode->getDefinition(), module)
         );
 
-        fnNamesToAddToTable.push_back(functionName);
+        functionNameToClosureMap.insert(make_pair(
+            functionName,
+            WasmClosure(functionNameToClosureMap.size(), totalParams)
+        ));
 
         if (addToExports) {
             BinaryenAddFunctionExport(module, functionName.c_str(), functionName.c_str());
@@ -465,21 +466,19 @@ namespace Theta {
         scope.insert(identifier, ast->getRight());
     }
 
-    void CodeGen::prepareFunctionTable(BinaryenModuleRef &module) {
+    void CodeGen::registerModuleFunctions(BinaryenModuleRef &module) {
         BinaryenAddTable(
             module,
             FN_TABLE_NAME.c_str(),
-            10,
-            1000,
+            functionNameToClosureMap.size(),
+            functionNameToClosureMap.size(),
             BinaryenTypeFuncref()
         );
-    }
 
-    void CodeGen::registerModuleFunctions(BinaryenModuleRef &module) {
-        const char** fnNames = new const char*[fnNamesToAddToTable.size()];
+        const char** fnNames = new const char*[functionNameToClosureMap.size()];
 
-        for (int i = 0; i < fnNamesToAddToTable.size(); i++) {
-            fnNames[i] = fnNamesToAddToTable.at(i).c_str();
+        for (auto& [fnName, fnRef] : functionNameToClosureMap) {
+            fnNames[fnRef.getFunctionIndex()] = fnName.c_str();
         }
 
         BinaryenAddActiveElementSegment(
@@ -487,7 +486,7 @@ namespace Theta {
             FN_TABLE_NAME.c_str(),
             "0",
             fnNames,
-            fnNamesToAddToTable.size(),
+            functionNameToClosureMap.size(),
             BinaryenConst(module, BinaryenLiteralInt32(0))
         );
     }

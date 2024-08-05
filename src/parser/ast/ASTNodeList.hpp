@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -12,7 +13,7 @@ namespace Theta {
         public:
             vector<shared_ptr<ASTNode>> elements;
 
-            ASTNodeList(ASTNode::Types type = ASTNode::AST_NODE_LIST) : ASTNode(type) {};
+            ASTNodeList(shared_ptr<ASTNode> parent, ASTNode::Types type = ASTNode::AST_NODE_LIST) : ASTNode(type, parent) {};
 
             void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 

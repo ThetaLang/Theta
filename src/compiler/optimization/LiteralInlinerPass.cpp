@@ -58,7 +58,7 @@ void LiteralInlinerPass::substituteIdentifiers(shared_ptr<ASTNode> &ast) {
 
     shared_ptr<LiteralNode> literal = dynamic_pointer_cast<LiteralNode>(foundIdentifier);
 
-    ast = make_shared<LiteralNode>(literal->getNodeType(), literal->getLiteralValue());
+    ast = make_shared<LiteralNode>(literal->getNodeType(), literal->getLiteralValue(), ast);
 }
 
 // When we have a variable assigned to a literal, we can safely just add that to the scope
@@ -135,11 +135,11 @@ void LiteralInlinerPass::unpackEnumElementsInScope(shared_ptr<ASTNode> node, Sym
             return;
         }
 
-        scope.insert(enumElIdentifier, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(i)));
+        scope.insert(enumElIdentifier, make_shared<LiteralNode>(ASTNode::NUMBER_LITERAL, to_string(i), nullptr));
     }
 
     // Insert the enum identifier itself into scope so we can remap types
-    scope.insert(baseIdentifier, make_shared<TypeDeclarationNode>(DataTypes::NUMBER));
+    scope.insert(baseIdentifier, make_shared<TypeDeclarationNode>(DataTypes::NUMBER, nullptr));
 }
 
 void LiteralInlinerPass::remapEnumTypeReferences(shared_ptr<ASTNode> &ast) {

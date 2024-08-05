@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -11,7 +12,7 @@ namespace Theta {
         public:
             string name;
 
-            CapsuleNode(string n) : name(n), ASTNode(ASTNode::CAPSULE) {};
+            CapsuleNode(string n, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::CAPSULE, parent), name(n) {};
 
             string getName() { return name; }
 

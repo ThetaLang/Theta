@@ -7,6 +7,7 @@
 #include "../parser/ast/LiteralNode.hpp"
 #include "../parser/ast/SourceNode.hpp"
 #include "compiler/SymbolTableStack.hpp"
+#include "compiler/WasmClosure.hpp"
 #include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/AssignmentNode.hpp"
 #include "parser/ast/CapsuleNode.hpp"
@@ -17,6 +18,7 @@
 #include "parser/ast/FunctionInvocationNode.hpp"
 #include "parser/ast/ControlFlowNode.hpp"
 #include <binaryen-c.h>
+#include <unordered_map>
 
 using namespace std;
 
@@ -44,7 +46,7 @@ namespace Theta {
         private:
             SymbolTableStack scope;
             string FN_TABLE_NAME = "0";
-            vector<string> fnNamesToAddToTable;
+            unordered_map<string, WasmClosure> functionNameToClosureMap;
             string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
             string BOOTSTRAP_FUNC_NAME = "ThetaLang.bootstrap";
 
@@ -55,7 +57,6 @@ namespace Theta {
 
             void hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements);
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
-            void prepareFunctionTable(BinaryenModuleRef &module);
             void registerModuleFunctions(BinaryenModuleRef &module);
     };
 }

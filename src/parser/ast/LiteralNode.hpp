@@ -1,9 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
-#include "../../lexer/Token.hpp"
 
 using namespace std;
 
@@ -12,7 +12,7 @@ namespace Theta {
         public:
             string literalValue;
 
-            LiteralNode(ASTNode::Types typ, string val) : ASTNode(typ), literalValue(val) {};
+            LiteralNode(ASTNode::Types typ, string val, shared_ptr<ASTNode> parent) : ASTNode(typ, parent), literalValue(val) {};
 
             string getLiteralValue() { return literalValue; }
             void setLiteralValue(string val) { literalValue = val; }

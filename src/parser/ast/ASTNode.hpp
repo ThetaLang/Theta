@@ -53,9 +53,10 @@ namespace Theta {
             shared_ptr<ASTNode> left;
             shared_ptr<ASTNode> right;
             shared_ptr<ASTNode> resolvedType;
+            shared_ptr<ASTNode> parent;
             int mappedBinaryenIndex;
         
-            ASTNode(ASTNode::Types type) : nodeType(type), value(nullptr) {};
+            ASTNode(ASTNode::Types type, shared_ptr<ASTNode> par) : nodeType(type), parent(par), value(nullptr) {};
 
             virtual void setValue(shared_ptr<ASTNode> childNode) { value = childNode; }
             virtual shared_ptr<ASTNode>& getValue() { return value; }
@@ -68,6 +69,9 @@ namespace Theta {
 
             virtual int getMappedBinaryenIndex() { return mappedBinaryenIndex; }
             virtual void setMappedBinaryenIndex(int idx) { mappedBinaryenIndex = idx; }
+
+            virtual void setParent(shared_ptr<ASTNode> parentNode) { parent = parentNode; }
+            virtual shared_ptr<ASTNode>& getParent() { return parent; }
 
             void setResolvedType(shared_ptr<ASTNode> typeNode) { resolvedType = typeNode; }
             shared_ptr<ASTNode> getResolvedType() { return resolvedType; }

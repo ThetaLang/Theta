@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -11,7 +12,7 @@ namespace Theta {
         public:
             string symbol;
 
-            SymbolNode(string sym) : symbol(":" + sym), ASTNode(ASTNode::SYMBOL) {};
+            SymbolNode(string sym, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::SYMBOL, parent), symbol(":" + sym) {};
 
             string getSymbol() { return symbol; }
 

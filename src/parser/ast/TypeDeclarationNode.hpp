@@ -13,7 +13,7 @@ namespace Theta {
         public:
             string type;
 
-            TypeDeclarationNode(string typ) : type(typ), ASTNodeList(ASTNode::TYPE_DECLARATION) {};
+            TypeDeclarationNode(string typ, shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::TYPE_DECLARATION), type(typ) {};
 
             string getType() { return type; }
 
