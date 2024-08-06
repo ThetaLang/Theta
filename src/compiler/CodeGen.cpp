@@ -179,8 +179,26 @@ namespace Theta {
             }
 
             // TODO: scan ancestors for code relating to set variables. make sure to trace rhs to check if it gets assigned from
-            // a parameter
+            // a parameter. I think we need to change the findParameterizedIdentifiersFromAncestors function to build 
+            // out a list of params and function body statements at the same time, then return both
         }
+    }
+
+    void CodeGen::collectClosureScope(
+        shared_ptr<ASTNode> node, 
+        set<string> &identifiersToFind,
+        vector<shared_ptr<ASTNode>> &parameters,
+        vector<shared_ptr<ASTNode>> &bodyExpressions
+    ) {
+        if (identifiersToFind.size() == 0 || node->getParent()->getNodeType() == ASTNode::CAPSULE) return;
+
+        if (node->getParent()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
+            return collectClosureScope(node->parent, identifiersToFind, parameters, bodyExpressions);
+        }
+
+        shared_ptr<FunctionDeclarationNode> parent = dynamic_pointer_cast<FunctionDeclarationNode>(node->getParent());
+
+        // TODO: finish
     }
 
     vector<shared_ptr<ASTNode>> CodeGen::findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> found) {
