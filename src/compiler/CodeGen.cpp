@@ -162,14 +162,31 @@ namespace Theta {
             requiredScopeIdentifiers.insert(identifierName);
         }
     
-        // Find any identifiers that were passed in as parameters, those need to be included in the new parameter set
-        vector<shared_ptr<ASTNode>> closureParameters = findParameterizedIdentifiersFromAncestors(fnDeclNode, requiredScopeIdentifiers);
+        vector<shared_ptr<ASTNode>> closureParameters;
+        vector<shared_ptr<ASTNode>> closureExpressions;
 
+        collectClosureScope(fnDeclNode, requiredScopeIdentifiers, closureParameters, closureExpressions);
+
+        // The collectClosureScope function will collect the parameters in reverse order, in order to preserve the order
+        // in which the params are passed throughout the ancestry path, so we need to reverse it back here to get the
+        // correct order
+        reverse(closureParameters.begin(), closureParameters.end());
+    
         closureParameters.insert(
             closureParameters.end(),
             fnDeclNode->getParameters()->getElements().begin(),
             fnDeclNode->getParameters()->getElements().end()
         );
+
+        cout << "Closure Params are, in order of left to right: ";
+        for (auto param : closureParameters) {
+            cout << param->toJSON() << ", ";
+        }
+
+        cout << endl << "Closure expressions, in order of first to last: " << endl;
+        for (auto expr : closureExpressions) {
+            cout << expr->toJSON() << endl;
+        }
 
         // If we've traversed the tree for parameters and we still have some missing identifiers, they must be defined in bodies
         if (requiredScopeIdentifiers.size() > 0) {
@@ -198,40 +215,44 @@ namespace Theta {
 
         shared_ptr<FunctionDeclarationNode> parent = dynamic_pointer_cast<FunctionDeclarationNode>(node->getParent());
 
-        // TODO: finish
-    }
+        vector<shared_ptr<ASTNode>> parentExpressions = dynamic_pointer_cast<ASTNodeList>(parent->getDefinition())->getElements();
 
-    vector<shared_ptr<ASTNode>> CodeGen::findParameterizedIdentifiersFromAncestors(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> found) {
-        if (identifiersToFind.size() == 0 || node->getParent()->getNodeType() == ASTNode::CAPSULE) return found;
+        // Go through the parent expressions backwards so that we can collect dependencies and resolve them in one pass
+        for (int i = parentExpressions.size() - 1; i >= 0; i--) {
+            shared_ptr<ASTNode> expr = parentExpressions.at(i);
 
-        if (node->getParent()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
-            return findParameterizedIdentifiersFromAncestors(node->parent, identifiersToFind, found);
-        }
+            if (expr->getNodeType() != ASTNode::ASSIGNMENT) continue;
 
-        shared_ptr<FunctionDeclarationNode> parent = dynamic_pointer_cast<FunctionDeclarationNode>(node->getParent());
+            string identifier = dynamic_pointer_cast<IdentifierNode>(expr->getLeft())->getIdentifier();
+            
+            auto identExpr = identifiersToFind.find(identifier);
 
-        unordered_map<string, shared_ptr<ASTNode>> paramIdentifiers;
+            if (identExpr == identifiersToFind.end()) continue;
+        
+            bodyExpressions.push_back(expr);
+            identifiersToFind.erase(identifier);
 
-        for (auto param : parent->getParameters()->getElements()) {
-            paramIdentifiers.insert(make_pair(
-                dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier(),
-                param
-            ));
-        }
-
-        for (auto it = identifiersToFind.begin(); it != identifiersToFind.end();) {
-            auto param = paramIdentifiers.find(*it);
-
-            if (param == paramIdentifiers.end()) {
-                it++;
-                continue;
+            // This expression we just found might depend on other identifiers, in which case we need to copy those over too
+            vector<shared_ptr<ASTNode>> dependentIdentifiers = Compiler::findAllInTree(expr->getRight(), ASTNode::IDENTIFIER);
+            for (auto ident : dependentIdentifiers) {
+                identifiersToFind.insert(dynamic_pointer_cast<IdentifierNode>(ident)->getIdentifier());
             }
+        }
+    
+        // Go through the parameters backwards so we can preserve their order if we ascend further into the ancestors. This 
+        // will get reversed at the end
+        for (int i = parent->getParameters()->getElements().size() - 1; i >= 0; i--) {
+            shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(parent->getParameters()->getElements().at(i));
 
-            found.push_back(param->second);
-            it = identifiersToFind.erase(it);
+            auto identNeeded = identifiersToFind.find(ident->getIdentifier());
+
+            if (identNeeded == identifiersToFind.end()) continue;
+
+            parameters.push_back(ident);
+            identifiersToFind.erase(ident->getIdentifier());
         }
 
-        return findParameterizedIdentifiersFromAncestors(parent, identifiersToFind, found);
+        collectClosureScope(parent, identifiersToFind, parameters, bodyExpressions);
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
