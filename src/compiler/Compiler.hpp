@@ -120,6 +120,15 @@ namespace Theta {
              */
             static vector<shared_ptr<ASTNode>> findAllInTree(shared_ptr<ASTNode> node, ASTNode::Types type);
 
+            /**
+             * @brief Creates a deep copy of a type declaration node, useful for cases where type information 
+             * needs to be duplicated without referencing the original.
+             * 
+             * @param original The original type declaration node to copy.
+             * @return shared_ptr<TypeDeclarationNode> The deep-copied type declaration node.
+             */
+            static shared_ptr<TypeDeclarationNode> deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> node, shared_ptr<ASTNode> parent);
+
             shared_ptr<map<string, string>> filesByCapsuleName;
         private:
             /**

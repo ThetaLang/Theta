@@ -638,7 +638,7 @@ namespace Theta {
         // Initially set the function resolvedType to whatever the identifier type is specified. This will get
         // updated later when we actually typecheck the function definition to whatever types the function actually returns.
         // This way, we support recursive function type resolution and cyclic function type resolution
-        node->getRight()->setResolvedType(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(ident->getValue()), node));
+        node->getRight()->setResolvedType(Compiler::deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(ident->getValue()), node));
 
         capsuleDeclarationsTable.insert(uniqueFuncIdentifier, node->getRight());
     }
@@ -837,28 +837,7 @@ namespace Theta {
         }
 
         return functionIdentifier;
-    }
-
-    shared_ptr<TypeDeclarationNode> TypeChecker::deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> original, shared_ptr<ASTNode> parent) {
-        shared_ptr<TypeDeclarationNode> copy = make_shared<TypeDeclarationNode>(original->getType(), parent);
-
-        if (original->getValue()) {
-            copy->setValue(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getValue()), copy));
-        } else if (original->getLeft()) {
-            copy->setLeft(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getLeft()), copy));
-            copy->setRight(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getRight()), copy));
-        } else if (original->getElements().size() > 0) {
-            vector<shared_ptr<ASTNode>> copyChildren;
-
-            for (int i = 0; i < original->getElements().size(); i++) {
-                copyChildren.push_back(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getElements().at(i)), copy));
-            }
-
-            copy->setElements(copyChildren);
-        }
-
-        return copy;
-    }
+    } 
 
     shared_ptr<ASTNode> TypeChecker::lookupInScope(string identifierName) {
         shared_ptr<ASTNode> foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);

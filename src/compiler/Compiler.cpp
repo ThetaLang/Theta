@@ -284,4 +284,25 @@ namespace Theta {
 
         return {};
     }
+
+    shared_ptr<TypeDeclarationNode> Compiler::deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> original, shared_ptr<ASTNode> parent) {
+        shared_ptr<TypeDeclarationNode> copy = make_shared<TypeDeclarationNode>(original->getType(), parent);
+
+        if (original->getValue()) {
+            copy->setValue(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getValue()), copy));
+        } else if (original->getLeft()) {
+            copy->setLeft(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getLeft()), copy));
+            copy->setRight(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getRight()), copy));
+        } else if (original->getElements().size() > 0) {
+            vector<shared_ptr<ASTNode>> copyChildren;
+
+            for (int i = 0; i < original->getElements().size(); i++) {
+                copyChildren.push_back(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getElements().at(i)), copy));
+            }
+
+            copy->setElements(copyChildren);
+        }
+
+        return copy;
+    }
 }

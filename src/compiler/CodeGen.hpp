@@ -33,7 +33,7 @@ namespace Theta {
             BinaryenExpressionRef generateBlock(shared_ptr<ASTNodeList> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionDeclaration(string identifier, shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module, bool addToExports = false);
-            void generateClosure(shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module);
+            shared_ptr<FunctionDeclarationNode>  generateClosure(shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
@@ -62,5 +62,7 @@ namespace Theta {
             void registerModuleFunctions(BinaryenModuleRef &module);
 
             void collectClosureScope(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> &parameters, vector<shared_ptr<ASTNode>> &bodyExpressions);
+
+            string generateFunctionHash(shared_ptr<FunctionDeclarationNode> function);
     };
 }

@@ -10,10 +10,13 @@
 #include "StandardLibrary.hpp"
 #include "CodeGen.hpp"
 #include "DataTypes.hpp"
+#include "parser/ast/ASTNodeList.hpp"
 #include "parser/ast/AssignmentNode.hpp"
+#include "parser/ast/BlockNode.hpp"
 #include "parser/ast/FunctionDeclarationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
+#include "cli/CLI.cpp"
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
@@ -104,6 +107,13 @@ namespace Theta {
 
     BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> assignmentNode, BinaryenModuleRef &module) {
         string assignmentIdentifier = dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier();
+        // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
+        // local idx
+        shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
+        int idxOfAssignment = stoi(currentIdentIdx->getLiteralValue());
+
+        currentIdentIdx->setLiteralValue(to_string(idxOfAssignment + 1));
+        scope.insert(LOCAL_IDX_SCOPE_KEY, currentIdentIdx);
 
         // Function declarations dont get generated generically like the rest of the AST elements, they are not part of the "generate" method,
         // because they behave differently depending on where the function was declared. A function declared at the top level of capsule will
@@ -112,14 +122,6 @@ namespace Theta {
         // A function declared within another function body OR within any other structure will be turned into a closure that contains the scope
         // of anything outside of that function.
         if (assignmentNode->getRight()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
-            // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
-            // local idx
-            shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
-            int idxOfAssignment = stoi(currentIdentIdx->getLiteralValue());
-
-            currentIdentIdx->setLiteralValue(to_string(idxOfAssignment + 1));
-            scope.insert(LOCAL_IDX_SCOPE_KEY, currentIdentIdx);
-
             shared_ptr<ASTNode> assignmentRhs = assignmentNode->getRight();
             assignmentRhs->setMappedBinaryenIndex(idxOfAssignment);
             scope.insert(assignmentIdentifier, assignmentRhs);
@@ -131,14 +133,41 @@ namespace Theta {
             );
         }
 
-        generateClosure(dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()), module);
+        shared_ptr<FunctionDeclarationNode> closure = generateClosure(
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()),
+            module
+        );
 
-        // TODO: Functions will be defined as closures which take in the scope of the surrounding block as additional parameters
-        throw new runtime_error("Lambda functions are not yet implemented.");
+        string closureName = generateFunctionHash(closure);
+
+        generateFunctionDeclaration(
+            closureName,
+            closure,
+            module
+        );
+
+        string qualifiedClosureName = Compiler::getQualifiedFunctionIdentifier(
+            closureName,
+            dynamic_pointer_cast<ASTNode>(closure)
+        );
+
+        int functionIndex = functionNameToClosureMap.find(qualifiedClosureName)->second.getFunctionIndex();
+
+        closure->setMappedBinaryenIndex(idxOfAssignment);
+        scope.insert(assignmentIdentifier, closure);
+
+        return BinaryenLocalSet(
+            module,
+            idxOfAssignment,
+            BinaryenConst(
+                module,
+                BinaryenLiteralInt32(functionIndex)
+            )
+        );
     }
 
     // Transforms nested function declarations and generates an anonymous function in the function table
-    void CodeGen::generateClosure(shared_ptr<FunctionDeclarationNode> fnDeclNode, BinaryenModuleRef &module) {
+    shared_ptr<FunctionDeclarationNode> CodeGen::generateClosure(shared_ptr<FunctionDeclarationNode> fnDeclNode, BinaryenModuleRef &module) {
         // Capture the outer scope
         set<string> requiredScopeIdentifiers;
         set<string> paramIdentifiers;
@@ -161,6 +190,13 @@ namespace Theta {
 
             requiredScopeIdentifiers.insert(identifierName);
         }
+
+        shared_ptr<FunctionDeclarationNode> closure = make_shared<FunctionDeclarationNode>(nullptr);
+        closure->setResolvedType(Compiler::deepCopyTypeDeclaration(
+            dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()), 
+            closure
+        ));
+
     
         vector<shared_ptr<ASTNode>> closureParameters;
         vector<shared_ptr<ASTNode>> closureExpressions;
@@ -171,34 +207,58 @@ namespace Theta {
         // in which the params are passed throughout the ancestry path, so we need to reverse it back here to get the
         // correct order
         reverse(closureParameters.begin(), closureParameters.end());
-    
+        reverse(closureExpressions.begin(), closureExpressions.end());
+
         closureParameters.insert(
             closureParameters.end(),
             fnDeclNode->getParameters()->getElements().begin(),
             fnDeclNode->getParameters()->getElements().end()
         );
 
-        cout << "Closure Params are, in order of left to right: ";
-        for (auto param : closureParameters) {
-            cout << param->toJSON() << ", ";
-        }
+        vector<shared_ptr<ASTNode>> originalFnExpressions = dynamic_pointer_cast<ASTNodeList>(fnDeclNode->getDefinition())->getElements();
 
-        cout << endl << "Closure expressions, in order of first to last: " << endl;
-        for (auto expr : closureExpressions) {
-            cout << expr->toJSON() << endl;
-        }
+        closureExpressions.insert(
+            closureExpressions.end(),
+            originalFnExpressions.begin(),
+            originalFnExpressions.end()
+        );
 
+        shared_ptr<ASTNodeList> parametersNode = make_shared<ASTNodeList>(closure);
+        parametersNode->setElements(closureParameters);
+        closure->setParameters(parametersNode);
+
+        shared_ptr<BlockNode> closureBody = make_shared<BlockNode>(closure);
+        closureBody->setElements(closureExpressions);
+        closure->setDefinition(closureBody);
+    
         // If we've traversed the tree for parameters and we still have some missing identifiers, they must be defined in bodies
         if (requiredScopeIdentifiers.size() > 0) {
-            cout << "I STILL NEED MORE! DIDNT FIND: ";
-            for (auto i : requiredScopeIdentifiers) {
-                cout << i << ", ";
+            cout << "\033[1;31mFATAL ERROR: Could not locate necessary closure identifiers!\033[0m" << endl;
+            cout << "   Missed identifiers: ";
+            for (int i = 0; i < requiredScopeIdentifiers.size(); i++) {
+                if (i > 0) cout << ", ";
+                cout << i;
             }
+            cout << endl << "This error is not caused by your code, but rather an issue with the compiler itself. Please report an issue at " << CLI::makeLink("https://github.com/alexdovzhanyn/ThetaLang/issues");
 
-            // TODO: scan ancestors for code relating to set variables. make sure to trace rhs to check if it gets assigned from
-            // a parameter. I think we need to change the findParameterizedIdentifiersFromAncestors function to build 
-            // out a list of params and function body statements at the same time, then return both
+            exit(1);
         }
+ 
+        return closure;
+    }
+
+    string CodeGen::generateFunctionHash(shared_ptr<FunctionDeclarationNode> function) {
+        hash<string> hasher;
+
+        size_t hashed = hasher(function->toJSON());
+
+        ostringstream stream;
+
+        stream << hex << nouppercase << setw(sizeof(size_t) * 2) << setfill('0');
+
+        stream << hashed;
+
+        return stream.str();
     }
 
     void CodeGen::collectClosureScope(
@@ -209,50 +269,49 @@ namespace Theta {
     ) {
         if (identifiersToFind.size() == 0 || node->getParent()->getNodeType() == ASTNode::CAPSULE) return;
 
-        if (node->getParent()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
-            return collectClosureScope(node->parent, identifiersToFind, parameters, bodyExpressions);
-        }
+        if (node->getParent()->getNodeType() == ASTNode::BLOCK) {
+            vector<shared_ptr<ASTNode>> parentExpressions = dynamic_pointer_cast<ASTNodeList>(node->getParent())->getElements();
 
-        shared_ptr<FunctionDeclarationNode> parent = dynamic_pointer_cast<FunctionDeclarationNode>(node->getParent());
+            // Go through the parent expressions backwards so that we can collect dependencies and resolve them in one pass
+            // in case this expression relies on one before it
+            for (int i = parentExpressions.size() - 1; i >= 0; i--) {
+                shared_ptr<ASTNode> expr = parentExpressions.at(i);
 
-        vector<shared_ptr<ASTNode>> parentExpressions = dynamic_pointer_cast<ASTNodeList>(parent->getDefinition())->getElements();
+                if (expr->getNodeType() != ASTNode::ASSIGNMENT) continue;
 
-        // Go through the parent expressions backwards so that we can collect dependencies and resolve them in one pass
-        for (int i = parentExpressions.size() - 1; i >= 0; i--) {
-            shared_ptr<ASTNode> expr = parentExpressions.at(i);
+                string identifier = dynamic_pointer_cast<IdentifierNode>(expr->getLeft())->getIdentifier();
+                
+                auto identExpr = identifiersToFind.find(identifier);
 
-            if (expr->getNodeType() != ASTNode::ASSIGNMENT) continue;
-
-            string identifier = dynamic_pointer_cast<IdentifierNode>(expr->getLeft())->getIdentifier();
+                if (identExpr == identifiersToFind.end()) continue;
             
-            auto identExpr = identifiersToFind.find(identifier);
+                bodyExpressions.push_back(expr);
+                identifiersToFind.erase(identifier);
 
-            if (identExpr == identifiersToFind.end()) continue;
-        
-            bodyExpressions.push_back(expr);
-            identifiersToFind.erase(identifier);
+                // This expression we just found might depend on other identifiers, in which case we need to copy those over too
+                vector<shared_ptr<ASTNode>> dependentIdentifiers = Compiler::findAllInTree(expr->getRight(), ASTNode::IDENTIFIER);
+                for (auto ident : dependentIdentifiers) {
+                    identifiersToFind.insert(dynamic_pointer_cast<IdentifierNode>(ident)->getIdentifier());
+                }
+            }
+        } else if (node->getParent()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            shared_ptr<FunctionDeclarationNode> parent = dynamic_pointer_cast<FunctionDeclarationNode>(node->getParent());
 
-            // This expression we just found might depend on other identifiers, in which case we need to copy those over too
-            vector<shared_ptr<ASTNode>> dependentIdentifiers = Compiler::findAllInTree(expr->getRight(), ASTNode::IDENTIFIER);
-            for (auto ident : dependentIdentifiers) {
-                identifiersToFind.insert(dynamic_pointer_cast<IdentifierNode>(ident)->getIdentifier());
+            // Go through the parameters backwards so we can preserve their order if we ascend further into the ancestors. This 
+            // will get reversed at the end
+            for (int i = parent->getParameters()->getElements().size() - 1; i >= 0; i--) {
+                shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(parent->getParameters()->getElements().at(i));
+
+                auto identNeeded = identifiersToFind.find(ident->getIdentifier());
+
+                if (identNeeded == identifiersToFind.end()) continue;
+
+                parameters.push_back(ident);
+                identifiersToFind.erase(ident->getIdentifier());
             }
         }
-    
-        // Go through the parameters backwards so we can preserve their order if we ascend further into the ancestors. This 
-        // will get reversed at the end
-        for (int i = parent->getParameters()->getElements().size() - 1; i >= 0; i--) {
-            shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(parent->getParameters()->getElements().at(i));
 
-            auto identNeeded = identifiersToFind.find(ident->getIdentifier());
-
-            if (identNeeded == identifiersToFind.end()) continue;
-
-            parameters.push_back(ident);
-            identifiersToFind.erase(ident->getIdentifier());
-        }
-
-        collectClosureScope(parent, identifiersToFind, parameters, bodyExpressions);
+        collectClosureScope(node->getParent(), identifiersToFind, parameters, bodyExpressions);
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
@@ -571,6 +630,9 @@ namespace Theta {
         if (typeDeclaration->getType() == DataTypes::NUMBER) return BinaryenTypeInt64();
         if (typeDeclaration->getType() == DataTypes::STRING) return BinaryenTypeStringref();
         if (typeDeclaration->getType() == DataTypes::BOOLEAN) return BinaryenTypeInt32();
+
+        // Function references are returned as i32 pointers to a closure in the function table
+        if (typeDeclaration->getType() == DataTypes::FUNCTION) return BinaryenTypeInt32();
     }
 
     void CodeGen::hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements) {
