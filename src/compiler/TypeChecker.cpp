@@ -161,8 +161,15 @@ namespace Theta {
         
         // Function names can be overloaded, so functions don't need this check
         if (rhsType == DataTypes::FUNCTION) {
-            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
-
+            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(
+                ident->getIdentifier(),
+                (node->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION 
+                    ? node->getRight()
+                    // We're assigning to the result of a function invocation, and that invocation returns a function
+                    : node->getRight()->getResolvedType()
+                )
+            );
+            
             shared_ptr<ASTNode> existingFuncIdentifierInScope = identifierTable.lookup(uniqueFuncIdentifier);
 
             if (existingFuncIdentifierInScope) {
@@ -298,18 +305,30 @@ namespace Theta {
                 paramScopeBindings.push_back(make_pair(ident->getIdentifier(), ident->getValue()));
             }
         }
-    
+
         bool valid = checkAST(node->getDefinition(), paramScopeBindings);
 
         if (!valid) return false;
 
+        shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION, node);
+    
+        vector<shared_ptr<ASTNode>> typeValues;
+        for (auto param : node->getParameters()->getElements()) {
+            typeValues.push_back(Compiler::deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue()), funcType));
+        }
+
+        typeValues.push_back(node->getDefinition()->getResolvedType());
+        
+        funcType->setElements(typeValues);
+
         // A function might already have a resolvedType if it was hoisted, we need to redefine it with the real return type
         if (node->getResolvedType()) {
-            node->getResolvedType()->setValue(node->getDefinition()->getResolvedType());
+            if (typeValues.size() == 1) {
+                node->getResolvedType()->setValue(typeValues.at(0));
+            } else {
+                dynamic_pointer_cast<TypeDeclarationNode>(node->getResolvedType())->setElements(typeValues);
+            }
         } else {
-            shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION, node);
-            funcType->setValue(node->getDefinition()->getResolvedType());
-
             node->setResolvedType(funcType); 
         }
 
@@ -329,12 +348,21 @@ namespace Theta {
         shared_ptr<ASTNode> referencedFunction = lookupInScope(uniqueFuncIdentifier);
         
         if (!referencedFunction) {
+                        cout << "shleem: " << uniqueFuncIdentifier << endl;
+
             Compiler::getInstance().addException(make_shared<ReferenceError>(funcIdentifier));
             return false;
         }
 
-        node->setResolvedType(referencedFunction->getResolvedType()->getValue());
-    
+        shared_ptr<TypeDeclarationNode> referencedFunctionType = dynamic_pointer_cast<TypeDeclarationNode>(referencedFunction->getResolvedType());
+
+        // The function return type is the last element in the types list
+        if (referencedFunctionType->getValue()) {
+            node->setResolvedType(referencedFunctionType->getValue());
+        } else {
+            node->setResolvedType(referencedFunctionType->getElements().back());
+        }
+
         return true;
     }
 
@@ -819,6 +847,8 @@ namespace Theta {
         if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
             params = declarationNode->getParameters()->getElements();
+        } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
+            return getDeterministicFunctionIdentifierFromTypeSignature(variableName, dynamic_pointer_cast<TypeDeclarationNode>(node));
         } else {
             shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
             params = invocationNode->getParameters()->getElements();
@@ -838,6 +868,25 @@ namespace Theta {
 
         return functionIdentifier;
     } 
+
+    string TypeChecker::getDeterministicFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig) {
+        vector<shared_ptr<ASTNode>> params;
+
+        // If typeSig has a value, that means the function takes in no parameters and only has a return value
+        if (typeSig->getValue() == nullptr) {
+            params.resize(typeSig->getElements().size() - 1);
+            copy(typeSig->getElements().begin(), typeSig->getElements().end() - 1, params.begin());
+        }
+
+        string functionIdentifier = variableName + to_string(params.size());
+
+        for (auto param : params) {
+            shared_ptr<TypeDeclarationNode> p = dynamic_pointer_cast<TypeDeclarationNode>(param);
+            functionIdentifier += p->getType();
+        }
+
+        return functionIdentifier;
+    }
 
     shared_ptr<ASTNode> TypeChecker::lookupInScope(string identifierName) {
         shared_ptr<ASTNode> foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);

@@ -718,23 +718,17 @@ namespace Theta {
                 shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(typeName, parent);
 
                 if (match(Token::OPERATOR, Lexemes::LT)) {
-                    shared_ptr<ASTNode> l = parseType(typ);
+                    shared_ptr<TypeDeclarationNode> typeDecl = dynamic_pointer_cast<TypeDeclarationNode>(typ);
+                    vector<shared_ptr<ASTNode>> types = { parseType(typeDecl) };
 
-                    if (typeName == DataTypes::VARIADIC) {
-                        shared_ptr<TypeDeclarationNode> variadic = dynamic_pointer_cast<TypeDeclarationNode>(typ);
-                        vector<shared_ptr<ASTNode>> types;
-                        types.push_back(l);
+                    while (match(Token::COMMA)) {
+                        types.push_back(parseType(typeDecl));
+                    }
 
-                        while (match(Token::COMMA)) {
-                            types.push_back(parseType(typ));
-                        }
-
-                        variadic->setElements(types);
-                    } else if (match(Token::COMMA)) {
-                        typ->setLeft(l);
-                        typ->setRight(parseType(typ));
+                    if (types.size() > 1) {
+                        typeDecl->setElements(types);
                     } else {
-                        typ->setValue(l);
+                        typeDecl->setValue(types.at(0));
                     }
 
                     match(Token::OPERATOR, Lexemes::GT);

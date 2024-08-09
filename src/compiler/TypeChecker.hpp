@@ -283,5 +283,14 @@ namespace Theta {
              * @return string The unique identifier for the function.
              */
             static string getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> declarationNode);
+
+            /**
+             * @brief Generates a unique function identifier based on the function's name and its type signature
+             * 
+             * @param variableName The base name of the function.
+             * @param typeSig The type signature of the function.
+             * @return string The unique identifier for the function.
+             */
+            static string getDeterministicFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig);
     };
 }
