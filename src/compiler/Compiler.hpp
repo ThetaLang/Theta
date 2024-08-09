@@ -17,6 +17,7 @@
 #include "CodeGen.hpp"
 #include "compiler/optimization/OptimizationPass.hpp"
 #include "compiler/optimization/LiteralInlinerPass.hpp"
+#include "parser/ast/TypeDeclarationNode.hpp"
 
 using namespace std;
 
@@ -110,6 +111,15 @@ namespace Theta {
              * @return string The unique identifier for the function.
              */
             static string getQualifiedFunctionIdentifier(string variableName, shared_ptr<ASTNode> node);
+    
+            /**
+             * @brief Generates a unique function identifier based on the function's name and its type signature
+             * 
+             * @param variableName The base name of the function.
+             * @param typeSig The type signature of the function.
+             * @return string The unique identifier for the function.
+             */
+            static string getQualifiedFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig);
 
             /**
              * @brief Finds all AST nodes of a specific type within the tree rooted at a given node.

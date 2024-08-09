@@ -276,24 +276,6 @@ namespace Theta {
              * @param types The vector of type declaration nodes.
              * @return shared_ptr<TypeDeclarationNode> The created variadic type node.
              */
-            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types, shared_ptr<ASTNode> parent);
-    
-            /**
-             * @brief Generates a unique function identifier based on the function's name and its parameters to handle overloading.
-             * 
-             * @param variableName The base name of the function.
-             * @param declarationNode The function declaration node containing the parameters.
-             * @return string The unique identifier for the function.
-             */
-            static string getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> declarationNode);
-
-            /**
-             * @brief Generates a unique function identifier based on the function's name and its type signature
-             * 
-             * @param variableName The base name of the function.
-             * @param typeSig The type signature of the function.
-             * @return string The unique identifier for the function.
-             */
-            static string getDeterministicFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig);
+            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types, shared_ptr<ASTNode> parent); 
     };
 }

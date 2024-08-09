@@ -223,6 +223,8 @@ namespace Theta {
         if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
             params = declarationNode->getParameters()->getElements();
+        } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
+            return getQualifiedFunctionIdentifierFromTypeSignature(variableName, dynamic_pointer_cast<TypeDeclarationNode>(node));
         } else {
             shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
             params = invocationNode->getParameters()->getElements();
@@ -238,6 +240,25 @@ namespace Theta {
                 shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getResolvedType());
                 functionIdentifier += paramType->getType();
             }
+        }
+
+        return functionIdentifier;
+    }
+
+    string Compiler::getQualifiedFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig) {
+        vector<shared_ptr<ASTNode>> params;
+
+        // If typeSig has a value, that means the function takes in no parameters and only has a return value
+        if (typeSig->getValue() == nullptr) {
+            params.resize(typeSig->getElements().size() - 1);
+            copy(typeSig->getElements().begin(), typeSig->getElements().end() - 1, params.begin());
+        }
+
+        string functionIdentifier = variableName + to_string(params.size());
+
+        for (auto param : params) {
+            shared_ptr<TypeDeclarationNode> p = dynamic_pointer_cast<TypeDeclarationNode>(param);
+            functionIdentifier += p->getType();
         }
 
         return functionIdentifier;

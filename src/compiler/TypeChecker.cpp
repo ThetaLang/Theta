@@ -161,7 +161,7 @@ namespace Theta {
         
         // Function names can be overloaded, so functions don't need this check
         if (rhsType == DataTypes::FUNCTION) {
-            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(
+            string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(
                 ident->getIdentifier(),
                 (node->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION 
                     ? node->getRight()
@@ -343,7 +343,7 @@ namespace Theta {
         if (!validParams) return false;
 
         string funcIdentifier = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
-        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(funcIdentifier, node);
+        string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(funcIdentifier, node);
 
         shared_ptr<ASTNode> referencedFunction = lookupInScope(uniqueFuncIdentifier);
         
@@ -654,7 +654,7 @@ namespace Theta {
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(node); 
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
-        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
+        string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(ident->getIdentifier(), node->getRight());
 
         shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
 
@@ -839,53 +839,6 @@ namespace Theta {
         variadicTypeNode->setElements(typesAsASTNode);
 
         return variadicTypeNode;
-    }
-
-    string TypeChecker::getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> node) {
-        vector<shared_ptr<ASTNode>> params;
-
-        if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-            shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
-            params = declarationNode->getParameters()->getElements();
-        } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
-            return getDeterministicFunctionIdentifierFromTypeSignature(variableName, dynamic_pointer_cast<TypeDeclarationNode>(node));
-        } else {
-            shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
-            params = invocationNode->getParameters()->getElements();
-        }
-        
-        string functionIdentifier = variableName + to_string(params.size());
-
-        for (int i = 0; i < params.size(); i++) {
-            if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getValue());
-                functionIdentifier += paramType->getType();
-            } else {
-                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getResolvedType());
-                functionIdentifier += paramType->getType();
-            }
-        }
-
-        return functionIdentifier;
-    } 
-
-    string TypeChecker::getDeterministicFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig) {
-        vector<shared_ptr<ASTNode>> params;
-
-        // If typeSig has a value, that means the function takes in no parameters and only has a return value
-        if (typeSig->getValue() == nullptr) {
-            params.resize(typeSig->getElements().size() - 1);
-            copy(typeSig->getElements().begin(), typeSig->getElements().end() - 1, params.begin());
-        }
-
-        string functionIdentifier = variableName + to_string(params.size());
-
-        for (auto param : params) {
-            shared_ptr<TypeDeclarationNode> p = dynamic_pointer_cast<TypeDeclarationNode>(param);
-            functionIdentifier += p->getType();
-        }
-
-        return functionIdentifier;
     }
 
     shared_ptr<ASTNode> TypeChecker::lookupInScope(string identifierName) {
