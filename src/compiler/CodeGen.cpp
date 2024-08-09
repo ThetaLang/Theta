@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
+#include "compiler/TypeChecker.hpp"
 #include "lexer/Lexemes.hpp"
 #include "StandardLibrary.hpp"
 #include "CodeGen.hpp"
@@ -107,6 +108,8 @@ namespace Theta {
 
     BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> assignmentNode, BinaryenModuleRef &module) {
         string assignmentIdentifier = dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier();
+
+        cout << "generating assignment for " << assignmentIdentifier << endl;
         // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
         // local idx
         shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
@@ -362,7 +365,7 @@ namespace Theta {
             module,
             functionName.c_str(),
             parameterType,
-            getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue())),
+            getBinaryenTypeFromTypeDeclaration(TypeChecker::getFunctionReturnType(fnDeclNode)),
             localVariableTypes,
             localVariables.size(),
             generate(fnDeclNode->getDefinition(), module)
@@ -401,6 +404,7 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, BinaryenModuleRef &module) {
+        cout << "generating function invocation!" << dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier() << endl;
         BinaryenExpressionRef* arguments = new BinaryenExpressionRef[funcInvNode->getParameters()->getElements().size()];
 
         string funcName = Compiler::getQualifiedFunctionIdentifier(
@@ -411,6 +415,8 @@ namespace Theta {
         for (int i = 0; i < funcInvNode->getParameters()->getElements().size(); i++) {
             arguments[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
         }
+
+        cout << "right before binaryen call" << endl;
 
         return BinaryenCall(
             module,
