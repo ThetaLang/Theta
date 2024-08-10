@@ -1,4 +1,7 @@
 #include <iostream>
+#include <libgen.h>
+#include <limits.h>
+#include <unistd.h>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -22,6 +25,10 @@
 #include "parser/ast/TypeDeclarationNode.hpp"
 #include "cli/CLI.cpp"
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
         BinaryenModuleRef module = initializeWasmModule();        
@@ -37,7 +44,7 @@ namespace Theta {
     }
 
     BinaryenModuleRef CodeGen::initializeWasmModule() {
-        BinaryenModuleRef module = BinaryenModuleCreate();
+        BinaryenModuleRef module = importCoreLangWasm();
 
         BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
         BinaryenSetMemory(
@@ -510,10 +517,10 @@ namespace Theta {
         
             vector<BinaryenExpressionRef> temp = storage.second;
 
-            copy(temp.begin(), temp.end(), back_inserter(expressions));
+            copy(storage.second.begin(), storage.second.end(), back_inserter(expressions));
 
             // TODO: replace with call_indirect
-            expressions.push_back(BinaryenConst(module, BinaryenLiteralInt64(1)));
+            expressions.push_back(BinaryenConst(module, BinaryenLiteralInt64(storage.first)));
 
             BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
             for (int i = 0; i < expressions.size(); i++) {
@@ -832,5 +839,58 @@ namespace Theta {
         }
 
         throw new runtime_error("No cant calculate byte size for non-literal");
+    }
+
+    BinaryenModuleRef CodeGen::importCoreLangWasm() {
+        ifstream file(resolveAbsolutePath("wasm/ThetaLangCore.wat"), ios::binary);
+        if (!file.is_open()) {
+            cerr << "Failed to open the file." << endl;
+            return nullptr;
+        }
+
+        vector<char> buffer(istreambuf_iterator<char>(file), {});
+
+        if (buffer.empty()) {
+            cerr << "Failed to read the file or the file is empty." << endl;
+            return nullptr;
+        }
+
+        file.close();
+
+        return BinaryenModuleParse(buffer.data());
+    }
+
+    string CodeGen::resolveAbsolutePath(string relativePath) {
+        char path[PATH_MAX];
+
+        #ifdef __APPLE__
+            uint32_t size = sizeof(path);
+            if (_NSGetExecutablePath(path, &size) != 0) {
+                cerr << "Buffer too small; should be resized to " << size << " bytes\n" << endl;
+                return "";
+            }
+        #else
+            ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
+            if (count <= 0) {
+                cerr << "Failed to read the path of the executable." << endl;
+                return "";
+            }
+            path[count] = '\0'; // Ensure null termination
+        #endif
+
+        char realPath[PATH_MAX];
+        if (realpath(path, realPath) == NULL) {
+            cerr << "Error resolving symlink for " << path << endl;
+            return "";
+        }
+            
+        string exePath = string(realPath);
+        if (exePath.empty()) return "";
+
+        char *pathCStr = strdup(exePath.c_str());
+        string dirPath = dirname(pathCStr); // Use dirname to get the directory part
+        free(pathCStr); // Free the duplicated string
+
+        return dirPath + "/" + relativePath;
     }
 }

@@ -38,6 +38,16 @@ file(GLOB TEST_SRC_FILES "${TEST_DIR}/*.cpp")
 # Add executable for the main program
 add_executable(theta ${SRC_FILES} ${MAIN_SRC})
 
+# Add a custom command to copy the WAT file
+set(WAT_FILE_SRC "${CMAKE_SOURCE_DIR}/src/wasm/ThetaLangCore.wat")
+set(WAT_FILE_DEST "${CMAKE_BINARY_DIR}/wasm")
+add_custom_command(
+    TARGET theta POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${WAT_FILE_DEST}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WAT_FILE_SRC} ${WAT_FILE_DEST}
+    COMMENT "Copying WAT file to build directory"
+)
+
 # Add the readline library
 if (WIN32)
     # Add the readline library

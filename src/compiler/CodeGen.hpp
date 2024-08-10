@@ -73,5 +73,9 @@ namespace Theta {
             string generateFunctionHash(shared_ptr<FunctionDeclarationNode> function);
 
             int calculateLiteralByteSize(shared_ptr<ASTNode> literal);
+
+            BinaryenModuleRef importCoreLangWasm();
+
+            string resolveAbsolutePath(string relativePath);
     };
 }
