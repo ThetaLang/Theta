@@ -1,12 +1,15 @@
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
 #include "compiler/TypeChecker.hpp"
+#include "compiler/WasmClosure.hpp"
 #include "lexer/Lexemes.hpp"
 #include "StandardLibrary.hpp"
 #include "CodeGen.hpp"
@@ -21,17 +24,39 @@
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
-        BinaryenModuleRef module = BinaryenModuleCreate();
-
-        BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
-
-        StandardLibrary::registerFunctions(module);
+        BinaryenModuleRef module = initializeWasmModule();        
 
         generate(ast, module);
 
         registerModuleFunctions(module);
-
+    
+        // Automatically adds drops to unused stack values
         BinaryenModuleAutoDrop(module);
+
+        return module;
+    }
+
+    BinaryenModuleRef CodeGen::initializeWasmModule() {
+        BinaryenModuleRef module = BinaryenModuleCreate();
+
+        BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
+        BinaryenSetMemory(
+            module,
+            1, // IMPORTANT: Memory size is dictated in pages, NOT bytes, where each page is 64k
+            10,
+            "memory",
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            0,
+            false,
+            false,
+            MEMORY_NAME.c_str()
+        );
+    
+        StandardLibrary::registerFunctions(module);
 
         return module;
     }
@@ -109,7 +134,6 @@ namespace Theta {
     BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> assignmentNode, BinaryenModuleRef &module) {
         string assignmentIdentifier = dynamic_pointer_cast<IdentifierNode>(assignmentNode->getLeft())->getIdentifier();
 
-        cout << "generating assignment for " << assignmentIdentifier << endl;
         // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
         // local idx
         shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
@@ -127,7 +151,13 @@ namespace Theta {
         if (assignmentNode->getRight()->getNodeType() != ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<ASTNode> assignmentRhs = assignmentNode->getRight();
             assignmentRhs->setMappedBinaryenIndex(idxOfAssignment);
-            scope.insert(assignmentIdentifier, assignmentRhs);
+        
+            string identName = assignmentIdentifier;
+            if (assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
+                identName = Compiler::getQualifiedFunctionIdentifier(identName, assignmentNode->getRight()->getResolvedType());
+            }
+
+            scope.insert(identName, assignmentRhs);
 
             return BinaryenLocalSet(
                 module,
@@ -154,7 +184,7 @@ namespace Theta {
             dynamic_pointer_cast<ASTNode>(closure)
         );
 
-        int functionIndex = functionNameToClosureMap.find(qualifiedClosureName)->second.getFunctionIndex();
+        int functionIndex = functionNameToClosureTemplateMap.find(qualifiedClosureName)->second.getFunctionIndex();
 
         closure->setMappedBinaryenIndex(idxOfAssignment);
         scope.insert(assignmentIdentifier, closure);
@@ -371,10 +401,13 @@ namespace Theta {
             generate(fnDeclNode->getDefinition(), module)
         );
 
-        functionNameToClosureMap.insert(make_pair(
-            functionName,
-            WasmClosure(functionNameToClosureMap.size(), totalParams)
-        ));
+        // Only add to the closure template map if its not already in there. It may have been added during hoisting
+        if (functionNameToClosureTemplateMap.find(functionName) == functionNameToClosureTemplateMap.end()) {
+            functionNameToClosureTemplateMap.insert(make_pair(
+                functionName,
+                WasmClosure(functionNameToClosureTemplateMap.size(), totalParams)
+            ));
+        }
 
         if (addToExports) {
             BinaryenAddFunctionExport(module, functionName.c_str(), functionName.c_str());
@@ -404,7 +437,6 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, BinaryenModuleRef &module) {
-        cout << "generating function invocation!" << dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier() << endl;
         BinaryenExpressionRef* arguments = new BinaryenExpressionRef[funcInvNode->getParameters()->getElements().size()];
 
         string funcName = Compiler::getQualifiedFunctionIdentifier(
@@ -416,7 +448,14 @@ namespace Theta {
             arguments[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
         }
 
-        cout << "right before binaryen call" << endl;
+        shared_ptr<ASTNode> foundLocalReference = scope.lookup(funcName);
+
+        if (foundLocalReference) {
+            return generateIndirectInvocation(funcInvNode, foundLocalReference, module);
+        }
+
+        // TODO: Check if this needs to be an indirect call, and generate that instead of a normal call. Thats why the current compile
+        // is failing
 
         return BinaryenCall(
             module,
@@ -425,6 +464,70 @@ namespace Theta {
             funcInvNode->getParameters()->getElements().size(),
             getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(funcInvNode->getResolvedType()))
         );
+    }
+
+    BinaryenExpressionRef CodeGen::generateIndirectInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, shared_ptr<ASTNode> reference, BinaryenModuleRef &module) {
+        if (reference->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+            shared_ptr<FunctionDeclarationNode> ref = dynamic_pointer_cast<FunctionDeclarationNode>(reference);
+            string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
+
+            string refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
+            cout << "Looking for closure template: " << refIdentifier << endl;
+
+            WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
+
+            WasmClosure closure = WasmClosure::clone(closureTemplate);
+
+            vector<BinaryenExpressionRef> expressions;
+
+            vector<int> paramMemPointers;
+
+            for (auto arg : funcInvNode->getParameters()->getElements()) {
+                int byteSize = calculateLiteralByteSize(arg);
+                int memLocation = memoryOffset;
+
+                paramMemPointers.push_back(memLocation);
+
+                memoryOffset += byteSize;
+
+                expressions.push_back(
+                    BinaryenStore(
+                        module,
+                        byteSize,
+                        0,
+                        0,
+                        BinaryenConst(module, BinaryenLiteralInt32(memLocation)),
+                        generate(arg, module),
+                        getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
+                        MEMORY_NAME.c_str()
+                    )
+                );
+            }
+
+            closure.addArgs(paramMemPointers);
+
+            pair<int, vector<BinaryenExpressionRef>> storage = generateClosureMemoryStore(closure, module);
+        
+            vector<BinaryenExpressionRef> temp = storage.second;
+
+            copy(temp.begin(), temp.end(), back_inserter(expressions));
+
+            // TODO: replace with call_indirect
+            expressions.push_back(BinaryenConst(module, BinaryenLiteralInt64(1)));
+
+            BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
+            for (int i = 0; i < expressions.size(); i++) {
+                blockExpressions[i] = expressions.at(i);
+            }
+
+            return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeInt64());
+        }
+
+        shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
+        string refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
+
+        functionNameToClosureTemplateMap.find(Compiler::getQualifiedFunctionIdentifier(refIdentifier, reference));
+
     }
 
     BinaryenExpressionRef CodeGen::generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module) {
@@ -613,6 +716,37 @@ namespace Theta {
         }
     }
 
+    pair<int, vector<BinaryenExpressionRef>> CodeGen::generateClosureMemoryStore(WasmClosure closure, BinaryenModuleRef &module) {
+        // At least 4 bytes for the fn_idx and 4 bytes for the arity. Then 4 bytes for each parameter the closure takes.
+        // We also multiply the remaining arity, since not all parameters may have been applied to the function
+        int totalMemSize = 8 + (closure.getArgPointers().size() * 4) + (closure.getArity() * 4);
+        int memLocation = memoryOffset;
+
+        vector<int> closureDataSegments = { closure.getFunctionIndex(), closure.getArity() };
+        for (int i = 0; i < closure.getArgPointers().size(); i++) {
+            closureDataSegments.push_back(closure.getArgPointers().at(i));
+        }
+
+        vector<BinaryenExpressionRef> expressions;
+
+        for (int i = 0; i < closureDataSegments.size(); i++) {
+            expressions.push_back(
+                BinaryenStore(
+                    module,
+                    4,
+                    i * 4,
+                    0,
+                    BinaryenConst(module, BinaryenLiteralInt32(memLocation)),
+                    BinaryenConst(module, BinaryenLiteralInt32(closureDataSegments.at(i))),
+                    BinaryenTypeInt32(),
+                    MEMORY_NAME.c_str()
+                )
+            );
+        }
+
+        return make_pair(memLocation, expressions);
+    }
+
     BinaryenOp CodeGen::getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> binOpNode) {
         string op = binOpNode->getOperator();
 
@@ -652,6 +786,13 @@ namespace Theta {
 
         if (ast->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             identifier = Compiler::getQualifiedFunctionIdentifier(identifier, ast->getRight());
+
+            int totalParams = dynamic_pointer_cast<FunctionDeclarationNode>(ast->getRight())->getParameters()->getElements().size();
+
+            functionNameToClosureTemplateMap.insert(make_pair(
+                identifier,
+                WasmClosure(functionNameToClosureTemplateMap.size(), totalParams)
+            ));
         } 
 
         scope.insert(identifier, ast->getRight());
@@ -661,14 +802,14 @@ namespace Theta {
         BinaryenAddTable(
             module,
             FN_TABLE_NAME.c_str(),
-            functionNameToClosureMap.size(),
-            functionNameToClosureMap.size(),
+            functionNameToClosureTemplateMap.size(),
+            functionNameToClosureTemplateMap.size(),
             BinaryenTypeFuncref()
         );
 
-        const char** fnNames = new const char*[functionNameToClosureMap.size()];
+        const char** fnNames = new const char*[functionNameToClosureTemplateMap.size()];
 
-        for (auto& [fnName, fnRef] : functionNameToClosureMap) {
+        for (auto& [fnName, fnRef] : functionNameToClosureTemplateMap) {
             fnNames[fnRef.getFunctionIndex()] = fnName.c_str();
         }
 
@@ -677,8 +818,19 @@ namespace Theta {
             FN_TABLE_NAME.c_str(),
             "0",
             fnNames,
-            functionNameToClosureMap.size(),
+            functionNameToClosureTemplateMap.size(),
             BinaryenConst(module, BinaryenLiteralInt32(0))
         );
+    }
+
+    int CodeGen::calculateLiteralByteSize(shared_ptr<ASTNode> literal) {
+        if (literal->getNodeType() == ASTNode::BOOLEAN_LITERAL) return 4;
+        if (literal->getNodeType() == ASTNode::NUMBER_LITERAL) return 8;
+        if (literal->getNodeType() == ASTNode::STRING_LITERAL) {
+            cout << "WARNING! String byte size count has not been implemented." << endl;
+            return 100;
+        }
+
+        throw new runtime_error("No cant calculate byte size for non-literal");
     }
 }

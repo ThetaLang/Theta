@@ -35,6 +35,7 @@ namespace Theta {
             BinaryenExpressionRef generateFunctionDeclaration(string identifier, shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module, bool addToExports = false);
             shared_ptr<FunctionDeclarationNode>  generateClosure(shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
+            BinaryenExpressionRef generateIndirectInvocation(shared_ptr<FunctionInvocationNode> node, shared_ptr<ASTNode> reference, BinaryenModuleRef &module);
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBinaryOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
@@ -48,9 +49,13 @@ namespace Theta {
         private:
             SymbolTableStack scope;
             string FN_TABLE_NAME = "0";
-            unordered_map<string, WasmClosure> functionNameToClosureMap;
+            string MEMORY_NAME = "0";
+            int memoryOffset = 0;
+            unordered_map<string, WasmClosure> functionNameToClosureTemplateMap;
             string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
             string BOOTSTRAP_FUNC_NAME = "ThetaLang.bootstrap";
+
+            BinaryenModuleRef initializeWasmModule();
 
             BinaryenExpressionRef generateStringBinaryOperation(string op, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenModuleRef &module);
         
@@ -61,8 +66,12 @@ namespace Theta {
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
             void registerModuleFunctions(BinaryenModuleRef &module);
 
+            pair<int, vector<BinaryenExpressionRef>> generateClosureMemoryStore(WasmClosure closure, BinaryenModuleRef &module);
+
             void collectClosureScope(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> &parameters, vector<shared_ptr<ASTNode>> &bodyExpressions);
 
             string generateFunctionHash(shared_ptr<FunctionDeclarationNode> function);
+
+            int calculateLiteralByteSize(shared_ptr<ASTNode> literal);
     };
 }
