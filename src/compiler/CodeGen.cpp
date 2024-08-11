@@ -489,6 +489,8 @@ namespace Theta {
 
             vector<int> paramMemPointers;
 
+            // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
+            // That way, we save a bunch of store and load calls, and can just skip to the call_indirect
             for (auto arg : funcInvNode->getParameters()->getElements()) {
                 int byteSize = calculateLiteralByteSize(arg);
                 int memLocation = memoryOffset;
@@ -519,9 +521,43 @@ namespace Theta {
 
             copy(storage.second.begin(), storage.second.end(), back_inserter(expressions));
 
-            // TODO: replace with call_indirect
-            expressions.push_back(BinaryenConst(module, BinaryenLiteralInt64(storage.first)));
+            // If we're at 0 arity we can go ahead and execute the function call
+            if (closure.getArity() == 0) {
+                BinaryenExpressionRef* operands = new BinaryenExpressionRef[closure.getArgPointers().size()];
+            
+                for (int i = 0; i < closure.getArgPointers().size(); i++) {
+                    shared_ptr<ASTNode> arg = funcInvNode->getParameters()->getElements().at(i);
 
+                    operands[i] = BinaryenLoad(
+                        module,
+                        calculateLiteralByteSize(arg),
+                        false, // TODO: Support signed values!
+                        0,
+                        0,
+                        getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())), // TODO: fix the hardcoded stuff here
+                        BinaryenConst(module, BinaryenLiteralInt32(closure.getArgPointers().at(i))),
+                        MEMORY_NAME.c_str()
+                    );
+                }
+
+                pair<BinaryenType, BinaryenType> fnTypes = getBinaryenTypeForFunctionDeclaration(ref);
+
+                expressions.push_back(
+                    BinaryenCallIndirect(
+                        module,
+                        FN_TABLE_NAME.c_str(),
+                        BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionIndex())),
+                        operands,
+                        closure.getArgPointers().size(),
+                        fnTypes.first,
+                        fnTypes.second
+                    )
+                );
+            } else {
+                // Otherwise we just return a pointer to the function, for later use
+                expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(storage.first)));
+            }
+        
             BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
             for (int i = 0; i < expressions.size(); i++) {
                 blockExpressions[i] = expressions.at(i);
@@ -782,6 +818,23 @@ namespace Theta {
         if (typeDeclaration->getType() == DataTypes::FUNCTION) return BinaryenTypeInt32();
     }
 
+    pair<BinaryenType, BinaryenType> CodeGen::getBinaryenTypeForFunctionDeclaration(shared_ptr<FunctionDeclarationNode> function) {
+        int totalParams = function->getParameters()->getElements().size();
+
+        BinaryenType* types = new BinaryenType[totalParams];
+        for (int i = 0; i < totalParams; i++) {
+            types[i] = getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(function->getParameters()->getElements().at(i)->getValue()));
+        }
+    
+        BinaryenType paramType = BinaryenTypeCreate(types, totalParams);
+
+        BinaryenType returnType = getBinaryenTypeFromTypeDeclaration(
+            dynamic_pointer_cast<TypeDeclarationNode>(TypeChecker::getFunctionReturnType(function))
+        );
+
+        return make_pair(paramType, returnType);
+    }
+
     void CodeGen::hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements) {
         scope.enterScope();
 
@@ -855,9 +908,14 @@ namespace Theta {
             return nullptr;
         }
 
+        // Add a null terminator at the end
+        buffer.push_back('\0');
+
+        BinaryenModuleRef module = BinaryenModuleParse(buffer.data());
+
         file.close();
 
-        return BinaryenModuleParse(buffer.data());
+        return module;
     }
 
     string CodeGen::resolveAbsolutePath(string relativePath) {

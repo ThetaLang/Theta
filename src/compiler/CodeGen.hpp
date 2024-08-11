@@ -61,6 +61,7 @@ namespace Theta {
         
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
             static BinaryenType getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
+            static pair<BinaryenType, BinaryenType> getBinaryenTypeForFunctionDeclaration(shared_ptr<FunctionDeclarationNode> node);
 
             void hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements);
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
