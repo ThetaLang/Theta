@@ -32,10 +32,18 @@ namespace Theta {
             BinaryenExpressionRef generateAssignment(shared_ptr<AssignmentNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBlock(shared_ptr<ASTNodeList> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
-            BinaryenExpressionRef generateFunctionDeclaration(string identifier, shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module, bool addToExports = false);
-            shared_ptr<FunctionDeclarationNode>  generateClosure(shared_ptr<FunctionDeclarationNode> node, BinaryenModuleRef &module);
+            BinaryenExpressionRef generateFunctionDeclaration(
+                string identifier, 
+                shared_ptr<FunctionDeclarationNode> node,
+                BinaryenModuleRef &module,
+                bool addToExports = false
+            );
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
-            BinaryenExpressionRef generateIndirectInvocation(shared_ptr<FunctionInvocationNode> node, shared_ptr<ASTNode> reference, BinaryenModuleRef &module);
+            BinaryenExpressionRef generateIndirectInvocation(
+                shared_ptr<FunctionInvocationNode> node,
+                shared_ptr<ASTNode> reference,
+                BinaryenModuleRef &module
+            );
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBinaryOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
@@ -45,6 +53,11 @@ namespace Theta {
             BinaryenExpressionRef generateBooleanLiteral(shared_ptr<LiteralNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateExponentOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
             void generateSource(shared_ptr<SourceNode> node, BinaryenModuleRef &module);
+
+            shared_ptr<FunctionDeclarationNode> simplifyNestedFunctionDeclaration(
+                shared_ptr<FunctionDeclarationNode> node,
+                BinaryenModuleRef &module
+            );
 
         private:
             SymbolTableStack scope;
@@ -57,7 +70,12 @@ namespace Theta {
 
             BinaryenModuleRef initializeWasmModule();
 
-            BinaryenExpressionRef generateStringBinaryOperation(string op, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenModuleRef &module);
+            BinaryenExpressionRef generateStringBinaryOperation(
+                string op,
+                BinaryenExpressionRef left,
+                BinaryenExpressionRef right,
+                BinaryenModuleRef &modul
+            );
         
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
             static BinaryenType getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
@@ -69,7 +87,12 @@ namespace Theta {
 
             pair<int, vector<BinaryenExpressionRef>> generateClosureMemoryStore(WasmClosure closure, BinaryenModuleRef &module);
 
-            void collectClosureScope(shared_ptr<ASTNode> node, set<string> &identifiersToFind, vector<shared_ptr<ASTNode>> &parameters, vector<shared_ptr<ASTNode>> &bodyExpressions);
+            void collectClosureScope(
+                shared_ptr<ASTNode> node,
+                set<string> &identifiersToFind,
+                vector<shared_ptr<ASTNode>> &parameters,
+                vector<shared_ptr<ASTNode>> &bodyExpression
+            );
 
             string generateFunctionHash(shared_ptr<FunctionDeclarationNode> function);
 

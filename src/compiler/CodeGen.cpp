@@ -51,7 +51,7 @@ namespace Theta {
             module,
             1, // IMPORTANT: Memory size is dictated in pages, NOT bytes, where each page is 64k
             10,
-            "memory",
+            "memory", // TODO: We don't actually want to export this -- just for now
             NULL,
             NULL,
             NULL,
@@ -82,7 +82,9 @@ namespace Theta {
         } else if (node->getNodeType() == ASTNode::RETURN) {
             return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
         } else if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-            generateClosure(dynamic_pointer_cast<FunctionDeclarationNode>(node), module);
+            // The only time we should get here is if we have a function defined inside a function,
+            // because the normal function declaration flow goes through the generateAssignment flow
+            simplifyNestedFunctionDeclaration(dynamic_pointer_cast<FunctionDeclarationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
             return generateFunctionInvocation(dynamic_pointer_cast<FunctionInvocationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
@@ -173,28 +175,30 @@ namespace Theta {
             );
         }
 
-        shared_ptr<FunctionDeclarationNode> closure = generateClosure(
+        shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = simplifyNestedFunctionDeclaration(
             dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()),
             module
         );
 
-        string closureName = generateFunctionHash(closure);
+        string simplifiedDeclarationName = generateFunctionHash(simplifiedDeclaration);
 
         generateFunctionDeclaration(
-            closureName,
-            closure,
+            simplifiedDeclarationName,
+            simplifiedDeclaration,
             module
         );
 
-        string qualifiedClosureName = Compiler::getQualifiedFunctionIdentifier(
-            closureName,
-            dynamic_pointer_cast<ASTNode>(closure)
+        string qualifiedFunctionName = Compiler::getQualifiedFunctionIdentifier(
+            simplifiedDeclarationName,
+            dynamic_pointer_cast<ASTNode>(simplifiedDeclaration)
         );
 
-        int functionIndex = functionNameToClosureTemplateMap.find(qualifiedClosureName)->second.getFunctionIndex();
+        int functionIndex = functionNameToClosureTemplateMap.find(qualifiedFunctionName)->second.getFunctionIndex();
 
-        closure->setMappedBinaryenIndex(idxOfAssignment);
-        scope.insert(assignmentIdentifier, closure);
+        simplifiedDeclaration->setMappedBinaryenIndex(idxOfAssignment);
+
+        // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced
+        scope.insert(assignmentIdentifier, simplifiedDeclaration);
 
         return BinaryenLocalSet(
             module,
@@ -207,7 +211,10 @@ namespace Theta {
     }
 
     // Transforms nested function declarations and generates an anonymous function in the function table
-    shared_ptr<FunctionDeclarationNode> CodeGen::generateClosure(shared_ptr<FunctionDeclarationNode> fnDeclNode, BinaryenModuleRef &module) {
+    shared_ptr<FunctionDeclarationNode> CodeGen::simplifyNestedFunctionDeclaration(
+        shared_ptr<FunctionDeclarationNode> fnDeclNode,
+        BinaryenModuleRef &module
+    ) {
         // Capture the outer scope
         set<string> requiredScopeIdentifiers;
         set<string> paramIdentifiers;
@@ -231,76 +238,63 @@ namespace Theta {
             requiredScopeIdentifiers.insert(identifierName);
         }
 
-        shared_ptr<FunctionDeclarationNode> closure = make_shared<FunctionDeclarationNode>(nullptr);
-        closure->setResolvedType(Compiler::deepCopyTypeDeclaration(
-            dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()), 
-            closure
-        ));
+        vector<shared_ptr<ASTNode>> simplifiedDeclarationParameters;
+        vector<shared_ptr<ASTNode>> simplifiedDeclarationExpressions;
 
-    
-        vector<shared_ptr<ASTNode>> closureParameters;
-        vector<shared_ptr<ASTNode>> closureExpressions;
-
-        collectClosureScope(fnDeclNode, requiredScopeIdentifiers, closureParameters, closureExpressions);
+        collectClosureScope(fnDeclNode, requiredScopeIdentifiers, simplifiedDeclarationParameters, simplifiedDeclarationExpressions);
 
         // The collectClosureScope function will collect the parameters in reverse order, in order to preserve the order
         // in which the params are passed throughout the ancestry path, so we need to reverse it back here to get the
         // correct order
-        reverse(closureParameters.begin(), closureParameters.end());
-        reverse(closureExpressions.begin(), closureExpressions.end());
+        reverse(simplifiedDeclarationParameters.begin(), simplifiedDeclarationParameters.end());
+        reverse(simplifiedDeclarationExpressions.begin(), simplifiedDeclarationExpressions.end());
 
-        closureParameters.insert(
-            closureParameters.end(),
+        // Add the most immediate-level function's parameters to the end
+        simplifiedDeclarationParameters.insert(
+            simplifiedDeclarationParameters.end(),
             fnDeclNode->getParameters()->getElements().begin(),
             fnDeclNode->getParameters()->getElements().end()
         );
 
-        vector<shared_ptr<ASTNode>> originalFnExpressions = dynamic_pointer_cast<ASTNodeList>(fnDeclNode->getDefinition())->getElements();
+        vector<shared_ptr<ASTNode>> originalFnExpressions =
+            dynamic_pointer_cast<ASTNodeList>(fnDeclNode->getDefinition())->getElements();
 
-        closureExpressions.insert(
-            closureExpressions.end(),
+        simplifiedDeclarationExpressions.insert(
+            simplifiedDeclarationExpressions.end(),
             originalFnExpressions.begin(),
             originalFnExpressions.end()
         );
+    
+        shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = make_shared<FunctionDeclarationNode>(nullptr);
+        simplifiedDeclaration->setResolvedType(Compiler::deepCopyTypeDeclaration(
+            dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()), 
+            simplifiedDeclaration
+        ));
 
-        shared_ptr<ASTNodeList> parametersNode = make_shared<ASTNodeList>(closure);
-        parametersNode->setElements(closureParameters);
-        closure->setParameters(parametersNode);
+        shared_ptr<ASTNodeList> parametersNode = make_shared<ASTNodeList>(simplifiedDeclaration);
+        parametersNode->setElements(simplifiedDeclarationParameters);
+        simplifiedDeclaration->setParameters(parametersNode);
 
-        shared_ptr<BlockNode> closureBody = make_shared<BlockNode>(closure);
-        closureBody->setElements(closureExpressions);
-        closure->setDefinition(closureBody);
+        shared_ptr<BlockNode> simplifiedDeclarationBody = make_shared<BlockNode>(simplifiedDeclaration);
+        simplifiedDeclarationBody->setElements(simplifiedDeclarationExpressions);
+        simplifiedDeclaration->setDefinition(simplifiedDeclarationBody);
     
         // If we've traversed the tree for parameters and we still have some missing identifiers, they must be defined in bodies
         if (requiredScopeIdentifiers.size() > 0) {
-            cout << "\033[1;31mFATAL ERROR: Could not locate necessary closure identifiers!\033[0m" << endl;
-            cout << "   Missed identifiers: ";
+            cerr << "\033[1;31mFATAL ERROR: Could not locate necessary closure identifiers!\033[0m" << endl;
+            cerr << "   Missed identifiers: ";
             for (int i = 0; i < requiredScopeIdentifiers.size(); i++) {
-                if (i > 0) cout << ", ";
-                cout << i;
+                if (i > 0) cerr << ", ";
+                cerr << i;
             }
-            cout << endl << "This error is not caused by your code, but rather an issue with the compiler itself. Please report an issue at " << CLI::makeLink("https://github.com/alexdovzhanyn/ThetaLang/issues");
+            cerr << endl << "This error is not caused by your code, but rather an issue with the compiler itself. Please report an issue at " << CLI::makeLink("https://github.com/alexdovzhanyn/ThetaLang/issues");
 
             exit(1);
         }
  
-        return closure;
+        return simplifiedDeclaration;
     }
-
-    string CodeGen::generateFunctionHash(shared_ptr<FunctionDeclarationNode> function) {
-        hash<string> hasher;
-
-        size_t hashed = hasher(function->toJSON());
-
-        ostringstream stream;
-
-        stream << hex << nouppercase << setw(sizeof(size_t) * 2) << setfill('0');
-
-        stream << hashed;
-
-        return stream.str();
-    }
-
+    
     void CodeGen::collectClosureScope(
         shared_ptr<ASTNode> node, 
         set<string> &identifiersToFind,
@@ -473,7 +467,12 @@ namespace Theta {
         );
     }
 
-    BinaryenExpressionRef CodeGen::generateIndirectInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, shared_ptr<ASTNode> reference, BinaryenModuleRef &module) {
+    // TODO: This needs to be refactored
+    BinaryenExpressionRef CodeGen::generateIndirectInvocation(
+        shared_ptr<FunctionInvocationNode> funcInvNode,
+        shared_ptr<ASTNode> reference,
+        BinaryenModuleRef &module
+    ) {
         if (reference->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> ref = dynamic_pointer_cast<FunctionDeclarationNode>(reference);
             string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
@@ -482,11 +481,9 @@ namespace Theta {
             cout << "Looking for closure template: " << refIdentifier << endl;
 
             WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
-
             WasmClosure closure = WasmClosure::clone(closureTemplate);
 
             vector<BinaryenExpressionRef> expressions;
-
             vector<int> paramMemPointers;
 
             // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
@@ -499,6 +496,7 @@ namespace Theta {
 
                 memoryOffset += byteSize;
 
+                // Store each passed argument into memory
                 expressions.push_back(
                     BinaryenStore(
                         module,
@@ -515,11 +513,9 @@ namespace Theta {
 
             closure.addArgs(paramMemPointers);
 
-            pair<int, vector<BinaryenExpressionRef>> storage = generateClosureMemoryStore(closure, module);
-        
-            vector<BinaryenExpressionRef> temp = storage.second;
+            auto [closurePointer, storageExpressions] = generateClosureMemoryStore(closure, module);
 
-            copy(storage.second.begin(), storage.second.end(), back_inserter(expressions));
+            copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
 
             // If we're at 0 arity we can go ahead and execute the function call
             if (closure.getArity() == 0) {
@@ -554,8 +550,7 @@ namespace Theta {
                     )
                 );
             } else {
-                // Otherwise we just return a pointer to the function, for later use
-                expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(storage.first)));
+                expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closurePointer)));
             }
         
             BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
@@ -566,11 +561,11 @@ namespace Theta {
             return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeInt64());
         }
 
+        // TODO: Implement
         shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
         string refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
 
         functionNameToClosureTemplateMap.find(Compiler::getQualifiedFunctionIdentifier(refIdentifier, reference));
-
     }
 
     BinaryenExpressionRef CodeGen::generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module) {
@@ -950,5 +945,19 @@ namespace Theta {
         free(pathCStr); // Free the duplicated string
 
         return dirPath + "/" + relativePath;
+    }
+
+    string CodeGen::generateFunctionHash(shared_ptr<FunctionDeclarationNode> function) {
+        hash<string> hasher;
+
+        size_t hashed = hasher(function->toJSON());
+
+        ostringstream stream;
+
+        stream << hex << nouppercase << setw(sizeof(size_t) * 2) << setfill('0');
+
+        stream << hashed;
+
+        return stream.str();
     }
 }
