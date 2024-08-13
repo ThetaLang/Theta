@@ -168,10 +168,14 @@ namespace Theta {
 
             scope.insert(identName, assignmentRhs);
 
+            BinaryenExpressionRef generated = generate(assignmentRhs, module);
+            cout << "here after generate: " << assignmentRhs->toJSON() << endl;
+            BinaryenExpressionPrint(generated);
+
             return BinaryenLocalSet(
                 module,
                 idxOfAssignment,
-                generate(assignmentRhs, module)
+                generated
             );
         }
 
@@ -402,6 +406,9 @@ namespace Theta {
             generate(fnDeclNode->getDefinition(), module)
         );
 
+        cout << "teehee" << endl;
+        BinaryenModulePrint(module);
+
         // Only add to the closure template map if its not already in there. It may have been added during hoisting
         if (functionNameToClosureTemplateMap.find(functionName) == functionNameToClosureTemplateMap.end()) {
             functionNameToClosureTemplateMap.insert(make_pair(
@@ -552,16 +559,17 @@ namespace Theta {
             } else {
                 expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closurePointer)));
             }
-        
+
             BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
             for (int i = 0; i < expressions.size(); i++) {
                 blockExpressions[i] = expressions.at(i);
             }
-
+        
             return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeInt64());
         }
 
         // TODO: Implement
+        cout << "AHA! im here!" << endl;
         shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
         string refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
 

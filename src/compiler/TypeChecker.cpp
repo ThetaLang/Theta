@@ -348,9 +348,18 @@ namespace Theta {
         shared_ptr<ASTNode> referencedFunction = lookupInScope(uniqueFuncIdentifier);
         
         if (!referencedFunction) {
-                        cout << "shleem: " << uniqueFuncIdentifier << endl;
+            string paramTypes = "(";
 
-            Compiler::getInstance().addException(make_shared<ReferenceError>(funcIdentifier));
+            for (int i = 0; i < node->getParameters()->getElements().size(); i++) {
+                if (i > 0) paramTypes += ", ";
+                paramTypes += dynamic_pointer_cast<TypeDeclarationNode>(
+                    node->getParameters()->getElements().at(i)->getResolvedType()
+                )->toString();  
+            }
+
+            paramTypes += ")";
+
+            Compiler::getInstance().addException(make_shared<ReferenceError>(funcIdentifier + paramTypes));
             return false;
         }
 

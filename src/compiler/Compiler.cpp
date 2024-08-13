@@ -37,6 +37,7 @@ namespace Theta {
         if (isEmitWAT) {
             cout << "Generated WAT for \"" + entrypoint + "\":" << endl;
             BinaryenModulePrint(module);
+            cout << "done" << endl;
         }
 
         writeModuleToFile(module, outputFile);
@@ -248,8 +249,8 @@ namespace Theta {
     string Compiler::getQualifiedFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig) {
         vector<shared_ptr<ASTNode>> params;
 
-        // If typeSig has a value, that means the function takes in no parameters and only has a return value
-        if (typeSig->getValue() == nullptr) {
+        // If typeSig is a function, and it has a value, that means the function takes in no parameters and only has a return value
+        if (typeSig->getType() == DataTypes::FUNCTION && typeSig->getValue() == nullptr) {
             params.resize(typeSig->getElements().size() - 1);
             copy(typeSig->getElements().begin(), typeSig->getElements().end() - 1, params.begin());
         }
