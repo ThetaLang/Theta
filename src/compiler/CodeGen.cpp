@@ -179,8 +179,10 @@ namespace Theta {
             );
         }
 
+        shared_ptr<FunctionDeclarationNode> originalDeclaration = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+
         shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = simplifyNestedFunctionDeclaration(
-            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()),
+            originalDeclaration,
             module
         );
 
@@ -197,21 +199,87 @@ namespace Theta {
             dynamic_pointer_cast<ASTNode>(simplifiedDeclaration)
         );
 
-        int functionIndex = functionNameToClosureTemplateMap.find(qualifiedFunctionName)->second.getFunctionIndex();
+        pair<WasmClosure, vector<BinaryenExpressionRef>> storage = generateAndStoreClosure(
+            qualifiedFunctionName,
+            simplifiedDeclaration,
+            originalDeclaration,
+            module
+        );
 
         simplifiedDeclaration->setMappedBinaryenIndex(idxOfAssignment);
 
         // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced
         scope.insert(assignmentIdentifier, simplifiedDeclaration);
 
+        // Returns a reference to the closure memory address
         return BinaryenLocalSet(
             module,
             idxOfAssignment,
             BinaryenConst(
                 module,
-                BinaryenLiteralInt32(functionIndex)
+                BinaryenLiteralInt32(storage.first.getPointer().getAddress())
             )
         );
+    }
+
+    pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosure(
+        string qualifiedReferenceFunctionName,
+        shared_ptr<FunctionDeclarationNode> simplifiedReference,
+        shared_ptr<FunctionDeclarationNode> originalReference,
+        BinaryenModuleRef &module
+    ) {
+        Pointer referencePtr = functionNameToClosureTemplateMap.find(qualifiedReferenceFunctionName)->second.getFunctionPointer();
+        set<string> originalParameters;
+
+        for (auto param : originalReference->getParameters()->getElements()) {
+            originalParameters.insert(dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier());
+        }
+
+        vector<BinaryenExpressionRef> expressions;
+        vector<Pointer<PointerType::Data>> argPointers; 
+
+        for (auto param : simplifiedReference->getParameters()->getElements()) {
+            string paramName = dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier();
+
+            if (originalParameters.find(paramName) == originalParameters.end()) continue;
+
+            shared_ptr<ASTNode> paramValue = scope.lookup(paramName);
+            cout << "about to calculate size" << endl;
+            cout << paramValue->toJSON() << endl;
+
+            // TODO: this is causing build failure. paramValue isnt a literal in this case
+            int byteSize = calculateLiteralByteSize(paramValue);
+            cout << "calculated it" << endl;
+            expressions.push_back(
+                BinaryenStore(
+                    module,
+                    byteSize,
+                    0,
+                    0,
+                    BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
+                    generate(paramValue, module),
+                    getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(param->getResolvedType())),
+                    MEMORY_NAME.c_str()
+                )
+            );
+
+            argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
+            
+            // TODO: change to only increment memoryOffset after the loop finishes
+            memoryOffset += byteSize;
+        }
+
+        WasmClosure closure = WasmClosure(
+            referencePtr,
+            simplifiedReference->getParameters()->getElements().size(),
+            argPointers
+        );
+
+        vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
+
+        copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
+    
+        return make_pair(closure, expressions);
     }
 
     // Transforms nested function declarations and generates an anonymous function in the function table
@@ -413,7 +481,10 @@ namespace Theta {
         if (functionNameToClosureTemplateMap.find(functionName) == functionNameToClosureTemplateMap.end()) {
             functionNameToClosureTemplateMap.insert(make_pair(
                 functionName,
-                WasmClosure(functionNameToClosureTemplateMap.size(), totalParams)
+                WasmClosure(
+                    Pointer<PointerType::Function>(functionNameToClosureTemplateMap.size()),
+                    totalParams
+                )
             ));
         }
 
@@ -480,9 +551,10 @@ namespace Theta {
         shared_ptr<ASTNode> reference,
         BinaryenModuleRef &module
     ) {
+        string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
+
         if (reference->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> ref = dynamic_pointer_cast<FunctionDeclarationNode>(reference);
-            string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
 
             string refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
             cout << "Looking for closure template: " << refIdentifier << endl;
@@ -491,7 +563,7 @@ namespace Theta {
             WasmClosure closure = WasmClosure::clone(closureTemplate);
 
             vector<BinaryenExpressionRef> expressions;
-            vector<int> paramMemPointers;
+            vector<Pointer<PointerType::Data>> paramMemPointers;
 
             // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
             // That way, we save a bunch of store and load calls, and can just skip to the call_indirect
@@ -499,7 +571,7 @@ namespace Theta {
                 int byteSize = calculateLiteralByteSize(arg);
                 int memLocation = memoryOffset;
 
-                paramMemPointers.push_back(memLocation);
+                paramMemPointers.push_back(Pointer<PointerType::Data>(memLocation));
 
                 memoryOffset += byteSize;
 
@@ -520,7 +592,7 @@ namespace Theta {
 
             closure.addArgs(paramMemPointers);
 
-            auto [closurePointer, storageExpressions] = generateClosureMemoryStore(closure, module);
+            vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
 
             copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
 
@@ -538,7 +610,7 @@ namespace Theta {
                         0,
                         0,
                         getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())), // TODO: fix the hardcoded stuff here
-                        BinaryenConst(module, BinaryenLiteralInt32(closure.getArgPointers().at(i))),
+                        BinaryenConst(module, BinaryenLiteralInt32(closure.getArgPointers().at(i).getAddress())),
                         MEMORY_NAME.c_str()
                     );
                 }
@@ -549,7 +621,7 @@ namespace Theta {
                     BinaryenCallIndirect(
                         module,
                         FN_TABLE_NAME.c_str(),
-                        BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionIndex())),
+                        BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionPointer().getAddress())),
                         operands,
                         closure.getArgPointers().size(),
                         fnTypes.first,
@@ -557,7 +629,7 @@ namespace Theta {
                     )
                 );
             } else {
-                expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closurePointer)));
+                expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closure.getPointer().getAddress())));
             }
 
             BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
@@ -573,7 +645,61 @@ namespace Theta {
         shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
         string refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
 
-        functionNameToClosureTemplateMap.find(Compiler::getQualifiedFunctionIdentifier(refIdentifier, reference));
+        vector<BinaryenExpressionRef> expressions;
+        vector<int> paramMemPointers;
+
+        string qualifiedInvName = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
+
+        shared_ptr<ASTNode> inScope = scope.lookup(qualifiedInvName);
+
+        for (auto arg : funcInvNode->getParameters()->getElements()) {
+            int byteSize = calculateLiteralByteSize(arg);
+            int memLocation = memoryOffset;
+
+            paramMemPointers.push_back(memLocation);
+            
+            // TODO: instead of incrementing memoryoffset each time, lets change to only increment after the loop, and then
+            // for each generated store operation just use the offset field instead of 0
+            memoryOffset += byteSize;
+
+            expressions.push_back(
+                BinaryenStore(
+                    module,
+                    byteSize,
+                    0,
+                    0,
+                    BinaryenConst(module, BinaryenLiteralInt32(memLocation)),
+                    generate(arg, module),
+                    getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
+                    MEMORY_NAME.c_str()
+                )
+            );
+        }
+
+        cout << "meow" << endl;
+        cout << inScope->toJSON() << endl;
+
+        BinaryenExpressionPrint(
+        BinaryenLoad(
+            module,
+            4,
+            false,
+            0,
+            0,
+            BinaryenTypeInt32(),
+            BinaryenLocalGet( // TODO: need to check if is -1 and globalget instead
+                module,
+                inScope->getMappedBinaryenIndex(),
+                BinaryenTypeInt32()
+            ),
+            MEMORY_NAME.c_str()
+        )
+        );
+
+        //functionNameToClosureTemplateMap
+
+
+        cout << "teehee" << endl;
     }
 
     BinaryenExpressionRef CodeGen::generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module) {
@@ -762,15 +888,15 @@ namespace Theta {
         }
     }
 
-    pair<int, vector<BinaryenExpressionRef>> CodeGen::generateClosureMemoryStore(WasmClosure closure, BinaryenModuleRef &module) {
+    vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &closure, BinaryenModuleRef &module) {
         // At least 4 bytes for the fn_idx and 4 bytes for the arity. Then 4 bytes for each parameter the closure takes.
         // We also multiply the remaining arity, since not all parameters may have been applied to the function
         int totalMemSize = 8 + (closure.getArgPointers().size() * 4) + (closure.getArity() * 4);
         int memLocation = memoryOffset;
 
-        vector<int> closureDataSegments = { closure.getFunctionIndex(), closure.getArity() };
+        vector<int> closureDataSegments = { closure.getFunctionPointer().getAddress(), closure.getArity() };
         for (int i = 0; i < closure.getArgPointers().size(); i++) {
-            closureDataSegments.push_back(closure.getArgPointers().at(i));
+            closureDataSegments.push_back(closure.getArgPointers().at(i).getAddress());
         }
 
         vector<BinaryenExpressionRef> expressions;
@@ -790,7 +916,9 @@ namespace Theta {
             );
         }
 
-        return make_pair(memLocation, expressions);
+        closure.setAddress(memLocation);
+
+        return expressions;
     }
 
     BinaryenOp CodeGen::getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> binOpNode) {
@@ -873,7 +1001,7 @@ namespace Theta {
         const char** fnNames = new const char*[functionNameToClosureTemplateMap.size()];
 
         for (auto& [fnName, fnRef] : functionNameToClosureTemplateMap) {
-            fnNames[fnRef.getFunctionIndex()] = fnName.c_str();
+            fnNames[fnRef.getFunctionPointer().getAddress()] = fnName.c_str();
         }
 
         BinaryenAddActiveElementSegment(

@@ -85,7 +85,14 @@ namespace Theta {
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
             void registerModuleFunctions(BinaryenModuleRef &module);
 
-            pair<int, vector<BinaryenExpressionRef>> generateClosureMemoryStore(WasmClosure closure, BinaryenModuleRef &module);
+            pair<WasmClosure, vector<BinaryenExpressionRef>> generateAndStoreClosure(
+                string qualifiedReferenceFunctionName,
+                shared_ptr<FunctionDeclarationNode> simplifiedReference,
+                shared_ptr<FunctionDeclarationNode> originalReference,
+                BinaryenModuleRef &module
+            );
+
+            vector<BinaryenExpressionRef> generateClosureMemoryStore(WasmClosure &closure, BinaryenModuleRef &module);
 
             void collectClosureScope(
                 shared_ptr<ASTNode> node,
