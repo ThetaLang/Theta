@@ -211,14 +211,31 @@ namespace Theta {
         // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced
         scope.insert(assignmentIdentifier, simplifiedDeclaration);
 
+        vector<BinaryenExpressionRef> expressions = storage.second;
+
         // Returns a reference to the closure memory address
-        return BinaryenLocalSet(
-            module,
-            idxOfAssignment,
-            BinaryenConst(
+        expressions.push_back(
+            BinaryenLocalSet(
                 module,
-                BinaryenLiteralInt32(storage.first.getPointer().getAddress())
+                idxOfAssignment,
+                BinaryenConst(
+                    module,
+                    BinaryenLiteralInt32(storage.first.getPointer().getAddress())
+                )
             )
+        );
+
+        BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
+        for (int i = 0; i < expressions.size(); i++) {
+            blockExpressions[i] = expressions.at(i);
+        }
+
+        return BinaryenBlock(
+            module,
+            NULL,
+            blockExpressions,
+            expressions.size(),
+            BinaryenTypeInt32()
         );
     }
 
@@ -241,15 +258,12 @@ namespace Theta {
         for (auto param : simplifiedReference->getParameters()->getElements()) {
             string paramName = dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier();
 
-            if (originalParameters.find(paramName) == originalParameters.end()) continue;
+            if (originalParameters.find(paramName) != originalParameters.end()) continue;
 
             shared_ptr<ASTNode> paramValue = scope.lookup(paramName);
-            cout << "about to calculate size" << endl;
-            cout << paramValue->toJSON() << endl;
+            shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(param->getValue());
 
-            // TODO: this is causing build failure. paramValue isnt a literal in this case
-            int byteSize = calculateLiteralByteSize(paramValue);
-            cout << "calculated it" << endl;
+            int byteSize = getByteSizeForType(paramType);
             expressions.push_back(
                 BinaryenStore(
                     module,
@@ -258,7 +272,7 @@ namespace Theta {
                     0,
                     BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
                     generate(paramValue, module),
-                    getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(param->getResolvedType())),
+                    getBinaryenTypeFromTypeDeclaration(paramType),
                     MEMORY_NAME.c_str()
                 )
             );
@@ -474,9 +488,6 @@ namespace Theta {
             generate(fnDeclNode->getDefinition(), module)
         );
 
-        cout << "teehee" << endl;
-        BinaryenModulePrint(module);
-
         // Only add to the closure template map if its not already in there. It may have been added during hoisting
         if (functionNameToClosureTemplateMap.find(functionName) == functionNameToClosureTemplateMap.end()) {
             functionNameToClosureTemplateMap.insert(make_pair(
@@ -568,7 +579,7 @@ namespace Theta {
             // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
             // That way, we save a bunch of store and load calls, and can just skip to the call_indirect
             for (auto arg : funcInvNode->getParameters()->getElements()) {
-                int byteSize = calculateLiteralByteSize(arg);
+                int byteSize = getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType()));
                 int memLocation = memoryOffset;
 
                 paramMemPointers.push_back(Pointer<PointerType::Data>(memLocation));
@@ -605,7 +616,7 @@ namespace Theta {
 
                     operands[i] = BinaryenLoad(
                         module,
-                        calculateLiteralByteSize(arg),
+                        getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
                         false, // TODO: Support signed values!
                         0,
                         0,
@@ -653,7 +664,7 @@ namespace Theta {
         shared_ptr<ASTNode> inScope = scope.lookup(qualifiedInvName);
 
         for (auto arg : funcInvNode->getParameters()->getElements()) {
-            int byteSize = calculateLiteralByteSize(arg);
+            int byteSize = getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType()));
             int memLocation = memoryOffset;
 
             paramMemPointers.push_back(memLocation);
@@ -746,22 +757,28 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
-        shared_ptr<ASTNode> identInScope = scope.lookup(identNode->getIdentifier());
+        string identName = identNode->getIdentifier();
+        shared_ptr<ASTNode> identInScope = scope.lookup(identName);
+
+        // The ident in this case may refer to a parameter to a function, which may not have a resolvedType
+        shared_ptr<TypeDeclarationNode> type = dynamic_pointer_cast<TypeDeclarationNode>(
+            identInScope->getResolvedType() 
+                ? identInScope->getResolvedType()
+                : identInScope->getValue()
+        );
 
         if (identInScope->getMappedBinaryenIndex() == -1) {
-            string identName = identNode->getIdentifier();
-        
             return BinaryenGlobalGet(
                 module,
                 identName.c_str(),
-                getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(identInScope->getResolvedType()))
+                getBinaryenTypeFromTypeDeclaration(type)
             );
         }
 
         return BinaryenLocalGet(
             module,
             identInScope->getMappedBinaryenIndex(),
-            getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(identNode->getResolvedType()))
+            getBinaryenTypeFromTypeDeclaration(type)
         );
     }
 
@@ -1014,15 +1031,16 @@ namespace Theta {
         );
     }
 
-    int CodeGen::calculateLiteralByteSize(shared_ptr<ASTNode> literal) {
-        if (literal->getNodeType() == ASTNode::BOOLEAN_LITERAL) return 4;
-        if (literal->getNodeType() == ASTNode::NUMBER_LITERAL) return 8;
-        if (literal->getNodeType() == ASTNode::STRING_LITERAL) {
-            cout << "WARNING! String byte size count has not been implemented." << endl;
-            return 100;
-        }
+    int CodeGen::getByteSizeForType(shared_ptr<TypeDeclarationNode> type) {
+        if (type->getType() == DataTypes::NUMBER) return 8;
+        if (type->getType() == DataTypes::BOOLEAN) return 4;
+        // TODO: Figure out if this holds true. According to
+        // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md#the-stringref-facility
+        // stringrefs are either i32 or i64
+        if (type->getType() == DataTypes::STRING) return 8; 
 
-        throw new runtime_error("No cant calculate byte size for non-literal");
+        cout << "Not implemented for type: " << type->getType() << endl;
+        throw new runtime_error("Not implemented");
     }
 
     BinaryenModuleRef CodeGen::importCoreLangWasm() {

@@ -37,7 +37,6 @@ namespace Theta {
         if (isEmitWAT) {
             cout << "Generated WAT for \"" + entrypoint + "\":" << endl;
             BinaryenModulePrint(module);
-            cout << "done" << endl;
         }
 
         writeModuleToFile(module, outputFile);
