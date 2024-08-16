@@ -28,13 +28,13 @@ namespace Theta {
          * @brief Cleans up and resets scope variables for the pass. Should always be called after the optimization pass finishes
          */
         void cleanup() {
-            localScope = SymbolTableStack();
-            hoistedScope = SymbolTableStack();
+            localScope = SymbolTableStack<shared_ptr<ASTNode>>();
+            hoistedScope = SymbolTableStack<shared_ptr<ASTNode>>();
         }
 
     protected:
-        SymbolTableStack localScope;
-        SymbolTableStack hoistedScope;
+        SymbolTableStack<shared_ptr<ASTNode>> localScope;
+        SymbolTableStack<shared_ptr<ASTNode>> hoistedScope;
 
         /**
          * @brief Retrieves an AST node based on an identifier from the available scopes.

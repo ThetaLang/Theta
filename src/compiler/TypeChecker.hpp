@@ -65,8 +65,8 @@ namespace Theta {
 
 
         private:
-            SymbolTableStack identifierTable;
-            SymbolTableStack capsuleDeclarationsTable;
+            SymbolTableStack<shared_ptr<ASTNode>> identifierTable;
+            SymbolTableStack<shared_ptr<ASTNode>> capsuleDeclarationsTable;
             
             /**
              * @brief Performs type checking on a single AST node.

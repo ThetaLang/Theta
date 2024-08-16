@@ -50,7 +50,7 @@ namespace Theta {
          * @param ast Reference to the shared pointer of the AST node representing an assignment.
          * @param scope Reference to the symbol table stack where the identifier will be bound.
          */
-        void bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolTableStack &scope);
+        void bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolTableStack<shared_ptr<ASTNode>> &scope);
 
         /**
          * @brief Unpacks enum elements and adds them to the given scope.
@@ -61,7 +61,7 @@ namespace Theta {
          * @param ast Reference to the shared pointer of the AST node representing an enum.
          * @param scope Reference to the symbol table stack where the enum elements will be inserted.
          */
-        void unpackEnumElementsInScope(shared_ptr<ASTNode> ast, SymbolTableStack &scope);
+        void unpackEnumElementsInScope(shared_ptr<ASTNode> ast, SymbolTableStack<shared_ptr<ASTNode>> &scope);
 
         /**
          * @brief Remaps type references for enums by looking up the actual types from the scope. It basically

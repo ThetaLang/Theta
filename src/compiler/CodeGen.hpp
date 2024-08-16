@@ -42,7 +42,8 @@ namespace Theta {
             BinaryenExpressionRef generateIndirectInvocation(
                 shared_ptr<FunctionInvocationNode> node,
                 shared_ptr<ASTNode> reference,
-                BinaryenModuleRef &module
+                BinaryenModuleRef &module,
+                string refIdentifier = ""
             );
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
@@ -60,7 +61,8 @@ namespace Theta {
             );
 
         private:
-            SymbolTableStack scope;
+            SymbolTableStack<shared_ptr<ASTNode>> scope;          
+            SymbolTableStack<string> scopeReferences;
             string FN_TABLE_NAME = "0";
             string MEMORY_NAME = "0";
             int memoryOffset = 0;

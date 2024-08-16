@@ -69,7 +69,10 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generate(shared_ptr<ASTNode> node, BinaryenModuleRef &module) {
-        if (node->hasOwnScope()) scope.enterScope();
+        if (node->hasOwnScope()) {
+            scope.enterScope();
+            scopeReferences.enterScope();
+        }
 
         if (node->getNodeType() == ASTNode::SOURCE) {
             generateSource(dynamic_pointer_cast<SourceNode>(node), module);
@@ -103,7 +106,10 @@ namespace Theta {
             return generateBooleanLiteral(dynamic_pointer_cast<LiteralNode>(node), module);
         }
 
-        if (node->hasOwnScope()) scope.exitScope();
+        if (node->hasOwnScope()) {
+            scope.exitScope();
+            scopeReferences.exitScope();
+        }
 
         return nullptr;
     }
@@ -145,7 +151,7 @@ namespace Theta {
 
         // Using a space in scope for an idx counter so we dont have to have a whole separate stack just to keep track of the current
         // local idx
-        shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY));
+        shared_ptr<LiteralNode> currentIdentIdx = dynamic_pointer_cast<LiteralNode>(scope.lookup(LOCAL_IDX_SCOPE_KEY).value());
         int idxOfAssignment = stoi(currentIdentIdx->getLiteralValue());
 
         currentIdentIdx->setLiteralValue(to_string(idxOfAssignment + 1));
@@ -168,14 +174,10 @@ namespace Theta {
 
             scope.insert(identName, assignmentRhs);
 
-            BinaryenExpressionRef generated = generate(assignmentRhs, module);
-            cout << "here after generate: " << assignmentRhs->toJSON() << endl;
-            BinaryenExpressionPrint(generated);
-
             return BinaryenLocalSet(
                 module,
                 idxOfAssignment,
-                generated
+                generate(assignmentRhs, module)
             );
         }
 
@@ -186,21 +188,23 @@ namespace Theta {
             module
         );
 
-        string simplifiedDeclarationName = generateFunctionHash(simplifiedDeclaration);
+        // Generating a unique hash for this function is necessary because it will be stored on the module globally,
+        // so we need to make sure there are no naming collisions
+        string simplifiedDeclarationHash = generateFunctionHash(simplifiedDeclaration);
 
         generateFunctionDeclaration(
-            simplifiedDeclarationName,
+            simplifiedDeclarationHash,
             simplifiedDeclaration,
             module
         );
 
-        string qualifiedFunctionName = Compiler::getQualifiedFunctionIdentifier(
-            simplifiedDeclarationName,
-            dynamic_pointer_cast<ASTNode>(simplifiedDeclaration)
+        string globalQualifiedFunctionName = Compiler::getQualifiedFunctionIdentifier(
+            simplifiedDeclarationHash,
+            simplifiedDeclaration
         );
 
         pair<WasmClosure, vector<BinaryenExpressionRef>> storage = generateAndStoreClosure(
-            qualifiedFunctionName,
+            globalQualifiedFunctionName,
             simplifiedDeclaration,
             originalDeclaration,
             module
@@ -208,8 +212,15 @@ namespace Theta {
 
         simplifiedDeclaration->setMappedBinaryenIndex(idxOfAssignment);
 
-        // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced
-        scope.insert(assignmentIdentifier, simplifiedDeclaration);
+        string localQualifiedFunctionName = Compiler::getQualifiedFunctionIdentifier(
+            assignmentIdentifier,
+            originalDeclaration
+        );
+
+        // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced. This
+        // way the caller does not need to know the global function name in order to call it
+        scope.insert(globalQualifiedFunctionName, simplifiedDeclaration);
+        scopeReferences.insert(localQualifiedFunctionName, globalQualifiedFunctionName);
 
         vector<BinaryenExpressionRef> expressions = storage.second;
 
@@ -260,7 +271,7 @@ namespace Theta {
 
             if (originalParameters.find(paramName) != originalParameters.end()) continue;
 
-            shared_ptr<ASTNode> paramValue = scope.lookup(paramName);
+            shared_ptr<ASTNode> paramValue = scope.lookup(paramName).value();
             shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(param->getValue());
 
             int byteSize = getByteSizeForType(paramType);
@@ -318,7 +329,7 @@ namespace Theta {
             if (paramIdentifiers.find(identifierName) != paramIdentifiers.end()) continue;
 
             // If an identifier is globally available we dont need to include it either
-            shared_ptr<ASTNode> inScope = scope.lookup(identifierName);
+            shared_ptr<ASTNode> inScope = scope.lookup(identifierName).value();
             if (inScope->getMappedBinaryenIndex() == -1) continue;
 
             requiredScopeIdentifiers.insert(identifierName);
@@ -441,6 +452,7 @@ namespace Theta {
         bool addToExports
     ) {
         scope.enterScope();
+        scopeReferences.enterScope();
         BinaryenType parameterType = BinaryenTypeNone();
         int totalParams = fnDeclNode->getParameters()->getElements().size();
 
@@ -504,6 +516,7 @@ namespace Theta {
         }
 
         scope.exitScope();
+        scopeReferences.exitScope();
     }
 
     BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, BinaryenModuleRef &module) {
@@ -538,14 +551,28 @@ namespace Theta {
             arguments[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
         }
 
-        shared_ptr<ASTNode> foundLocalReference = scope.lookup(funcName);
+        string scopeLookupIdentifier = funcName;
 
-        if (foundLocalReference) {
-            return generateIndirectInvocation(funcInvNode, foundLocalReference, module);
+        auto localReference = scopeReferences.lookup(funcName); 
+        if (localReference.has_value()) {
+           scopeLookupIdentifier = localReference.value();
+        }
+
+        auto foundLocalReference = scope.lookup(scopeLookupIdentifier);
+
+        if (foundLocalReference.has_value()) {
+            return generateIndirectInvocation(
+                funcInvNode,
+                foundLocalReference.value(),
+                module,
+                scopeLookupIdentifier
+            );
         }
 
         // TODO: Check if this needs to be an indirect call, and generate that instead of a normal call. Thats why the current compile
         // is failing
+
+        cout << "AAAAAAAHHH I SHOULD NEVER GET HERE" << endl;
 
         return BinaryenCall(
             module,
@@ -560,16 +587,18 @@ namespace Theta {
     BinaryenExpressionRef CodeGen::generateIndirectInvocation(
         shared_ptr<FunctionInvocationNode> funcInvNode,
         shared_ptr<ASTNode> reference,
-        BinaryenModuleRef &module
+        BinaryenModuleRef &module,
+        string refIdentifier
     ) {
         string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
 
         if (reference->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> ref = dynamic_pointer_cast<FunctionDeclarationNode>(reference);
-
-            string refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
-            cout << "Looking for closure template: " << refIdentifier << endl;
-
+    
+            if (refIdentifier == "") {
+                refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
+            } 
+            
             WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
             WasmClosure closure = WasmClosure::clone(closureTemplate);
 
@@ -651,17 +680,18 @@ namespace Theta {
             return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeInt64());
         }
 
-        // TODO: Implement
-        cout << "AHA! im here!" << endl;
         shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
-        string refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
+        
+        if (refIdentifier == "") {
+            refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
+        }
 
         vector<BinaryenExpressionRef> expressions;
         vector<int> paramMemPointers;
 
         string qualifiedInvName = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
 
-        shared_ptr<ASTNode> inScope = scope.lookup(qualifiedInvName);
+        auto inScope = scope.lookup(qualifiedInvName);
 
         for (auto arg : funcInvNode->getParameters()->getElements()) {
             int byteSize = getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType()));
@@ -687,9 +717,6 @@ namespace Theta {
             );
         }
 
-        cout << "meow" << endl;
-        cout << inScope->toJSON() << endl;
-
         BinaryenExpressionPrint(
         BinaryenLoad(
             module,
@@ -700,7 +727,7 @@ namespace Theta {
             BinaryenTypeInt32(),
             BinaryenLocalGet( // TODO: need to check if is -1 and globalget instead
                 module,
-                inScope->getMappedBinaryenIndex(),
+                inScope.value()->getMappedBinaryenIndex(),
                 BinaryenTypeInt32()
             ),
             MEMORY_NAME.c_str()
@@ -758,7 +785,7 @@ namespace Theta {
 
     BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
         string identName = identNode->getIdentifier();
-        shared_ptr<ASTNode> identInScope = scope.lookup(identName);
+        shared_ptr<ASTNode> identInScope = scope.lookup(identName).value();
 
         // The ident in this case may refer to a parameter to a function, which may not have a resolvedType
         shared_ptr<TypeDeclarationNode> type = dynamic_pointer_cast<TypeDeclarationNode>(
@@ -911,6 +938,8 @@ namespace Theta {
         int totalMemSize = 8 + (closure.getArgPointers().size() * 4) + (closure.getArity() * 4);
         int memLocation = memoryOffset;
 
+        memoryOffset += totalMemSize;
+
         vector<int> closureDataSegments = { closure.getFunctionPointer().getAddress(), closure.getArity() };
         for (int i = 0; i < closure.getArgPointers().size(); i++) {
             closureDataSegments.push_back(closure.getArgPointers().at(i).getAddress());
@@ -985,6 +1014,7 @@ namespace Theta {
 
     void CodeGen::hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements) {
         scope.enterScope();
+        scopeReferences.enterScope();
 
         for (auto ast : elements) bindIdentifierToScope(ast);
     }

@@ -170,18 +170,18 @@ namespace Theta {
                 )
             );
             
-            shared_ptr<ASTNode> existingFuncIdentifierInScope = identifierTable.lookup(uniqueFuncIdentifier);
+            auto existingFuncIdentifierInScope = identifierTable.lookup(uniqueFuncIdentifier);
 
-            if (existingFuncIdentifierInScope) {
+            if (existingFuncIdentifierInScope.has_value()) {
                 Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
                 return false;
             }
 
             identifierTable.insert(uniqueFuncIdentifier, node->getRight());
         } else {
-            shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
+            auto existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
-            if (existingIdentifierInScope) {
+            if (existingIdentifierInScope.has_value()) {
                 Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
                 return false;
             }
@@ -553,9 +553,9 @@ namespace Theta {
 
         structNode->setResolvedType(make_shared<TypeDeclarationNode>(node->getName(), structNode));
     
-        shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(node->getName());
+        auto existingIdentifierInScope = identifierTable.lookup(node->getName());
 
-        if (existingIdentifierInScope) {
+        if (existingIdentifierInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(node->getName()));
             return false;
         }
@@ -665,9 +665,9 @@ namespace Theta {
 
         string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(ident->getIdentifier(), node->getRight());
 
-        shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
+        auto existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
 
-        if (existingFuncIdentifierInScope) {
+        if (existingFuncIdentifierInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
             return;
         }
@@ -683,9 +683,9 @@ namespace Theta {
     void TypeChecker::hoistStructDefinition(shared_ptr<ASTNode> node) {
         shared_ptr<StructDefinitionNode> structNode = dynamic_pointer_cast<StructDefinitionNode>(node);
 
-        shared_ptr<ASTNode> existingStructDefinitionInScope = capsuleDeclarationsTable.lookup(structNode->getName());
+        auto existingStructDefinitionInScope = capsuleDeclarationsTable.lookup(structNode->getName());
         
-        if (existingStructDefinitionInScope) {
+        if (existingStructDefinitionInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(structNode->getName()));
             return;
         }
@@ -698,9 +698,9 @@ namespace Theta {
     void TypeChecker::hoistIdentifier(shared_ptr<ASTNode> node) {
         shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
-        shared_ptr<ASTNode> existingHoistedIdentifier = capsuleDeclarationsTable.lookup(identNode->getIdentifier());
+        auto existingHoistedIdentifier = capsuleDeclarationsTable.lookup(identNode->getIdentifier());
     
-        if (existingHoistedIdentifier) {
+        if (existingHoistedIdentifier.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identNode->getIdentifier()));
             return;
         }
@@ -851,13 +851,15 @@ namespace Theta {
     }
 
     shared_ptr<ASTNode> TypeChecker::lookupInScope(string identifierName) {
-        shared_ptr<ASTNode> foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);
-        shared_ptr<ASTNode> foundInLocalScope = identifierTable.lookup(identifierName);
+        auto foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);
+        auto foundInLocalScope = identifierTable.lookup(identifierName);
 
         // Local scope overrides capsule scope
-        if (foundInLocalScope) return foundInLocalScope;
-
-        return foundInCapsule;
+        if (foundInLocalScope.has_value()) return foundInLocalScope.value();
+    
+        if (foundInCapsule.has_value()) return foundInCapsule.value();
+    
+        return nullptr;
     }
 
     shared_ptr<TypeDeclarationNode> TypeChecker::getFunctionReturnType(shared_ptr<FunctionDeclarationNode> fnDeclNode) {

@@ -39,48 +39,48 @@ void LiteralInlinerPass::substituteIdentifiers(shared_ptr<ASTNode> &ast) {
     if (ast->getValue() && ast->getValue()->getNodeType() == ASTNode::TYPE_DECLARATION) return;
     shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(ast);
 
-    shared_ptr<ASTNode> foundIdentifier = hoistedScope.lookup(ident->getIdentifier());
+    auto foundIdentifier = hoistedScope.lookup(ident->getIdentifier());
 
-    shared_ptr<ASTNode> foundInScope = localScope.lookup(ident->getIdentifier());
-    if (foundInScope) {
+    auto foundInScope = localScope.lookup(ident->getIdentifier());
+    if (foundInScope.has_value()) {
         foundIdentifier = foundInScope;
     }
 
     // Only optimize if we found the literal value we need to replace with
     if (
-        !foundIdentifier ||
+        !foundIdentifier.has_value() ||
         !(
-            foundIdentifier->getNodeType() == ASTNode::NUMBER_LITERAL ||
-            foundIdentifier->getNodeType() == ASTNode::STRING_LITERAL ||
-            foundIdentifier->getNodeType() == ASTNode::BOOLEAN_LITERAL
+            foundIdentifier.value()->getNodeType() == ASTNode::NUMBER_LITERAL ||
+            foundIdentifier.value()->getNodeType() == ASTNode::STRING_LITERAL ||
+            foundIdentifier.value()->getNodeType() == ASTNode::BOOLEAN_LITERAL
         )
     ) return;
 
-    shared_ptr<LiteralNode> literal = dynamic_pointer_cast<LiteralNode>(foundIdentifier);
+    shared_ptr<LiteralNode> literal = dynamic_pointer_cast<LiteralNode>(foundIdentifier.value());
 
     ast = make_shared<LiteralNode>(literal->getNodeType(), literal->getLiteralValue(), ast);
 }
 
 // When we have a variable assigned to a literal, we can safely just add that to the scope
 // since we know it references a primitive value
-void LiteralInlinerPass::bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolTableStack &scope) {
+void LiteralInlinerPass::bindIdentifierToScope(shared_ptr<ASTNode> &ast, SymbolTableStack<shared_ptr<ASTNode>> &scope) {
     string identifier = dynamic_pointer_cast<IdentifierNode>(ast->getLeft())->getIdentifier();
 
     if (ast->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
         string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(identifier, ast->getRight());
 
-        shared_ptr<ASTNode> existingFuncIdentifierInScope = scope.lookup(uniqueFuncIdentifier);
+        auto existingFuncIdentifierInScope = scope.lookup(uniqueFuncIdentifier);
 
-        if (existingFuncIdentifierInScope) {
+        if (existingFuncIdentifierInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identifier));
             return;
         }
 
         scope.insert(uniqueFuncIdentifier, ast->getRight());
     } else {
-        shared_ptr<ASTNode> foundIdentInScope = scope.lookup(identifier);
+        auto foundIdentInScope = scope.lookup(identifier);
 
-        if (foundIdentInScope) {
+        if (foundIdentInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identifier));
             return;
         }
@@ -119,7 +119,7 @@ void LiteralInlinerPass::hoistNecessary(shared_ptr<ASTNode> &ast) {
     nodeList->setElements(topLevelElements);
 }
 
-void LiteralInlinerPass::unpackEnumElementsInScope(shared_ptr<ASTNode> node, SymbolTableStack &scope) {
+void LiteralInlinerPass::unpackEnumElementsInScope(shared_ptr<ASTNode> node, SymbolTableStack<shared_ptr<ASTNode>> &scope) {
     shared_ptr<EnumNode> enumNode = dynamic_pointer_cast<EnumNode>(node);
     string baseIdentifier = dynamic_pointer_cast<IdentifierNode>(enumNode->getIdentifier())->getIdentifier();
     vector<shared_ptr<ASTNode>> enumElements = dynamic_pointer_cast<ASTNodeList>(node)->getElements();
@@ -129,7 +129,7 @@ void LiteralInlinerPass::unpackEnumElementsInScope(shared_ptr<ASTNode> node, Sym
 
         string enumElIdentifier = baseIdentifier + "." + elSymbol->getSymbol().substr(1);
         
-        shared_ptr<ASTNode> foundScopeIdentifier = scope.lookup(enumElIdentifier);
+        auto foundScopeIdentifier = scope.lookup(enumElIdentifier);
         if (foundScopeIdentifier) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(enumElIdentifier));
             return;
