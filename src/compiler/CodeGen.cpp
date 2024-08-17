@@ -266,6 +266,7 @@ namespace Theta {
         vector<BinaryenExpressionRef> expressions;
         vector<Pointer<PointerType::Data>> argPointers; 
 
+        // Store the args into memory
         for (auto param : simplifiedReference->getParameters()->getElements()) {
             string paramName = dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier();
 
@@ -300,6 +301,7 @@ namespace Theta {
             argPointers
         );
 
+        // Store a closure pointing to the args that were stored in memory
         vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
 
         copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
@@ -948,6 +950,9 @@ namespace Theta {
         vector<BinaryenExpressionRef> expressions;
 
         for (int i = 0; i < closureDataSegments.size(); i++) {
+            // Don't store uninitialized pointers
+            if (closureDataSegments.at(i) == -1) continue;
+
             expressions.push_back(
                 BinaryenStore(
                     module,

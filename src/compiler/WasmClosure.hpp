@@ -18,8 +18,16 @@ namespace Theta {
             Pointer<PointerType::Function> ptr,
             int initialArity,
             vector<Pointer<PointerType::Data>> args
-        ) : fnPointer(ptr), arity(initialArity), argPointers(args) {
+        ) : fnPointer(ptr), arity(initialArity) {
             argPointers.resize(arity);
+
+            for (int i = 0; i < args.size(); i++) {
+                if (args.at(i).getAddress() != -1) {
+                    argPointers[arity - 1] = args.at(i);
+
+                    arity--;
+                }
+            }
         }
 
         void setAddress(int closureMemAddress) {
