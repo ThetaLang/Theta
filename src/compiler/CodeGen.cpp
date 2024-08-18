@@ -599,6 +599,10 @@ namespace Theta {
     
             if (refIdentifier == "") {
                 refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
+            } else {
+                cout << "got passed a refIdentifier: " << refIdentifier << endl; 
+                // TODO: if a ref identifier was passed in, we know this is
+                // a function that has an existing closure already stored in memory
             } 
             
             WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
