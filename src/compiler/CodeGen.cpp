@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include "asmjs/shared-constants.h"
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
 #include "compiler/TypeChecker.hpp"
@@ -590,25 +591,128 @@ namespace Theta {
         shared_ptr<FunctionInvocationNode> funcInvNode,
         shared_ptr<ASTNode> reference,
         BinaryenModuleRef &module,
-        string refIdentifier
+        string passedRefIdentifier
     ) {
         string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
 
         if (reference->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> ref = dynamic_pointer_cast<FunctionDeclarationNode>(reference);
     
+            string refIdentifier = passedRefIdentifier;
             if (refIdentifier == "") {
                 refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
-            } else {
-                cout << "got passed a refIdentifier: " << refIdentifier << endl; 
-                // TODO: if a ref identifier was passed in, we know this is
-                // a function that has an existing closure already stored in memory
             } 
-            
+                
             WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
+            
+            vector<BinaryenExpressionRef> expressions;
+
+            string funcInvName = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
+
+            // If the calculated name isn't the same as the refIdentifier, we know
+            // this is a reference to a function and must have a closure already
+            // in memory
+            if (funcInvName != refIdentifier) {
+                cout << funcInvName << " is not the same as " << refIdentifier << endl;
+
+                for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
+                    shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType());
+                
+                    int argByteSize = getByteSizeForType(argType);
+
+                    expressions.push_back(
+                        BinaryenStore(
+                            module,
+                            argByteSize,
+                            0,
+                            0,
+                            BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
+                            generate(arg, module),
+                            getBinaryenTypeFromTypeDeclaration(argType),
+                            MEMORY_NAME.c_str()
+                        )
+                    );
+
+                    expressions.push_back(
+                        BinaryenCall(
+                            module,
+                            "Theta.Function.populateClosure",
+                            (BinaryenExpressionRef[]){
+                                BinaryenLocalGet(
+                                    module,
+                                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                                    BinaryenTypeInt32()
+                                ),
+                                BinaryenConst(
+                                    module,
+                                    BinaryenLiteralInt32(memoryOffset)
+                                )
+                            },
+                            2,
+                            BinaryenTypeNone()
+                        )
+                    );
+
+                    memoryOffset += argByteSize;
+                }
+
+                // If arity hits 0, we can call_indirect
+                expressions.push_back(
+                    BinaryenIf(
+                        module,
+                        BinaryenUnary(
+                            module,
+                            BinaryenEqZInt32(),
+                            BinaryenBinary(
+                                module,
+                                BinaryenAddInt32(),
+                                BinaryenLocalGet(
+                                    module,
+                                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                                    BinaryenTypeInt32()
+                                ),
+                                BinaryenConst(
+                                    module,
+                                    BinaryenLiteralInt32(4)
+                                )
+                            )
+                        ),
+                        BinaryenCallIndirect(
+                            module, 
+                            FN_TABLE_NAME.c_str(), 
+                            BinaryenLoad(
+                                module,
+                                4,
+                                false,
+                                0,
+                                0,
+                                BinaryenTypeInt32(),
+                                BinaryenLocalGet(
+                                    module,
+                                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                                    BinaryenTypeInt32()
+                                ),
+                                MEMORY_NAME.c_str()
+                            ),
+                            BinaryenExpressionRef *operands,
+                            closureTemplate->getArity(),
+                            BinaryenType params,
+                            BinaryenType results
+                        ),
+                        NULL
+                    )
+                );
+
+                BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
+                for (int i = 0; i < expressions.size(); i++) {
+                    blockExpressions[i] = expressions.at(i);
+                }
+            
+                return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeNone());
+            }
+
             WasmClosure closure = WasmClosure::clone(closureTemplate);
 
-            vector<BinaryenExpressionRef> expressions;
             vector<Pointer<PointerType::Data>> paramMemPointers;
 
             // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
@@ -687,7 +791,8 @@ namespace Theta {
         }
 
         shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
-        
+       
+        string refIdentifier = passedRefIdentifier;
         if (refIdentifier == "") {
             refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
         }
