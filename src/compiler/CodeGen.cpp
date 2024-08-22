@@ -656,28 +656,54 @@ namespace Theta {
                     memoryOffset += argByteSize;
                 }
 
+
+                BinaryenFunctionRef functionToExecute = BinaryenGetFunction(module, refIdentifier.c_str());
+                BinaryenType functionParamType = BinaryenFunctionGetParams(functionToExecute);
+                int functionArity = BinaryenTypeArity(functionParamType);
+
+                BinaryenType* types;
+                BinaryenTypeExpand(functionParamType, types);
+                BinaryenExpressionRef* loadArgsExpressions = new BinaryenExpressionRef[functionArity];
+
+                for (int i = 0; i < functionArity; i++) {
+                    loadArgsExpressions[i] = BinaryenLoad(
+                        module,
+                        getByteSizeForType(types[i]),
+                        false, // TODO: support negative values
+                        8 + i * 4,
+                        0,
+                        types[i],
+                        BinaryenLocalGet( //  The local thats storing the pointer to the function we want to call
+                            module,
+                            scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                            BinaryenTypeInt32()
+                        ),
+                        MEMORY_NAME.c_str()
+                    );
+                }
+
                 // If arity hits 0, we can call_indirect
                 expressions.push_back(
                     BinaryenIf(
                         module,
-                        BinaryenUnary(
+                        BinaryenUnary( // Check if the arity is equal to 0
                             module,
                             BinaryenEqZInt32(),
-                            BinaryenBinary(
+                            BinaryenBinary( // Add 4 to the closure pointer address to get the arity address
                                 module,
                                 BinaryenAddInt32(),
-                                BinaryenLocalGet(
+                                BinaryenLocalGet( //  The local thats storing the pointer to the function we want to call
                                     module,
                                     scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
                                     BinaryenTypeInt32()
                                 ),
-                                BinaryenConst(
+                                BinaryenConst( 
                                     module,
                                     BinaryenLiteralInt32(4)
                                 )
                             )
                         ),
-                        BinaryenCallIndirect(
+                        BinaryenCallIndirect( // If the above check is true, execute_indirect
                             module, 
                             FN_TABLE_NAME.c_str(), 
                             BinaryenLoad(
@@ -694,10 +720,10 @@ namespace Theta {
                                 ),
                                 MEMORY_NAME.c_str()
                             ),
-                            BinaryenExpressionRef *operands,
-                            closureTemplate->getArity(),
-                            BinaryenType params,
-                            BinaryenType results
+                            loadArgsExpressions,
+                            BinaryenTypeArity(functionParamType),
+                            functionParamType,
+                            BinaryenFunctionGetResults(functionToExecute)
                         ),
                         NULL
                     )
@@ -1181,9 +1207,18 @@ namespace Theta {
         // TODO: Figure out if this holds true. According to
         // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md#the-stringref-facility
         // stringrefs are either i32 or i64
-        if (type->getType() == DataTypes::STRING) return 8; 
+        if (type->getType() == DataTypes::STRING) return 4; 
 
         cout << "Not implemented for type: " << type->getType() << endl;
+        throw new runtime_error("Not implemented");
+    }
+
+    int CodeGen::getByteSizeForType(BinaryenType type) {
+        if (type == BinaryenTypeInt32()) return 4;
+        if (type == BinaryenTypeInt64()) return 8;
+        if (type == BinaryenTypeStringref()) return 4;
+
+        cout << "Not implemented for type: " << to_string(type) << endl;
         throw new runtime_error("Not implemented");
     }
 

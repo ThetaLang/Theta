@@ -106,6 +106,7 @@ namespace Theta {
             string generateFunctionHash(shared_ptr<FunctionDeclarationNode> function);
 
             int getByteSizeForType(shared_ptr<TypeDeclarationNode> type);
+            int getByteSizeForType(BinaryenType type);
 
             BinaryenModuleRef importCoreLangWasm();
 
