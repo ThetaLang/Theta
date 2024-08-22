@@ -613,8 +613,6 @@ namespace Theta {
             // this is a reference to a function and must have a closure already
             // in memory
             if (funcInvName != refIdentifier) {
-                cout << funcInvName << " is not the same as " << refIdentifier << endl;
-
                 for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
                     shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType());
                 
@@ -656,8 +654,8 @@ namespace Theta {
                     memoryOffset += argByteSize;
                 }
 
-
                 BinaryenFunctionRef functionToExecute = BinaryenGetFunction(module, refIdentifier.c_str());
+                BinaryenType functionReturnType = BinaryenFunctionGetResults(functionToExecute);
                 BinaryenType functionParamType = BinaryenFunctionGetParams(functionToExecute);
                 int functionArity = BinaryenTypeArity(functionParamType);
 
@@ -670,13 +668,22 @@ namespace Theta {
                         module,
                         getByteSizeForType(types[i]),
                         false, // TODO: support negative values
-                        8 + i * 4,
+                        0,
                         0,
                         types[i],
-                        BinaryenLocalGet( //  The local thats storing the pointer to the function we want to call
+                        BinaryenLoad( // Loads the arg pointer
                             module,
-                            scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                            BinaryenTypeInt32()
+                            4,
+                            false, 
+                            8 + i * 4,
+                            0,
+                            BinaryenTypeInt32(),
+                            BinaryenLocalGet( //  The local thats storing the pointer to the closure
+                                module,
+                                scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                                BinaryenTypeInt32()
+                            ),
+                            MEMORY_NAME.c_str()
                         ),
                         MEMORY_NAME.c_str()
                     );
@@ -689,18 +696,19 @@ namespace Theta {
                         BinaryenUnary( // Check if the arity is equal to 0
                             module,
                             BinaryenEqZInt32(),
-                            BinaryenBinary( // Add 4 to the closure pointer address to get the arity address
+                            BinaryenLoad(
                                 module,
-                                BinaryenAddInt32(),
+                                4, // Add 4 to the closure pointer address to get the arity address
+                                false,
+                                4,
+                                0,
+                                BinaryenTypeInt32(),
                                 BinaryenLocalGet( //  The local thats storing the pointer to the function we want to call
                                     module,
                                     scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
                                     BinaryenTypeInt32()
                                 ),
-                                BinaryenConst( 
-                                    module,
-                                    BinaryenLiteralInt32(4)
-                                )
+                                MEMORY_NAME.c_str()
                             )
                         ),
                         BinaryenCallIndirect( // If the above check is true, execute_indirect
@@ -723,9 +731,9 @@ namespace Theta {
                             loadArgsExpressions,
                             BinaryenTypeArity(functionParamType),
                             functionParamType,
-                            BinaryenFunctionGetResults(functionToExecute)
-                        ),
-                        NULL
+                            functionReturnType
+                        ),   
+                        BinaryenConst(module, BinaryenLiteralInt64(-1))
                     )
                 );
 
@@ -734,7 +742,7 @@ namespace Theta {
                     blockExpressions[i] = expressions.at(i);
                 }
             
-                return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeNone());
+                return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), functionReturnType);
             }
 
             WasmClosure closure = WasmClosure::clone(closureTemplate);
