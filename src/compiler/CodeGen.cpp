@@ -223,6 +223,11 @@ namespace Theta {
         scope.insert(globalQualifiedFunctionName, simplifiedDeclaration);
         scopeReferences.insert(localQualifiedFunctionName, globalQualifiedFunctionName);
 
+        // Also insert the assignment identifier into scope referenecs so that if we want to return a reference to the function
+        // using the identifier, we can do that. This will overwrite any previous scope references with that identifier, so only
+        // the most recent identifier of a given name can be returned as a reference 
+        scopeReferences.insert(assignmentIdentifier, globalQualifiedFunctionName);
+
         vector<BinaryenExpressionRef> expressions = storage.second;
 
         // Returns a reference to the closure memory address
@@ -825,11 +830,13 @@ namespace Theta {
         }
 
         shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
-       
         string refIdentifier = passedRefIdentifier;
+
         if (refIdentifier == "") {
             refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
         }
+
+        cout << "refidentifier is " << refIdentifier << endl;
 
         vector<BinaryenExpressionRef> expressions;
         vector<int> paramMemPointers;
@@ -930,6 +937,14 @@ namespace Theta {
 
     BinaryenExpressionRef CodeGen::generateIdentifier(shared_ptr<IdentifierNode> identNode, BinaryenModuleRef &module) {
         string identName = identNode->getIdentifier();
+        cout << "generating " << identName << endl;
+        optional<string> scopeRef = scopeReferences.lookup(identName);
+
+        if (scopeRef) {
+            cout << identName << " references " << scopeRef.value() << endl;
+            identName = scopeRef.value();
+        }
+
         shared_ptr<ASTNode> identInScope = scope.lookup(identName).value();
 
         // The ident in this case may refer to a parameter to a function, which may not have a resolvedType
@@ -938,6 +953,8 @@ namespace Theta {
                 ? identInScope->getResolvedType()
                 : identInScope->getValue()
         );
+
+        cout << "resolvedtype of " << identName << " is " << type->toJSON() << endl;
 
         if (identInScope->getMappedBinaryenIndex() == -1) {
             return BinaryenGlobalGet(

@@ -178,6 +178,12 @@ namespace Theta {
             }
 
             identifierTable.insert(uniqueFuncIdentifier, node->getRight());
+            
+            // Also insert as the non-unique identifier, in case the function will be referenced without being called later.
+            // It's okay to overwrite any identifier table value thats already there for this identifier, because if there are
+            // multiple function definitions with the same identifier, when the user returns / references one without calling it, 
+            // we'll assume they want the most recent one.
+            identifierTable.insert(ident->getIdentifier(), node->getResolvedType());
         } else {
             auto existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
