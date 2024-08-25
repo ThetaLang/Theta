@@ -868,9 +868,11 @@ namespace Theta {
         return nullptr;
     }
 
-    shared_ptr<TypeDeclarationNode> TypeChecker::getFunctionReturnType(shared_ptr<FunctionDeclarationNode> fnDeclNode) {
-        if (fnDeclNode->getResolvedType()->getValue()) return dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType()->getValue());
+    shared_ptr<TypeDeclarationNode> TypeChecker::getFunctionReturnType(shared_ptr<ASTNode> fn) {
+        if (fn->getNodeType() == ASTNode::FUNCTION_INVOCATION) return dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType());
 
-        return dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<TypeDeclarationNode>(fnDeclNode->getResolvedType())->getElements().back());
+        if (fn->getResolvedType()->getValue()) return dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType()->getValue());
+
+        return dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType())->getElements().back());
     }
 }

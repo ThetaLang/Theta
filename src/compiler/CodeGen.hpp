@@ -17,6 +17,7 @@
 #include "parser/ast/TypeDeclarationNode.hpp"
 #include "parser/ast/FunctionInvocationNode.hpp"
 #include "parser/ast/ControlFlowNode.hpp"
+#include "compiler/FunctionMetaData.hpp"
 #include <binaryen-c.h>
 #include <set>
 #include <unordered_map>
@@ -88,15 +89,25 @@ namespace Theta {
 
             BinaryenExpressionRef generateCallIndirectForExistingClosure(
                 shared_ptr<FunctionInvocationNode> funcInvNode,
+                shared_ptr<ASTNode> ref,
                 string refIdentifier,
                 BinaryenModuleRef &module
             );
         
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
             static BinaryenType getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
-            static pair<BinaryenType, BinaryenType> getBinaryenTypeForFunctionDeclaration(shared_ptr<FunctionDeclarationNode> node);
 
-            void hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements);
+            template<typename Node>
+            static FunctionMetaData getFunctionMetaData(shared_ptr<Node> node);
+
+            static FunctionMetaData getFunctionMetaDataFromTypeDeclaration(shared_ptr<TypeDeclarationNode> type);
+
+            static FunctionMetaData getDerivedFunctionMetaData(
+                shared_ptr<FunctionInvocationNode> inv,
+                shared_ptr<FunctionInvocationNode> ref
+            );
+
+            void hoistCapsuleElements(vector<shared_ptr<ASTNode>> ielements);
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
             void registerModuleFunctions(BinaryenModuleRef &module);
 

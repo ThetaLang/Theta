@@ -61,7 +61,7 @@ namespace Theta {
              */
             static bool isOneOfTypes(shared_ptr<ASTNode> type, vector<shared_ptr<ASTNode>> options);
 
-            static shared_ptr<TypeDeclarationNode> getFunctionReturnType(shared_ptr<FunctionDeclarationNode> fnDeclNode);
+            static shared_ptr<TypeDeclarationNode> getFunctionReturnType(shared_ptr<ASTNode> fn);
 
 
         private:
