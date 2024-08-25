@@ -548,348 +548,269 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, BinaryenModuleRef &module) {
-        BinaryenExpressionRef* arguments = new BinaryenExpressionRef[funcInvNode->getParameters()->getElements().size()];
+        string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
 
-        string funcName = Compiler::getQualifiedFunctionIdentifier(
-            dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier(),
-            funcInvNode
-        );
-    
-        for (int i = 0; i < funcInvNode->getParameters()->getElements().size(); i++) {
-            arguments[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
-        }
+        string scopeLookupIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
 
-        string scopeLookupIdentifier = funcName;
-
-        auto localReference = scopeReferences.lookup(funcName); 
-        if (localReference.has_value()) {
+        auto localReference = scopeReferences.lookup(scopeLookupIdentifier); 
+        if (localReference) {
            scopeLookupIdentifier = localReference.value();
         }
 
         auto foundLocalReference = scope.lookup(scopeLookupIdentifier);
 
-        if (foundLocalReference.has_value()) {
-            return generateIndirectInvocation(
-                funcInvNode,
-                foundLocalReference.value(),
-                module,
-                scopeLookupIdentifier
-            );
+        if (!foundLocalReference) {
+            cout << "Could not find reference for function invocation" << endl;
+            throw new runtime_error("Reference not found");
         }
 
-        // TODO: Check if this needs to be an indirect call, and generate that instead of a normal call. Thats why the current compile
-        // is failing
+        string funcInvName = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
 
-        cout << "AAAAAAAHHH I SHOULD NEVER GET HERE" << endl;
+        // If the calculated name isn't the same as the refIdentifier, we know
+        // this is a reference to a function and must have a closure already
+        // in memory
+        if (foundLocalReference.value()->getNodeType() == ASTNode::FUNCTION_INVOCATION || funcInvName != scopeLookupIdentifier) {
+            return generateCallIndirectForExistingClosure(funcInvNode, scopeLookupIdentifier, module);
+        }
 
-        return BinaryenCall(
-            module,
-            funcName.c_str(),
-            arguments,
-            funcInvNode->getParameters()->getElements().size(),
-            getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(funcInvNode->getResolvedType()))
-        );
+        cout << "indirect for " << scopeLookupIdentifier << endl;
+
+        return generateCallIndirectForNewClosure(funcInvNode, foundLocalReference.value(), scopeLookupIdentifier, module);
     }
 
-    // TODO: This needs to be refactored
-    BinaryenExpressionRef CodeGen::generateIndirectInvocation(
+    vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryInsertions(
         shared_ptr<FunctionInvocationNode> funcInvNode,
-        shared_ptr<ASTNode> reference,
+        vector<BinaryenExpressionRef> &expressions,
         BinaryenModuleRef &module,
-        string passedRefIdentifier
+        string refIdentifier
     ) {
-        string funcInvIdentifier = dynamic_pointer_cast<IdentifierNode>(funcInvNode->getIdentifier())->getIdentifier();
+        vector<Pointer<PointerType::Data>> paramMemPointers;
 
-        if (reference->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-            shared_ptr<FunctionDeclarationNode> ref = dynamic_pointer_cast<FunctionDeclarationNode>(reference);
-    
-            string refIdentifier = passedRefIdentifier;
-            if (refIdentifier == "") {
-                refIdentifier = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
-            } 
-                
-            WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
-            
-            vector<BinaryenExpressionRef> expressions;
-
-            string funcInvName = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
-
-            // If the calculated name isn't the same as the refIdentifier, we know
-            // this is a reference to a function and must have a closure already
-            // in memory
-            if (funcInvName != refIdentifier) {
-                for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
-                    shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType());
-                
-                    int argByteSize = getByteSizeForType(argType);
-
-                    expressions.push_back(
-                        BinaryenStore(
-                            module,
-                            argByteSize,
-                            0,
-                            0,
-                            BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
-                            generate(arg, module),
-                            getBinaryenTypeFromTypeDeclaration(argType),
-                            MEMORY_NAME.c_str()
-                        )
-                    );
-
-                    expressions.push_back(
-                        BinaryenCall(
-                            module,
-                            "Theta.Function.populateClosure",
-                            (BinaryenExpressionRef[]){
-                                BinaryenLocalGet(
-                                    module,
-                                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                                    BinaryenTypeInt32()
-                                ),
-                                BinaryenConst(
-                                    module,
-                                    BinaryenLiteralInt32(memoryOffset)
-                                )
-                            },
-                            2,
-                            BinaryenTypeNone()
-                        )
-                    );
-
-                    memoryOffset += argByteSize;
-                }
-
-                BinaryenFunctionRef functionToExecute = BinaryenGetFunction(module, refIdentifier.c_str());
-                BinaryenType functionReturnType = BinaryenFunctionGetResults(functionToExecute);
-                BinaryenType functionParamType = BinaryenFunctionGetParams(functionToExecute);
-                int functionArity = BinaryenTypeArity(functionParamType);
-
-                BinaryenType* types;
-                BinaryenTypeExpand(functionParamType, types);
-                BinaryenExpressionRef* loadArgsExpressions = new BinaryenExpressionRef[functionArity];
-
-                for (int i = 0; i < functionArity; i++) {
-                    loadArgsExpressions[i] = BinaryenLoad(
-                        module,
-                        getByteSizeForType(types[i]),
-                        false, // TODO: support negative values
-                        0,
-                        0,
-                        types[i],
-                        BinaryenLoad( // Loads the arg pointer
-                            module,
-                            4,
-                            false, 
-                            8 + i * 4,
-                            0,
-                            BinaryenTypeInt32(),
-                            BinaryenLocalGet( //  The local thats storing the pointer to the closure
-                                module,
-                                scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                                BinaryenTypeInt32()
-                            ),
-                            MEMORY_NAME.c_str()
-                        ),
-                        MEMORY_NAME.c_str()
-                    );
-                }
-
-                // If arity hits 0, we can call_indirect
-                expressions.push_back(
-                    BinaryenIf(
-                        module,
-                        BinaryenUnary( // Check if the arity is equal to 0
-                            module,
-                            BinaryenEqZInt32(),
-                            BinaryenLoad(
-                                module,
-                                4, // Add 4 to the closure pointer address to get the arity address
-                                false,
-                                4,
-                                0,
-                                BinaryenTypeInt32(),
-                                BinaryenLocalGet( //  The local thats storing the pointer to the function we want to call
-                                    module,
-                                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                                    BinaryenTypeInt32()
-                                ),
-                                MEMORY_NAME.c_str()
-                            )
-                        ),
-                        BinaryenCallIndirect( // If the above check is true, execute_indirect
-                            module, 
-                            FN_TABLE_NAME.c_str(), 
-                            BinaryenLoad(
-                                module,
-                                4,
-                                false,
-                                0,
-                                0,
-                                BinaryenTypeInt32(),
-                                BinaryenLocalGet(
-                                    module,
-                                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                                    BinaryenTypeInt32()
-                                ),
-                                MEMORY_NAME.c_str()
-                            ),
-                            loadArgsExpressions,
-                            BinaryenTypeArity(functionParamType),
-                            functionParamType,
-                            functionReturnType
-                        ),   
-                        BinaryenConst(module, BinaryenLiteralInt64(-1))
-                    )
-                );
-
-                BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
-                for (int i = 0; i < expressions.size(); i++) {
-                    blockExpressions[i] = expressions.at(i);
-                }
-            
-                return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), functionReturnType);
-            }
-
-            WasmClosure closure = WasmClosure::clone(closureTemplate);
-
-            vector<Pointer<PointerType::Data>> paramMemPointers;
-
-            // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
-            // That way, we save a bunch of store and load calls, and can just skip to the call_indirect
-            for (auto arg : funcInvNode->getParameters()->getElements()) {
-                int byteSize = getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType()));
-                int memLocation = memoryOffset;
-
-                paramMemPointers.push_back(Pointer<PointerType::Data>(memLocation));
-
-                memoryOffset += byteSize;
-
-                // Store each passed argument into memory
-                expressions.push_back(
-                    BinaryenStore(
-                        module,
-                        byteSize,
-                        0,
-                        0,
-                        BinaryenConst(module, BinaryenLiteralInt32(memLocation)),
-                        generate(arg, module),
-                        getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
-                        MEMORY_NAME.c_str()
-                    )
-                );
-            }
-
-            closure.addArgs(paramMemPointers);
-
-            vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
-
-            copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
-
-            // If we're at 0 arity we can go ahead and execute the function call
-            if (closure.getArity() == 0) {
-                BinaryenExpressionRef* operands = new BinaryenExpressionRef[closure.getArgPointers().size()];
-            
-                for (int i = 0; i < closure.getArgPointers().size(); i++) {
-                    shared_ptr<ASTNode> arg = funcInvNode->getParameters()->getElements().at(i);
-
-                    operands[i] = BinaryenLoad(
-                        module,
-                        getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
-                        false, // TODO: Support signed values!
-                        0,
-                        0,
-                        getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())), // TODO: fix the hardcoded stuff here
-                        BinaryenConst(module, BinaryenLiteralInt32(closure.getArgPointers().at(i).getAddress())),
-                        MEMORY_NAME.c_str()
-                    );
-                }
-
-                pair<BinaryenType, BinaryenType> fnTypes = getBinaryenTypeForFunctionDeclaration(ref);
-
-                expressions.push_back(
-                    BinaryenCallIndirect(
-                        module,
-                        FN_TABLE_NAME.c_str(),
-                        BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionPointer().getAddress())),
-                        operands,
-                        closure.getArgPointers().size(),
-                        fnTypes.first,
-                        fnTypes.second
-                    )
-                );
-            } else {
-                expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closure.getPointer().getAddress())));
-            }
-
-            BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
-            for (int i = 0; i < expressions.size(); i++) {
-                blockExpressions[i] = expressions.at(i);
-            }
+        // Store each passed argument into memory
+        for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
+            shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType());
         
-            return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeInt64());
-        }
-
-        shared_ptr<FunctionInvocationNode> ref = dynamic_pointer_cast<FunctionInvocationNode>(reference);    
-        string refIdentifier = passedRefIdentifier;
-
-        if (refIdentifier == "") {
-            refIdentifier = dynamic_pointer_cast<IdentifierNode>(ref->getIdentifier())->getIdentifier();
-        }
-
-        cout << "refidentifier is " << refIdentifier << endl;
-
-        vector<BinaryenExpressionRef> expressions;
-        vector<int> paramMemPointers;
-
-        string qualifiedInvName = Compiler::getQualifiedFunctionIdentifier(funcInvIdentifier, funcInvNode);
-
-        auto inScope = scope.lookup(qualifiedInvName);
-
-        for (auto arg : funcInvNode->getParameters()->getElements()) {
-            int byteSize = getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType()));
-            int memLocation = memoryOffset;
-
-            paramMemPointers.push_back(memLocation);
-            
-            // TODO: instead of incrementing memoryoffset each time, lets change to only increment after the loop, and then
-            // for each generated store operation just use the offset field instead of 0
-            memoryOffset += byteSize;
+            int argByteSize = getByteSizeForType(argType);
 
             expressions.push_back(
                 BinaryenStore(
                     module,
-                    byteSize,
+                    argByteSize,
                     0,
                     0,
-                    BinaryenConst(module, BinaryenLiteralInt32(memLocation)),
+                    BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
                     generate(arg, module),
-                    getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
+                    getBinaryenTypeFromTypeDeclaration(argType),
                     MEMORY_NAME.c_str()
                 )
             );
+
+            // If a refIdentifier was passed, that means we have an existing closure
+            // in memory that we want to populate.
+            if (refIdentifier != "") {
+                expressions.push_back(
+                    BinaryenCall(
+                        module,
+                        "Theta.Function.populateClosure",
+                        (BinaryenExpressionRef[]){
+                            BinaryenLocalGet(
+                                module,
+                                scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                                BinaryenTypeInt32()
+                            ),
+                            BinaryenConst(
+                                module,
+                                BinaryenLiteralInt32(memoryOffset)
+                            )
+                        },
+                        2,
+                        BinaryenTypeNone()
+                    )
+                );
+            }
+
+            paramMemPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
+
+            memoryOffset += argByteSize;
         }
 
-        BinaryenExpressionPrint(
-        BinaryenLoad(
-            module,
-            4,
-            false,
-            0,
-            0,
-            BinaryenTypeInt32(),
-            BinaryenLocalGet( // TODO: need to check if is -1 and globalget instead
+        return paramMemPointers;
+    }
+
+    BinaryenExpressionRef CodeGen::generateCallIndirectForExistingClosure(
+        shared_ptr<FunctionInvocationNode> funcInvNode,
+        string refIdentifier,
+        BinaryenModuleRef &module
+    ) {
+        vector<BinaryenExpressionRef> expressions;
+
+        generateFunctionInvocationArgMemoryInsertions(funcInvNode, expressions, module, refIdentifier);
+
+        cout << "in here for " << refIdentifier << endl;
+
+        // TODO: The referenced function isn't necessarily always already generated by Binaryen. If we haven't generated
+        // the reference before calling it here, this will bomb out. Thats why the current build is failing. The below lines
+        // need to be changed to figure out the arity, types, etc strictly from the funcInvNode data (and potentially a reference node, if needed)
+
+        BinaryenFunctionRef functionToExecute = BinaryenGetFunction(module, refIdentifier.c_str());
+        BinaryenType functionReturnType = BinaryenFunctionGetResults(functionToExecute);
+        BinaryenType functionParamType = BinaryenFunctionGetParams(functionToExecute);
+        int functionArity = BinaryenTypeArity(functionParamType);
+
+        BinaryenType* types;
+        BinaryenTypeExpand(functionParamType, types);
+        BinaryenExpressionRef* loadArgsExpressions = new BinaryenExpressionRef[functionArity];
+
+        for (int i = 0; i < functionArity; i++) {
+            loadArgsExpressions[i] = BinaryenLoad(
                 module,
-                inScope.value()->getMappedBinaryenIndex(),
-                BinaryenTypeInt32()
-            ),
-            MEMORY_NAME.c_str()
-        )
+                getByteSizeForType(types[i]),
+                false, // TODO: support negative values
+                0,
+                0,
+                types[i],
+                BinaryenLoad( // Loads the arg pointer
+                    module,
+                    4,
+                    false, 
+                    8 + i * 4,
+                    0,
+                    BinaryenTypeInt32(),
+                    BinaryenLocalGet( //  The local thats storing the pointer to the closure
+                        module,
+                        scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                        BinaryenTypeInt32()
+                    ),
+                    MEMORY_NAME.c_str()
+                ),
+                MEMORY_NAME.c_str()
+            );
+        }
+
+        // If arity hits 0, we can call_indirect
+        expressions.push_back(
+            BinaryenIf(
+                module,
+                BinaryenUnary( // Check if the arity is equal to 0
+                    module,
+                    BinaryenEqZInt32(),
+                    BinaryenLoad(
+                        module,
+                        4, // Add 4 to the closure pointer address to get the arity address
+                        false,
+                        4,
+                        0,
+                        BinaryenTypeInt32(),
+                        BinaryenLocalGet( //  The local thats storing the pointer to the function we want to call
+                            module,
+                            scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                            BinaryenTypeInt32()
+                        ),
+                        MEMORY_NAME.c_str()
+                    )
+                ),
+                BinaryenCallIndirect( // If the above check is true, execute_indirect
+                    module, 
+                    FN_TABLE_NAME.c_str(), 
+                    BinaryenLoad(
+                        module,
+                        4,
+                        false,
+                        0,
+                        0,
+                        BinaryenTypeInt32(),
+                        BinaryenLocalGet(
+                            module,
+                            scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                            BinaryenTypeInt32()
+                        ),
+                        MEMORY_NAME.c_str()
+                    ),
+                    loadArgsExpressions,
+                    BinaryenTypeArity(functionParamType),
+                    functionParamType,
+                    functionReturnType
+                ),   
+                BinaryenConst(module, BinaryenLiteralInt64(-1))
+            )
         );
 
-        //functionNameToClosureTemplateMap
+        BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
+        for (int i = 0; i < expressions.size(); i++) {
+            blockExpressions[i] = expressions.at(i);
+        }
+    
+        return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), functionReturnType);
+    }
 
+    BinaryenExpressionRef CodeGen::generateCallIndirectForNewClosure(
+        shared_ptr<FunctionInvocationNode> funcInvNode,
+        shared_ptr<ASTNode> ref,
+        string refIdentifier,
+        BinaryenModuleRef &module
+    ) {
+        vector<BinaryenExpressionRef> expressions;
 
-        cout << "teehee" << endl;
+        // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
+        // That way, we save a bunch of store and load calls, and can just skip to the call_indirect
+        vector<Pointer<PointerType::Data>> paramMemPointers = generateFunctionInvocationArgMemoryInsertions(
+            funcInvNode,
+            expressions,
+            module
+        );
+
+        WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
+        WasmClosure closure = WasmClosure::clone(closureTemplate);
+        closure.addArgs(paramMemPointers);
+
+        vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
+
+        copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
+
+        // If we're at 0 arity we can go ahead and execute the function call
+        if (closure.getArity() == 0) {
+            BinaryenExpressionRef* operands = new BinaryenExpressionRef[closure.getArgPointers().size()];
+        
+            for (int i = 0; i < closure.getArgPointers().size(); i++) {
+                shared_ptr<ASTNode> arg = funcInvNode->getParameters()->getElements().at(i);
+
+                operands[i] = BinaryenLoad(
+                    module,
+                    getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
+                    false, // TODO: Support signed values!
+                    0,
+                    0,
+                    getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())), // TODO: fix the hardcoded stuff here
+                    BinaryenConst(module, BinaryenLiteralInt32(closure.getArgPointers().at(i).getAddress())),
+                    MEMORY_NAME.c_str()
+                );
+            }
+
+            pair<BinaryenType, BinaryenType> fnTypes = getBinaryenTypeForFunctionDeclaration(
+                dynamic_pointer_cast<FunctionDeclarationNode>(ref)
+            );
+
+            expressions.push_back(
+                BinaryenCallIndirect(
+                    module,
+                    FN_TABLE_NAME.c_str(),
+                    BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionPointer().getAddress())),
+                    operands,
+                    closure.getArgPointers().size(),
+                    fnTypes.first,
+                    fnTypes.second
+                )
+            );
+        } else {
+            expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closure.getPointer().getAddress())));
+        }
+
+        BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
+        for (int i = 0; i < expressions.size(); i++) {
+            blockExpressions[i] = expressions.at(i);
+        }
+    
+        return BinaryenBlock(module, NULL, blockExpressions, expressions.size(), BinaryenTypeInt64());
     }
 
     BinaryenExpressionRef CodeGen::generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module) {
@@ -1160,7 +1081,8 @@ namespace Theta {
         if (typeDeclaration->getType() == DataTypes::FUNCTION) return BinaryenTypeInt32();
     }
 
-    pair<BinaryenType, BinaryenType> CodeGen::getBinaryenTypeForFunctionDeclaration(shared_ptr<FunctionDeclarationNode> function) {
+    pair<BinaryenType, BinaryenType> CodeGen::getBinaryenTypeForFunctionDeclaration(shared_ptr<FunctionDeclarationNode> node) {
+        shared_ptr<FunctionDeclarationNode> function = dynamic_pointer_cast<FunctionDeclarationNode>(node); 
         int totalParams = function->getParameters()->getElements().size();
 
         BinaryenType* types = new BinaryenType[totalParams];

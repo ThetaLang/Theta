@@ -39,12 +39,6 @@ namespace Theta {
                 bool addToExports = false
             );
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
-            BinaryenExpressionRef generateIndirectInvocation(
-                shared_ptr<FunctionInvocationNode> node,
-                shared_ptr<ASTNode> reference,
-                BinaryenModuleRef &module,
-                string refIdentifier = ""
-            );
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBinaryOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
@@ -77,6 +71,26 @@ namespace Theta {
                 BinaryenExpressionRef left,
                 BinaryenExpressionRef right,
                 BinaryenModuleRef &modul
+            );
+
+            vector<Pointer<PointerType::Data>> generateFunctionInvocationArgMemoryInsertions(
+                shared_ptr<FunctionInvocationNode> funcInvNode,
+                vector<BinaryenExpressionRef> &expressions,
+                BinaryenModuleRef &module,
+                string refIdentifier = ""
+            );
+
+            BinaryenExpressionRef generateCallIndirectForNewClosure(
+                shared_ptr<FunctionInvocationNode> funcInvNode,
+                shared_ptr<ASTNode> ref,
+                string refIdentifier,
+                BinaryenModuleRef &module
+            );
+
+            BinaryenExpressionRef generateCallIndirectForExistingClosure(
+                shared_ptr<FunctionInvocationNode> funcInvNode,
+                string refIdentifier,
+                BinaryenModuleRef &module
             );
         
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
