@@ -62,7 +62,6 @@ namespace Theta {
             int memoryOffset = 0;
             unordered_map<string, WasmClosure> functionNameToClosureTemplateMap;
             string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
-            string BOOTSTRAP_FUNC_NAME = "ThetaLang.bootstrap";
 
             BinaryenModuleRef initializeWasmModule();
 
