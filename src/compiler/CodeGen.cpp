@@ -656,10 +656,10 @@ namespace Theta {
 
         BinaryenExpressionRef* loadArgsExpressions = new BinaryenExpressionRef[functionMetaData.getArity()];
 
-        for (int i = 0; i < functionMetaData.getArity(); i++) {
+        for (int i = functionMetaData.getArity() - 1; i >= 0; i--) {
             BinaryenType argType = functionMetaData.getParams()[i];
 
-            loadArgsExpressions[i] = BinaryenLoad(
+            loadArgsExpressions[functionMetaData.getArity() - 1 - i] = BinaryenLoad(
                 module,
                 getByteSizeForType(argType),
                 false, // TODO: support negative values
@@ -746,41 +746,19 @@ namespace Theta {
         string refIdentifier,
         BinaryenModuleRef &module
     ) {
+        WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
         vector<BinaryenExpressionRef> expressions;
 
-        // TODO: This can be improved by checking if the arity will be 0 before adding anything to memory
-        // That way, we save a bunch of store and load calls, and can just skip to the call_indirect
-        vector<Pointer<PointerType::Data>> paramMemPointers = generateFunctionInvocationArgMemoryInsertions(
-            funcInvNode,
-            expressions,
-            module
-        );
-
-        WasmClosure closureTemplate = functionNameToClosureTemplateMap.find(refIdentifier)->second;
-        WasmClosure closure = WasmClosure::clone(closureTemplate);
-        closure.addArgs(paramMemPointers);
-
-        vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
-
-        copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
-
         // If we're at 0 arity we can go ahead and execute the function call
-        if (closure.getArity() == 0) {
-            BinaryenExpressionRef* operands = new BinaryenExpressionRef[closure.getArgPointers().size()];
+        if (funcInvNode->getParameters()->getElements().size() == closureTemplate.getArity()) {
+            BinaryenExpressionRef* operands = new BinaryenExpressionRef[closureTemplate.getArity()];
         
-            for (int i = 0; i < closure.getArgPointers().size(); i++) {
-                shared_ptr<ASTNode> arg = funcInvNode->getParameters()->getElements().at(i);
-
-                operands[i] = BinaryenLoad(
-                    module,
-                    getByteSizeForType(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())),
-                    false, // TODO: Support signed values!
-                    0,
-                    0,
-                    getBinaryenTypeFromTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType())), // TODO: fix the hardcoded stuff here
-                    BinaryenConst(module, BinaryenLiteralInt32(closure.getArgPointers().at(i).getAddress())),
-                    MEMORY_NAME.c_str()
+            for (int i = 0; i < closureTemplate.getArity(); i++) {
+                shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(
+                    funcInvNode->getParameters()->getElements().at(i)->getResolvedType()
                 );
+
+                operands[i] = generate(funcInvNode->getParameters()->getElements().at(i), module);
             }
 
             FunctionMetaData functionMetaData = getFunctionMetaData(
@@ -791,17 +769,29 @@ namespace Theta {
                 BinaryenCallIndirect(
                     module,
                     FN_TABLE_NAME.c_str(),
-                    BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionPointer().getAddress())),
+                    BinaryenConst(module, BinaryenLiteralInt32(closureTemplate.getFunctionPointer().getAddress())),
                     operands,
-                    closure.getArgPointers().size(),
+                    functionMetaData.getArity(),
                     functionMetaData.getParamType(),
                     functionMetaData.getReturnType()
                 )
             );
         } else {
+            WasmClosure closure = WasmClosure::clone(closureTemplate);
+            vector<Pointer<PointerType::Data>> paramMemPointers = generateFunctionInvocationArgMemoryInsertions(
+                funcInvNode,
+                expressions,
+                module
+            );
+
+            closure.addArgs(paramMemPointers);
+
+            vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
+            copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
+
             expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closure.getPointer().getAddress())));
         }
-
+        
         BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
         for (int i = 0; i < expressions.size(); i++) {
             blockExpressions[i] = expressions.at(i);
