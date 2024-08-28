@@ -297,7 +297,6 @@ namespace Theta {
 
             argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
             
-            // TODO: change to only increment memoryOffset after the loop finishes
             memoryOffset += byteSize;
         }
 
@@ -662,7 +661,7 @@ namespace Theta {
             loadArgsExpressions[functionMetaData.getArity() - 1 - i] = BinaryenLoad(
                 module,
                 getByteSizeForType(argType),
-                false, // TODO: support negative values
+                true, // TODO: support negative values
                 0,
                 0,
                 argType,
@@ -1091,10 +1090,6 @@ namespace Theta {
 
     // This is basically getting the function metadata for the function that gets generated as a result of 
     // currying
-    // TODO: This wont work if the function that is curried doesnt use all of the parameters of its parent
-    // function, because the generated function will have less arity than what we are inferring it 
-    // to have here. Need to change closure generation to just make every closure capture all the
-    // parameters of its parents
     FunctionMetaData CodeGen::getDerivedFunctionMetaData(
         shared_ptr<FunctionInvocationNode> invocation,
         shared_ptr<FunctionInvocationNode> reference
