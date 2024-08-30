@@ -58,9 +58,11 @@ namespace Theta {
         private:
             SymbolTableStack<shared_ptr<ASTNode>> scope;          
             SymbolTableStack<string> scopeReferences;
-            string FN_TABLE_NAME = "0";
+            string FN_TABLE_NAME = "ThetaFunctionRefs";
+            string STRINGREF_TABLE = "ThetaStringRefs";
             string MEMORY_NAME = "0";
             int memoryOffset = 0;
+            int stringRefOffset = 0;
             unordered_map<string, WasmClosure> functionNameToClosureTemplateMap;
             string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
 
@@ -96,6 +98,7 @@ namespace Theta {
         
             static BinaryenOp getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> node);
             static BinaryenType getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
+            static BinaryenType getBinaryenStorageTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
 
             template<typename Node>
             static FunctionMetaData getFunctionMetaData(shared_ptr<Node> node);

@@ -63,6 +63,14 @@ namespace Theta {
             false,
             MEMORY_NAME.c_str()
         );
+        
+        BinaryenAddTable(
+            module,
+            STRINGREF_TABLE.c_str(),
+            1000,
+            100000000,
+            BinaryenTypeStringref()
+        );
     
         StandardLibrary::registerFunctions(module);
 
@@ -282,18 +290,33 @@ namespace Theta {
             shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(param->getValue());
 
             int byteSize = getByteSizeForType(paramType);
-            expressions.push_back(
-                BinaryenStore(
-                    module,
-                    byteSize,
-                    0,
-                    0,
-                    BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
-                    generate(paramValue, module),
-                    getBinaryenTypeFromTypeDeclaration(paramType),
-                    MEMORY_NAME.c_str()
-                )
-            );
+
+            BinaryenExpressionRef generatedValue = generate(paramValue, module);
+            if (paramType->getType() == DataTypes::STRING) {
+                expressions.push_back(
+                    BinaryenTableSet(
+                        module,
+                        STRINGREF_TABLE.c_str(),
+                        BinaryenConst(module, BinaryenLiteralInt32(stringRefOffset)),
+                        generatedValue
+                    )
+                );
+    
+                stringRefOffset += 1;
+            } else {
+                expressions.push_back(
+                    BinaryenStore(
+                        module,
+                        byteSize,
+                        0,
+                        0,
+                        BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
+                        generatedValue,
+                        getBinaryenStorageTypeFromTypeDeclaration(paramType),
+                        MEMORY_NAME.c_str()
+                    )
+                );
+            }
 
             argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
             
@@ -593,18 +616,32 @@ namespace Theta {
         
             int argByteSize = getByteSizeForType(argType);
 
-            expressions.push_back(
-                BinaryenStore(
-                    module,
-                    argByteSize,
-                    0,
-                    0,
-                    BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
-                    generate(arg, module),
-                    getBinaryenTypeFromTypeDeclaration(argType),
-                    MEMORY_NAME.c_str()
-                )
-            );
+            BinaryenExpressionRef generatedValue = generate(arg, module);
+            if (argType->getType() == DataTypes::STRING) {
+                expressions.push_back(
+                    BinaryenTableSet(
+                        module,
+                        STRINGREF_TABLE.c_str(),
+                        BinaryenConst(module, BinaryenLiteralInt32(stringRefOffset)),
+                        generatedValue
+                    )
+                );
+
+                stringRefOffset += 1;
+            } else {
+                expressions.push_back(
+                    BinaryenStore(
+                        module,
+                        argByteSize,
+                        0,
+                        0,
+                        BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
+                        generatedValue,
+                        getBinaryenStorageTypeFromTypeDeclaration(argType),
+                        MEMORY_NAME.c_str()
+                    )
+                );
+            }
 
             // If a refIdentifier was passed, that means we have an existing closure
             // in memory that we want to populate.
@@ -658,29 +695,54 @@ namespace Theta {
         for (int i = functionMetaData.getArity() - 1; i >= 0; i--) {
             BinaryenType argType = functionMetaData.getParams()[i];
 
-            loadArgsExpressions[functionMetaData.getArity() - 1 - i] = BinaryenLoad(
+            BinaryenExpressionRef loadArgPointerExpr = BinaryenLoad( // Loads the arg pointer
                 module,
-                getByteSizeForType(argType),
-                true, // TODO: support negative values
+                4,
+                false, 
+                8 + i * 4,
                 0,
-                0,
-                argType,
-                BinaryenLoad( // Loads the arg pointer
+                BinaryenTypeInt32(),
+                BinaryenLocalGet( //  The local thats storing the pointer to the closure
                     module,
-                    4,
-                    false, 
-                    8 + i * 4,
-                    0,
-                    BinaryenTypeInt32(),
-                    BinaryenLocalGet( //  The local thats storing the pointer to the closure
-                        module,
-                        scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                        BinaryenTypeInt32()
-                    ),
-                    MEMORY_NAME.c_str()
+                    scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                    BinaryenTypeInt32()
                 ),
                 MEMORY_NAME.c_str()
             );
+
+            BinaryenExpressionRef loadArgExpression;
+            if (argType == BinaryenTypeStringref()) {
+                loadArgExpression = BinaryenTableGet(
+                    module,
+                    STRINGREF_TABLE.c_str(),
+                    loadArgPointerExpr,
+                    BinaryenTypeStringref()
+                );                 
+            } else {
+                loadArgExpression = BinaryenLoad(
+                    module,
+                    getByteSizeForType(argType),
+                    true,
+                    0,
+                    0,
+                    (argType == BinaryenTypeStringref() ? BinaryenTypeInt32() : argType),
+                    loadArgPointerExpr,
+                    MEMORY_NAME.c_str()
+                );
+            }
+
+            loadArgsExpressions[functionMetaData.getArity() - 1 - i] = loadArgExpression;
+        }
+
+        // In order for if statements to return a value in WASM, both branches must return the same concrete type.
+        // This is the value that will be returned by the else branch, should the if fail
+        BinaryenExpressionRef defaultReturnValue;
+        if (functionMetaData.getReturnType() == BinaryenTypeInt32()) {
+            defaultReturnValue = BinaryenConst(module, BinaryenLiteralInt32(-1));
+        } else if (functionMetaData.getReturnType() == BinaryenTypeInt64()) {
+            defaultReturnValue = BinaryenConst(module, BinaryenLiteralInt64(-1));
+        } else {
+            defaultReturnValue = BinaryenStringConst(module, "");
         }
 
         // If arity hits 0, we can call_indirect
@@ -727,7 +789,7 @@ namespace Theta {
                     functionMetaData.getParamType(),
                     functionMetaData.getReturnType()
                 ),   
-                BinaryenConst(module, BinaryenLiteralInt64(-1))
+                defaultReturnValue
             )
         );
 
@@ -1063,6 +1125,12 @@ namespace Theta {
         if (typeDeclaration->getType() == DataTypes::FUNCTION) return BinaryenTypeInt32();
     }
 
+    BinaryenType CodeGen::getBinaryenStorageTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> typeDeclaration) {
+        if (typeDeclaration->getType() == DataTypes::STRING) return BinaryenTypeInt32();
+
+        return getBinaryenTypeFromTypeDeclaration(typeDeclaration);
+    }
+
     template<typename Function>
     FunctionMetaData CodeGen::getFunctionMetaData(shared_ptr<Function> functionNode) {
         int totalParams = functionNode->getParameters()->getElements().size();
@@ -1195,9 +1263,6 @@ namespace Theta {
     int CodeGen::getByteSizeForType(shared_ptr<TypeDeclarationNode> type) {
         if (type->getType() == DataTypes::NUMBER) return 8;
         if (type->getType() == DataTypes::BOOLEAN) return 4;
-        // TODO: Figure out if this holds true. According to
-        // https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md#the-stringref-facility
-        // stringrefs are either i32 or i64
         if (type->getType() == DataTypes::STRING) return 4; 
 
         cout << "Not implemented for type: " << type->getType() << endl;
