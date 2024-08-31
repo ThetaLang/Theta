@@ -1,4 +1,5 @@
 (module
+  (import "console" "log" (func $log (param stringref))) ;; TODO: Remove this
   (memory $0 1 10)
   (func $Theta.Function.populateClosure (param $closure_mem_addr i32) (param $param_addr i32) (local $arity i32)
     (local.set $arity ;; Load the closure arity

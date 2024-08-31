@@ -289,8 +289,6 @@ namespace Theta {
             shared_ptr<ASTNode> paramValue = scope.lookup(paramName).value();
             shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(param->getValue());
 
-            int byteSize = getByteSizeForType(paramType);
-
             BinaryenExpressionRef generatedValue = generate(paramValue, module);
             if (paramType->getType() == DataTypes::STRING) {
                 expressions.push_back(
@@ -301,9 +299,13 @@ namespace Theta {
                         generatedValue
                     )
                 );
+
+                argPointers.push_back(Pointer<PointerType::Data>(stringRefOffset));
     
                 stringRefOffset += 1;
             } else {
+                int byteSize = getByteSizeForType(paramType);
+
                 expressions.push_back(
                     BinaryenStore(
                         module,
@@ -316,11 +318,11 @@ namespace Theta {
                         MEMORY_NAME.c_str()
                     )
                 );
-            }
-
-            argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
+                
+                argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
             
-            memoryOffset += byteSize;
+                memoryOffset += byteSize;
+            }
         }
 
         WasmClosure closure = WasmClosure(
@@ -614,34 +616,44 @@ namespace Theta {
         for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
             shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType());
         
-            int argByteSize = getByteSizeForType(argType);
 
             BinaryenExpressionRef generatedValue = generate(arg, module);
+            Pointer<PointerType::Data> addressToPopulate;
             if (argType->getType() == DataTypes::STRING) {
+                addressToPopulate = Pointer<PointerType::Data>(stringRefOffset);
+
+                stringRefOffset += 1;
+
                 expressions.push_back(
                     BinaryenTableSet(
                         module,
                         STRINGREF_TABLE.c_str(),
-                        BinaryenConst(module, BinaryenLiteralInt32(stringRefOffset)),
+                        BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress())),
                         generatedValue
                     )
                 );
 
-                stringRefOffset += 1;
             } else {
+                addressToPopulate = Pointer<PointerType::Data>(memoryOffset);
+                int argByteSize = getByteSizeForType(argType);
+
+                memoryOffset += argByteSize;
+
                 expressions.push_back(
                     BinaryenStore(
                         module,
                         argByteSize,
                         0,
                         0,
-                        BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
+                        BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress())),
                         generatedValue,
                         getBinaryenStorageTypeFromTypeDeclaration(argType),
                         MEMORY_NAME.c_str()
                     )
                 );
             }
+
+            paramMemPointers.push_back(addressToPopulate);
 
             // If a refIdentifier was passed, that means we have an existing closure
             // in memory that we want to populate.
@@ -656,20 +668,13 @@ namespace Theta {
                                 scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
                                 BinaryenTypeInt32()
                             ),
-                            BinaryenConst(
-                                module,
-                                BinaryenLiteralInt32(memoryOffset)
-                            )
+                            BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress()))
                         },
                         2,
                         BinaryenTypeNone()
                     )
                 );
             }
-
-            paramMemPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
-
-            memoryOffset += argByteSize;
         }
 
         return paramMemPointers;
