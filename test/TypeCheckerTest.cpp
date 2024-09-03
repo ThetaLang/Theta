@@ -246,10 +246,6 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
 
         bool isValid = typeChecker.checkAST(ast);
         
-        for (auto ex : Compiler::getInstance().getEncounteredExceptions()) {
-            ex->display();
-        }
-
         REQUIRE(isValid);
         REQUIRE(Compiler::getInstance().getEncounteredExceptions().size() == 0);
     }
