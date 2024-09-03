@@ -137,7 +137,7 @@ namespace Theta {
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
         bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
-        
+
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
         if (!typesMatch) {
@@ -485,8 +485,10 @@ namespace Theta {
         
         shared_ptr<TypeDeclarationNode> type = make_shared<TypeDeclarationNode>(DataTypes::TUPLE, node);
 
-        type->setLeft(node->getLeft()->getResolvedType());
-        type->setRight(node->getRight()->getResolvedType());
+        type->setElements({
+            node->getLeft()->getResolvedType(),
+            node->getRight()->getResolvedType()
+        });
 
         node->setResolvedType(type);
 
@@ -769,15 +771,27 @@ namespace Theta {
                 if (!containsType) return false;
             }
         } else if (t1->hasMany() && t2->hasMany()) {
-            for (int i = 0; i < t2->getElements().size(); i++) {
-                bool containsType = false;
+            if (t1->getType() == DataTypes::VARIADIC) {
+                // In Variadic types, it makes sense that the types on the right can be any of the values defined
+                // on the left, in any order 
+                for (int i = 0; i < t2->getElements().size(); i++) {
+                    bool containsType = false;
 
-                for (int j = 0; j < t1->getElements().size(); j++) {
-                    if (isSameType(t2->getElements().at(i), t1->getElements().at(j))) containsType = true;
+                    for (int j = 0; j < t1->getElements().size(); j++) {
+                        if (isSameType(t2->getElements().at(i), t1->getElements().at(j))) containsType = true;
+                    }
+
+                    if (!containsType) return false;
                 }
+            } else {
+                // In every other case, though, order matters. The left and right types must be exactly the same
+                if (t1->getElements().size() != t2->getElements().size()) return false;
 
-                if (!containsType) return false;
+                for (int i = 0; i < t1->getElements().size(); i++) {
+                    if (!isSameType(t1->getElements().at(i), t2->getElements().at(i))) return false;
+                }
             }
+
         }
 
         return t1->getType() == t2->getType();
