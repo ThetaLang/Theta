@@ -177,8 +177,12 @@ namespace Theta {
             assignmentRhs->setMappedBinaryenIndex(idxOfAssignment);
         
             string identName = assignmentIdentifier;
-            if (assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
-                identName = Compiler::getQualifiedFunctionIdentifier(identName, assignmentNode->getRight()->getResolvedType());
+            shared_ptr<TypeDeclarationNode> rhsResolvedType = dynamic_pointer_cast<TypeDeclarationNode>(assignmentNode->getRight()->getResolvedType());
+
+            // If this is an assignment to the result of a function call, and the function call returns another function, we need to
+            // use the qualified name instead 
+            if (assignmentNode->getRight()->getNodeType() == ASTNode::FUNCTION_INVOCATION && rhsResolvedType->getType() == DataTypes::FUNCTION) {
+                identName = Compiler::getQualifiedFunctionIdentifier(identName, rhsResolvedType);
             }
 
             scope.insert(identName, assignmentRhs);
@@ -916,6 +920,8 @@ namespace Theta {
         if (scopeRef) {
             identName = scopeRef.value();
         }
+
+        cout << "Here looking up " << identName << endl;
 
         shared_ptr<ASTNode> identInScope = scope.lookup(identName).value();
 
