@@ -114,6 +114,8 @@ namespace Theta {
             void bindIdentifierToScope(shared_ptr<ASTNode> ast);
             void registerModuleFunctions(BinaryenModuleRef &module);
 
+            bool checkIsLastInBlock(shared_ptr<ASTNode> node);
+
             pair<WasmClosure, vector<BinaryenExpressionRef>> generateAndStoreClosure(
                 string qualifiedReferenceFunctionName,
                 shared_ptr<FunctionDeclarationNode> simplifiedReference,

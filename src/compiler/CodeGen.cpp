@@ -166,6 +166,8 @@ namespace Theta {
         currentIdentIdx->setLiteralValue(to_string(idxOfAssignment + 1));
         scope.insert(LOCAL_IDX_SCOPE_KEY, currentIdentIdx);
 
+        bool isLastInBlock = checkIsLastInBlock(assignmentNode);
+
         // Function declarations dont get generated generically like the rest of the AST elements, they are not part of the "generate" method,
         // because they behave differently depending on where the function was declared. A function declared at the top level of capsule will
         // be hoisted and will have no inherent scope bound to it. 
@@ -186,12 +188,17 @@ namespace Theta {
             }
 
             scope.insert(identName, assignmentRhs);
+            
+            // If the last thing in the block is an assignment, we dont need to actually do the assignment at all,
+            // just return the value
+            if (isLastInBlock) return generate(assignmentRhs, module);
 
             return BinaryenLocalSet(
                 module,
                 idxOfAssignment,
                 generate(assignmentRhs, module)
             );
+
         }
 
         shared_ptr<FunctionDeclarationNode> originalDeclaration = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
@@ -241,18 +248,24 @@ namespace Theta {
         scopeReferences.insert(assignmentIdentifier, globalQualifiedFunctionName);
 
         vector<BinaryenExpressionRef> expressions = storage.second;
+    
+        BinaryenExpressionRef addressRefExpression = BinaryenConst(
+            module,
+            BinaryenLiteralInt32(storage.first.getPointer().getAddress())
+        );
 
         // Returns a reference to the closure memory address
-        expressions.push_back(
-            BinaryenLocalSet(
-                module,
-                idxOfAssignment,
-                BinaryenConst(
+        if (isLastInBlock) {
+            expressions.push_back(addressRefExpression);
+        } else {
+            expressions.push_back(
+                BinaryenLocalSet(
                     module,
-                    BinaryenLiteralInt32(storage.first.getPointer().getAddress())
+                    idxOfAssignment,
+                    addressRefExpression
                 )
-            )
-        );
+            );
+        }
 
         BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
         for (int i = 0; i < expressions.size(); i++) {
@@ -921,8 +934,6 @@ namespace Theta {
             identName = scopeRef.value();
         }
 
-        cout << "Here looking up " << identName << endl;
-
         shared_ptr<ASTNode> identInScope = scope.lookup(identName).value();
 
         // The ident in this case may refer to a parameter to a function, which may not have a resolvedType
@@ -1269,6 +1280,14 @@ namespace Theta {
             functionNameToClosureTemplateMap.size(),
             BinaryenConst(module, BinaryenLiteralInt32(0))
         );
+    }
+
+    bool CodeGen::checkIsLastInBlock(shared_ptr<ASTNode> node) {
+        if (node->getParent() == nullptr) return false;
+        if (!node->getParent()->hasMany()) return false;
+
+        
+        return node->getId() == dynamic_pointer_cast<ASTNodeList>(node->getParent())->getElements().back()->getId();
     }
 
     int CodeGen::getByteSizeForType(shared_ptr<TypeDeclarationNode> type) {
