@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -13,7 +14,7 @@ namespace Theta {
             shared_ptr<ASTNodeList> parameters;
             shared_ptr<ASTNode> definition;
 
-            FunctionDeclarationNode() : ASTNode(ASTNode::FUNCTION_DECLARATION) {};
+            FunctionDeclarationNode(shared_ptr<ASTNode> parent) : ASTNode(ASTNode::FUNCTION_DECLARATION, parent) {};
 
             void setParameters(shared_ptr<ASTNodeList> params) { parameters = params; }
 

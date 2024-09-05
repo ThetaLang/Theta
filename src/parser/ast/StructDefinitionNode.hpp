@@ -1,7 +1,7 @@
 #pragma once
 
+#include <memory>
 #include <string>
-#include <sstream>
 #include "ASTNode.hpp"
 #include "ASTNodeList.hpp"
 
@@ -12,7 +12,7 @@ namespace Theta {
         public:
             string name;
 
-            StructDefinitionNode(string n) : ASTNodeList(ASTNode::STRUCT_DEFINITION), name(n) {};
+            StructDefinitionNode(string n, shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::STRUCT_DEFINITION), name(n) {};
 
             string getName() { return name; }
     };

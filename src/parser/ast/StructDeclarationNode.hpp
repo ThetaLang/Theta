@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -11,7 +12,7 @@ namespace Theta {
         public:
             string structType;
 
-            StructDeclarationNode(string type) : structType(type), ASTNode(ASTNode::STRUCT_DECLARATION) {};
+            StructDeclarationNode(string type, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::STRUCT_DECLARATION, parent), structType(type) {};
 
             string getStructType() { return structType; }
 

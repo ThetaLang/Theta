@@ -898,11 +898,13 @@ TEST_CASE("Parser") {
         REQUIRE(typeNode->getNodeType() == ASTNode::TYPE_DECLARATION);
         REQUIRE(typeNode->getType() == "Tuple");
 
-        shared_ptr<TypeDeclarationNode> leftTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getLeft());
+        
+
+        shared_ptr<TypeDeclarationNode> leftTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getElements().at(0));
         REQUIRE(leftTypeNode != nullptr);
         REQUIRE(leftTypeNode->getType() == "Symbol");
 
-        shared_ptr<TypeDeclarationNode> rightTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getRight());
+        shared_ptr<TypeDeclarationNode> rightTypeNode = dynamic_pointer_cast<TypeDeclarationNode>(typeNode->getElements().at(1));
         REQUIRE(rightTypeNode != nullptr);
         REQUIRE(rightTypeNode->getType() == "String");
 

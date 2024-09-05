@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -11,7 +12,7 @@ namespace Theta {
         public:
             string identifier;
 
-            IdentifierNode(string ident) : identifier(ident), ASTNode(ASTNode::IDENTIFIER) {};
+            IdentifierNode(string ident, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::IDENTIFIER, parent), identifier(ident) {};
 
             string getIdentifier() { return identifier; }
 

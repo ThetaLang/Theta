@@ -75,19 +75,19 @@ namespace Theta {
             node->setResolvedType(node->getValue()->getResolvedType());
             return true;
         } else if (node->getNodeType() == ASTNode::NUMBER_LITERAL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::NUMBER));
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::NUMBER, node));
             return true;
         } else if (node->getNodeType() == ASTNode::STRING_LITERAL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::STRING));
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::STRING, node));
             return true;
         } else if (node->getNodeType() == ASTNode::BOOLEAN_LITERAL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN));
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN, node));
             return true;
         } else if (node->getNodeType() == ASTNode::CAPSULE) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::CAPSULE));
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::CAPSULE, node));
             return true;
         } else if (node->getNodeType() == ASTNode::SYMBOL) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::SYMBOL));
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::SYMBOL, node));
             return true;
         } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
             return checkTypeDeclarationNode(dynamic_pointer_cast<TypeDeclarationNode>(node));
@@ -137,7 +137,7 @@ namespace Theta {
 
     bool TypeChecker::checkAssignmentNode(shared_ptr<AssignmentNode> node) {
         bool typesMatch = isSameType(node->getLeft()->getValue(), node->getRight()->getResolvedType());
-        
+
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
         if (!typesMatch) {
@@ -161,20 +161,33 @@ namespace Theta {
         
         // Function names can be overloaded, so functions don't need this check
         if (rhsType == DataTypes::FUNCTION) {
-            string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
+            string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(
+                ident->getIdentifier(),
+                (node->getRight()->getNodeType() == ASTNode::FUNCTION_DECLARATION 
+                    ? node->getRight()
+                    // We're assigning to the result of a function invocation, and that invocation returns a function
+                    : node->getRight()->getResolvedType()
+                )
+            );
+            
+            auto existingFuncIdentifierInScope = identifierTable.lookup(uniqueFuncIdentifier);
 
-            shared_ptr<ASTNode> existingFuncIdentifierInScope = identifierTable.lookup(uniqueFuncIdentifier);
-
-            if (existingFuncIdentifierInScope) {
+            if (existingFuncIdentifierInScope.has_value()) {
                 Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
                 return false;
             }
 
             identifierTable.insert(uniqueFuncIdentifier, node->getRight());
+            
+            // Also insert as the non-unique identifier, in case the function will be referenced without being called later.
+            // It's okay to overwrite any identifier table value thats already there for this identifier, because if there are
+            // multiple function definitions with the same identifier, when the user returns / references one without calling it, 
+            // we'll assume they want the most recent one.
+            identifierTable.insert(ident->getIdentifier(), node->getResolvedType());
         } else {
-            shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
+            auto existingIdentifierInScope = identifierTable.lookup(ident->getIdentifier());
 
-            if (existingIdentifierInScope) {
+            if (existingIdentifierInScope.has_value()) {
                 Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
                 return false;
             }
@@ -216,7 +229,7 @@ namespace Theta {
         }
 
         if (isBooleanOperator(node->getOperator())) {
-            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN));
+            node->setResolvedType(make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN, node));
         } else {
             node->setResolvedType(node->getLeft()->getResolvedType());
         }
@@ -229,8 +242,8 @@ namespace Theta {
 
         if (!valid) return false;
 
-        shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN);
-        shared_ptr<TypeDeclarationNode> numType = make_shared<TypeDeclarationNode>(DataTypes::NUMBER);
+        shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN, nullptr);
+        shared_ptr<TypeDeclarationNode> numType = make_shared<TypeDeclarationNode>(DataTypes::NUMBER, nullptr);
 
         if (isSameType(node->getValue()->getResolvedType(), boolType) && node->getOperator() != Lexemes::NOT) {
             Compiler::getInstance().addException(
@@ -279,7 +292,7 @@ namespace Theta {
         if (blockReturnTypes.size() == 1) {
             node->setResolvedType(blockReturnTypes[0]);
         } else if (blockReturnTypes.size() > 1) {
-            node->setResolvedType(makeVariadicType(blockReturnTypes));
+            node->setResolvedType(makeVariadicType(blockReturnTypes, node));
         }
 
         return true;
@@ -298,18 +311,30 @@ namespace Theta {
                 paramScopeBindings.push_back(make_pair(ident->getIdentifier(), ident->getValue()));
             }
         }
-    
+
         bool valid = checkAST(node->getDefinition(), paramScopeBindings);
 
         if (!valid) return false;
 
+        shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION, node);
+    
+        vector<shared_ptr<ASTNode>> typeValues;
+        for (auto param : node->getParameters()->getElements()) {
+            typeValues.push_back(Compiler::deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(param->getValue()), funcType));
+        }
+
+        typeValues.push_back(node->getDefinition()->getResolvedType());
+        
+        funcType->setElements(typeValues);
+
         // A function might already have a resolvedType if it was hoisted, we need to redefine it with the real return type
         if (node->getResolvedType()) {
-            node->getResolvedType()->setValue(node->getDefinition()->getResolvedType());
+            if (typeValues.size() == 1) {
+                node->getResolvedType()->setValue(typeValues.at(0));
+            } else {
+                dynamic_pointer_cast<TypeDeclarationNode>(node->getResolvedType())->setElements(typeValues);
+            }
         } else {
-            shared_ptr<TypeDeclarationNode> funcType = make_shared<TypeDeclarationNode>(DataTypes::FUNCTION);
-            funcType->setValue(node->getDefinition()->getResolvedType());
-
             node->setResolvedType(funcType); 
         }
 
@@ -324,17 +349,35 @@ namespace Theta {
         if (!validParams) return false;
 
         string funcIdentifier = dynamic_pointer_cast<IdentifierNode>(node->getIdentifier())->getIdentifier();
-        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(funcIdentifier, node);
+        string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(funcIdentifier, node);
 
         shared_ptr<ASTNode> referencedFunction = lookupInScope(uniqueFuncIdentifier);
         
         if (!referencedFunction) {
-            Compiler::getInstance().addException(make_shared<ReferenceError>(funcIdentifier));
+            string paramTypes = "(";
+
+            for (int i = 0; i < node->getParameters()->getElements().size(); i++) {
+                if (i > 0) paramTypes += ", ";
+                paramTypes += dynamic_pointer_cast<TypeDeclarationNode>(
+                    node->getParameters()->getElements().at(i)->getResolvedType()
+                )->toString();  
+            }
+
+            paramTypes += ")";
+
+            Compiler::getInstance().addException(make_shared<ReferenceError>(funcIdentifier + paramTypes));
             return false;
         }
 
-        node->setResolvedType(referencedFunction->getResolvedType()->getValue());
-    
+        shared_ptr<TypeDeclarationNode> referencedFunctionType = dynamic_pointer_cast<TypeDeclarationNode>(referencedFunction->getResolvedType());
+
+        // The function return type is the last element in the types list
+        if (referencedFunctionType->getValue()) {
+            node->setResolvedType(referencedFunctionType->getValue());
+        } else {
+            node->setResolvedType(referencedFunctionType->getElements().back());
+        }
+
         return true;
     }
 
@@ -349,11 +392,11 @@ namespace Theta {
             if (pair.first) {
                 bool validCondition = checkAST(pair.first);
 
-                shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN);
+                shared_ptr<TypeDeclarationNode> boolType = make_shared<TypeDeclarationNode>(DataTypes::BOOLEAN, nullptr);
 
                 vector<shared_ptr<ASTNode>> typesThatCanBeInterpretedAsBooleans = {
                     boolType,
-                    make_shared<TypeDeclarationNode>(DataTypes::NUMBER)
+                    make_shared<TypeDeclarationNode>(DataTypes::NUMBER, nullptr)
                 };
 
                 if (!validCondition || !isOneOfTypes(pair.first->getResolvedType(), typesThatCanBeInterpretedAsBooleans)) {
@@ -381,12 +424,12 @@ namespace Theta {
         // If we have an if without an else, thats fine, but that means we have a potential hole if we try to use this as
         // a return value to something (like assigning a variable to the result of a control flow). We can return nil as part
         // of the resolved type of the node, which will cause assignments without an else to fail (as they should)
-        if (!hasElseBlock) returnTypes.push_back(make_shared<TypeDeclarationNode>(DataTypes::NIL));
+        if (!hasElseBlock) returnTypes.push_back(make_shared<TypeDeclarationNode>(DataTypes::NIL, node));
 
         if (returnTypes.size() == 1) {
             node->setResolvedType(returnTypes[0]);
         } else {
-            node->setResolvedType(makeVariadicType(returnTypes));
+            node->setResolvedType(makeVariadicType(returnTypes, node));
         }
 
         return true;
@@ -421,10 +464,10 @@ namespace Theta {
             return false;
         }
     
-        shared_ptr<TypeDeclarationNode> listType = make_shared<TypeDeclarationNode>(DataTypes::LIST);
+        shared_ptr<TypeDeclarationNode> listType = make_shared<TypeDeclarationNode>(DataTypes::LIST, node);
         
         if (returnTypes.size() == 0) {
-            listType->setValue(make_shared<TypeDeclarationNode>(DataTypes::UNKNOWN));
+            listType->setValue(make_shared<TypeDeclarationNode>(DataTypes::UNKNOWN, listType));
         } else {
             listType->setValue(returnTypes.at(0));
         }
@@ -440,10 +483,12 @@ namespace Theta {
 
         if (!validLeft || !validRight) return false;
         
-        shared_ptr<TypeDeclarationNode> type = make_shared<TypeDeclarationNode>(DataTypes::TUPLE);
+        shared_ptr<TypeDeclarationNode> type = make_shared<TypeDeclarationNode>(DataTypes::TUPLE, node);
 
-        type->setLeft(node->getLeft()->getResolvedType());
-        type->setRight(node->getRight()->getResolvedType());
+        type->setElements({
+            node->getLeft()->getResolvedType(),
+            node->getRight()->getResolvedType()
+        });
 
         node->setResolvedType(type);
 
@@ -464,7 +509,7 @@ namespace Theta {
 
             if (!isKeyValid || !isValValid) return false;
         
-            shared_ptr<TypeDeclarationNode> symbolType = make_shared<TypeDeclarationNode>(DataTypes::SYMBOL);
+            shared_ptr<TypeDeclarationNode> symbolType = make_shared<TypeDeclarationNode>(DataTypes::SYMBOL, nullptr);
 
             if (!isSameType(kvTuple->getLeft()->getResolvedType(), symbolType)) {
                 Compiler::getInstance().addException(
@@ -492,10 +537,10 @@ namespace Theta {
             return false;
         }
 
-        shared_ptr<TypeDeclarationNode> dictType = make_shared<TypeDeclarationNode>(DataTypes::DICT);
+        shared_ptr<TypeDeclarationNode> dictType = make_shared<TypeDeclarationNode>(DataTypes::DICT, node);
     
         if (valueTypes.size() == 0) {
-            dictType->setValue(make_shared<TypeDeclarationNode>(DataTypes::UNKNOWN));
+            dictType->setValue(make_shared<TypeDeclarationNode>(DataTypes::UNKNOWN, dictType));
         } else {
             dictType->setValue(valueTypes.at(0));
         }
@@ -514,11 +559,11 @@ namespace Theta {
             if (!valid) return false;
         }
 
-        structNode->setResolvedType(make_shared<TypeDeclarationNode>(node->getName()));
+        structNode->setResolvedType(make_shared<TypeDeclarationNode>(node->getName(), structNode));
     
-        shared_ptr<ASTNode> existingIdentifierInScope = identifierTable.lookup(node->getName());
+        auto existingIdentifierInScope = identifierTable.lookup(node->getName());
 
-        if (existingIdentifierInScope) {
+        if (existingIdentifierInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(node->getName()));
             return false;
         }
@@ -597,7 +642,7 @@ namespace Theta {
             return false;
         }
 
-        node->setResolvedType(make_shared<TypeDeclarationNode>(node->getStructType()));
+        node->setResolvedType(make_shared<TypeDeclarationNode>(node->getStructType(), node));
 
         return true;
     }
@@ -626,11 +671,11 @@ namespace Theta {
         shared_ptr<AssignmentNode> assignmentNode = dynamic_pointer_cast<AssignmentNode>(node); 
         shared_ptr<IdentifierNode> ident = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
-        string uniqueFuncIdentifier = getDeterministicFunctionIdentifier(ident->getIdentifier(), node->getRight());
+        string uniqueFuncIdentifier = Compiler::getQualifiedFunctionIdentifier(ident->getIdentifier(), node->getRight());
 
-        shared_ptr<ASTNode> existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
+        auto existingFuncIdentifierInScope = capsuleDeclarationsTable.lookup(uniqueFuncIdentifier);
 
-        if (existingFuncIdentifierInScope) {
+        if (existingFuncIdentifierInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(ident->getIdentifier()));
             return;
         }
@@ -638,7 +683,7 @@ namespace Theta {
         // Initially set the function resolvedType to whatever the identifier type is specified. This will get
         // updated later when we actually typecheck the function definition to whatever types the function actually returns.
         // This way, we support recursive function type resolution and cyclic function type resolution
-        node->getRight()->setResolvedType(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(ident->getValue())));
+        node->getRight()->setResolvedType(Compiler::deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(ident->getValue()), node));
 
         capsuleDeclarationsTable.insert(uniqueFuncIdentifier, node->getRight());
     }
@@ -646,14 +691,14 @@ namespace Theta {
     void TypeChecker::hoistStructDefinition(shared_ptr<ASTNode> node) {
         shared_ptr<StructDefinitionNode> structNode = dynamic_pointer_cast<StructDefinitionNode>(node);
 
-        shared_ptr<ASTNode> existingStructDefinitionInScope = capsuleDeclarationsTable.lookup(structNode->getName());
+        auto existingStructDefinitionInScope = capsuleDeclarationsTable.lookup(structNode->getName());
         
-        if (existingStructDefinitionInScope) {
+        if (existingStructDefinitionInScope.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(structNode->getName()));
             return;
         }
 
-        structNode->setResolvedType(make_shared<TypeDeclarationNode>(structNode->getName()));
+        structNode->setResolvedType(make_shared<TypeDeclarationNode>(structNode->getName(), structNode));
 
         capsuleDeclarationsTable.insert(structNode->getName(), node);
     }
@@ -661,9 +706,9 @@ namespace Theta {
     void TypeChecker::hoistIdentifier(shared_ptr<ASTNode> node) {
         shared_ptr<IdentifierNode> identNode = dynamic_pointer_cast<IdentifierNode>(node->getLeft());
 
-        shared_ptr<ASTNode> existingHoistedIdentifier = capsuleDeclarationsTable.lookup(identNode->getIdentifier());
+        auto existingHoistedIdentifier = capsuleDeclarationsTable.lookup(identNode->getIdentifier());
     
-        if (existingHoistedIdentifier) {
+        if (existingHoistedIdentifier.has_value()) {
             Compiler::getInstance().addException(make_shared<IllegalReassignmentError>(identNode->getIdentifier()));
             return;
         }
@@ -726,15 +771,27 @@ namespace Theta {
                 if (!containsType) return false;
             }
         } else if (t1->hasMany() && t2->hasMany()) {
-            for (int i = 0; i < t2->getElements().size(); i++) {
-                bool containsType = false;
+            if (t1->getType() == DataTypes::VARIADIC) {
+                // In Variadic types, it makes sense that the types on the right can be any of the values defined
+                // on the left, in any order 
+                for (int i = 0; i < t2->getElements().size(); i++) {
+                    bool containsType = false;
 
-                for (int j = 0; j < t1->getElements().size(); j++) {
-                    if (isSameType(t2->getElements().at(i), t1->getElements().at(j))) containsType = true;
+                    for (int j = 0; j < t1->getElements().size(); j++) {
+                        if (isSameType(t2->getElements().at(i), t1->getElements().at(j))) containsType = true;
+                    }
+
+                    if (!containsType) return false;
                 }
+            } else {
+                // In every other case, though, order matters. The left and right types must be exactly the same
+                if (t1->getElements().size() != t2->getElements().size()) return false;
 
-                if (!containsType) return false;
+                for (int i = 0; i < t1->getElements().size(); i++) {
+                    if (!isSameType(t1->getElements().at(i), t2->getElements().at(i))) return false;
+                }
             }
+
         }
 
         return t1->getType() == t2->getType();
@@ -786,8 +843,8 @@ namespace Theta {
         return find(BOOLEAN_OPERATORS.begin(), BOOLEAN_OPERATORS.end(), op) != BOOLEAN_OPERATORS.end();
     }
 
-    shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types) {
-        shared_ptr<TypeDeclarationNode> variadicTypeNode = make_shared<TypeDeclarationNode>(DataTypes::VARIADIC);
+    shared_ptr<TypeDeclarationNode> TypeChecker::makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types, shared_ptr<ASTNode> parent) {
+        shared_ptr<TypeDeclarationNode> variadicTypeNode = make_shared<TypeDeclarationNode>(DataTypes::VARIADIC, parent);
 
         // The unique function requires a sorted vector
         sort(types.begin(), types.end(), [](const shared_ptr<TypeDeclarationNode>& a, const shared_ptr<TypeDeclarationNode>& b) {
@@ -813,60 +870,23 @@ namespace Theta {
         return variadicTypeNode;
     }
 
-    string TypeChecker::getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> node) {
-        vector<shared_ptr<ASTNode>> params;
-
-        if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-            shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
-            params = declarationNode->getParameters()->getElements();
-        } else {
-            shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
-            params = invocationNode->getParameters()->getElements();
-        }
-        
-        string functionIdentifier = variableName + to_string(params.size());
-
-        for (int i = 0; i < params.size(); i++) {
-            if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
-                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getValue());
-                functionIdentifier += paramType->getType();
-            } else {
-                shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getResolvedType());
-                functionIdentifier += paramType->getType();
-            }
-        }
-
-        return functionIdentifier;
-    }
-
-    shared_ptr<TypeDeclarationNode> TypeChecker::deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> original) {
-        shared_ptr<TypeDeclarationNode> copy = make_shared<TypeDeclarationNode>(original->getType());
-
-        if (original->getValue()) {
-            copy->setValue(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getValue())));
-        } else if (original->getLeft()) {
-            copy->setLeft(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getLeft())));
-            copy->setRight(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getRight())));
-        } else if (original->getElements().size() > 0) {
-            vector<shared_ptr<ASTNode>> copyChildren;
-
-            for (int i = 0; i < original->getElements().size(); i++) {
-                copyChildren.push_back(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getElements().at(i))));
-            }
-
-            copy->setElements(copyChildren);
-        }
-
-        return copy;
-    }
-
     shared_ptr<ASTNode> TypeChecker::lookupInScope(string identifierName) {
-        shared_ptr<ASTNode> foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);
-        shared_ptr<ASTNode> foundInLocalScope = identifierTable.lookup(identifierName);
+        auto foundInCapsule = capsuleDeclarationsTable.lookup(identifierName);
+        auto foundInLocalScope = identifierTable.lookup(identifierName);
 
         // Local scope overrides capsule scope
-        if (foundInLocalScope) return foundInLocalScope;
+        if (foundInLocalScope.has_value()) return foundInLocalScope.value();
+    
+        if (foundInCapsule.has_value()) return foundInCapsule.value();
+    
+        return nullptr;
+    }
 
-        return foundInCapsule;
+    shared_ptr<TypeDeclarationNode> TypeChecker::getFunctionReturnType(shared_ptr<ASTNode> fn) {
+        if (fn->getNodeType() == ASTNode::FUNCTION_INVOCATION) return dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType());
+
+        if (fn->getResolvedType()->getValue()) return dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType()->getValue());
+
+        return dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType())->getElements().back());
     }
 }

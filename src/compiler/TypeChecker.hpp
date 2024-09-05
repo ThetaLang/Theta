@@ -61,9 +61,12 @@ namespace Theta {
              */
             static bool isOneOfTypes(shared_ptr<ASTNode> type, vector<shared_ptr<ASTNode>> options);
 
+            static shared_ptr<TypeDeclarationNode> getFunctionReturnType(shared_ptr<ASTNode> fn);
+
+
         private:
-            SymbolTableStack identifierTable;
-            SymbolTableStack capsuleDeclarationsTable;
+            SymbolTableStack<shared_ptr<ASTNode>> identifierTable;
+            SymbolTableStack<shared_ptr<ASTNode>> capsuleDeclarationsTable;
             
             /**
              * @brief Performs type checking on a single AST node.
@@ -273,24 +276,6 @@ namespace Theta {
              * @param types The vector of type declaration nodes.
              * @return shared_ptr<TypeDeclarationNode> The created variadic type node.
              */
-            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types);
-    
-            /**
-             * @brief Generates a unique function identifier based on the function's name and its parameters to handle overloading.
-             * 
-             * @param variableName The base name of the function.
-             * @param declarationNode The function declaration node containing the parameters.
-             * @return string The unique identifier for the function.
-             */
-            static string getDeterministicFunctionIdentifier(string variableName, shared_ptr<ASTNode> declarationNode);
-
-            /**
-             * @brief Creates a deep copy of a type declaration node, useful for cases where type information 
-             * needs to be duplicated without referencing the original.
-             * 
-             * @param original The original type declaration node to copy.
-             * @return shared_ptr<TypeDeclarationNode> The deep-copied type declaration node.
-             */
-            static shared_ptr<TypeDeclarationNode> deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> node);
+            static shared_ptr<TypeDeclarationNode> makeVariadicType(vector<shared_ptr<TypeDeclarationNode>> types, shared_ptr<ASTNode> parent); 
     };
 }

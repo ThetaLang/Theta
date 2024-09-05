@@ -85,11 +85,13 @@ void OptimizationPass::optimize(shared_ptr<ASTNode> &ast, bool isCapsuleDirectCh
 }
 
 shared_ptr<ASTNode> OptimizationPass::lookupInScope(string identifierName) {
-    shared_ptr<ASTNode> foindHoisted = hoistedScope.lookup(identifierName);
-    shared_ptr<ASTNode> foundInLocalScope = localScope.lookup(identifierName);
+    auto foundHoisted = hoistedScope.lookup(identifierName);
+    auto foundInLocalScope = localScope.lookup(identifierName);
 
     // Local scope overrides capsule scope
-    if (foundInLocalScope) return foundInLocalScope;
+    if (foundInLocalScope.has_value()) return foundInLocalScope.value();
 
-    return foindHoisted;
+    if (foundHoisted.has_value()) return foundHoisted.value();
+
+    return nullptr;
 }

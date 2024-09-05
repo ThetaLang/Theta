@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -11,7 +12,7 @@ namespace Theta {
         public:
             string capsule;
 
-            LinkNode(string cap) : capsule(cap), ASTNode(ASTNode::LINK) {};
+            LinkNode(string cap, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::LINK, parent), capsule(cap) {};
 
             string toJSON() const override {
                 ostringstream oss;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -11,7 +12,7 @@ namespace Theta {
         public:
             string operatorSymbol;
 
-            BinaryOperationNode(string op) : operatorSymbol(op), ASTNode(ASTNode::BINARY_OPERATION) {};
+            BinaryOperationNode(string op, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::BINARY_OPERATION, parent), operatorSymbol(op) {};
 
             string getOperator() { return operatorSymbol; }
 

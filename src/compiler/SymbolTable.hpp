@@ -1,26 +1,26 @@
 #pragma once
 
 #include <memory>
-#include "../parser/ast/TypeDeclarationNode.hpp"
-#include "parser/ast/ASTNode.hpp"
+#include <map>
 using namespace std;
 
 namespace Theta {
+    template<typename T>
     class SymbolTable {
     public:
-        void insert(const string &name, shared_ptr<ASTNode> type) {
-            table[name] = type;
+        void insert(const string &name, T value) {
+            table[name] = value;
         }
 
-        shared_ptr<ASTNode> lookup(const string &name) {
+        optional<T> lookup(const string &name) {
             auto it = table.find(name);
 
             if (it != table.end()) return it->second;
 
-            return nullptr;
+            return nullopt;
         }
 
     private:
-        map<string, shared_ptr<ASTNode>> table;
+        map<string, T> table;
     };
 }

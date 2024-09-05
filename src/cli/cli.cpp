@@ -62,6 +62,10 @@ namespace Theta {
                 Theta::Compiler::getInstance().compile(sourceFile, outFile, isEmitTokens, isEmitAST, isEmitWAT);
             }
 
+            static string makeLink(string url, string text = "") {
+                return "\x1B]8;;" +  url + "\x1B\\" + (text != "" ? text : url) + "\x1B]8;;\x1B\\";
+            }
+
        private:
             static void printUsageInstructions() {
                 cout << "Theta Language Compiler CLI" << endl;
@@ -120,10 +124,6 @@ namespace Theta {
                 }
 
                 cout << endl << endl << "Exiting ITH..." << endl;
-            }
-
-            static string makeLink(string url, string text = "") {
-                return "\x1B]8;;" +  url + "\x1B\\" + (text != "" ? text : url) + "\x1B]8;;\x1B\\";
             }
     };
 }

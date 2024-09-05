@@ -223,7 +223,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
     SECTION("Can typecheck function assignents with parameters correctly") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
-                x<Function<String>> = (a<String>) -> a
+                x<Function<String, String>> = (a<String>) -> a
             }
         )");
 
@@ -270,7 +270,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
     SECTION("Can typecheck curried functions correctly") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
-                x<Function<Function<Number>>> = (a<Number>) -> (b<Number>) -> a + b
+                x<Function<Number, Function<Number, Number>>> = (a<Number>) -> (b<Number>) -> a + b
             }
         )");
 
@@ -289,7 +289,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
                     :HIGH
                 }
 
-                severityIdent<Function<Severity>> = (sev<Severity>) -> {
+                severityIdent<Function<Severity, Severity>> = (sev<Severity>) -> {
                     sev
                 }
             }
@@ -304,7 +304,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
     SECTION("Can typecheck control flow correctly") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
-                isEven<Function<Boolean>> = (num<Number>) -> {
+                isEven<Function<Number, Boolean>> = (num<Number>) -> {
                     if (num % 2 == 0) {
                         return true
                     } else if (num % 3 == 0) {
@@ -325,7 +325,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
     SECTION("Throws if control flow condition is not a boolean") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
-                isLongString<Function<Boolean>> = (str<String>) -> {
+                isLongString<Function<String, Boolean>> = (str<String>) -> {
                     if (str) {
                         return true
                     }
@@ -342,7 +342,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
     SECTION("Can typecheck recursive functions correctly") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
-                addUntilTen<Function<Number>> = (sum<Number>) -> {
+                addUntilTen<Function<Number, Number>> = (sum<Number>) -> {
                     if (sum == 10) {
                         return sum
                     }
@@ -406,9 +406,9 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
     SECTION("Can typecheck function overloads correctly") {
         shared_ptr<ASTNode> ast = setup(R"(
             capsule Test {
-                add<Function<Number>> = (x<Number>) -> x
-                add<Function<Number>> = (x<Number>, y<Number>) -> x + y
-                add<Function<Number>> = (x<Number>, y<String>) -> x
+                add<Function<Number, Number>> = (x<Number>) -> x
+                add<Function<Number, Number, Number>> = (x<Number>, y<Number>) -> x + y
+                add<Function<Number, String, Number>> = (x<Number>, y<String>) -> x
 
                 doTheThing<Function<Number>> = () -> {
                     add(1)
@@ -501,7 +501,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
                     y<Number>
                 }
 
-                addPoints<Function<Point>> = (p1<Point>, p2<Point>) -> {
+                addPoints<Function<Point, Point, Point>> = (p1<Point>, p2<Point>) -> {
                     @Point {
                         x: 4,
                         y: 2
@@ -524,7 +524,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
                     y<Number>
                 }
 
-                addPoints<Function<Point>> = (p1<Point>, p2<Point>) -> {
+                addPoints<Function<Point, Point, Point>> = (p1<Point>, p2<Point>) -> {
                     @Point {
                         x: 4
                     }
@@ -608,7 +608,7 @@ TEST_CASE_METHOD(TypeCheckerTest, "TypeChecker") {
             capsule Test {
                 z<Number> = 5
 
-                add<Function<Function<Number>>> = (x<Number>) -> (y<Number>) -> x + y + z
+                add<Function<Number, Function<Number, Number>>> = (x<Number>) -> (y<Number>) -> x + y + z
             }
         )");
 

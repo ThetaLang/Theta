@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -12,7 +13,7 @@ namespace Theta {
         public:
             vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs;
 
-            ControlFlowNode() : ASTNode(ASTNode::CONTROL_FLOW) {};
+            ControlFlowNode(shared_ptr<ASTNode> parent) : ASTNode(ASTNode::CONTROL_FLOW, parent) {};
 
             void setConditionExpressionPairs(vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> cnd) {
                 conditionExpressionPairs = cnd;

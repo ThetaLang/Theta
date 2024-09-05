@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include "ASTNode.hpp"
@@ -9,7 +10,7 @@ using namespace std;
 namespace Theta {
     class TupleNode : public ASTNode {
         public:
-            TupleNode() : ASTNode(ASTNode::TUPLE) {};
+            TupleNode(shared_ptr<ASTNode> parent) : ASTNode(ASTNode::TUPLE, parent) {};
 
             string toJSON() const override {
                 std::ostringstream oss;

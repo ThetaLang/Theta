@@ -223,6 +223,8 @@ namespace Theta {
         if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             shared_ptr<FunctionDeclarationNode> declarationNode = dynamic_pointer_cast<FunctionDeclarationNode>(node);
             params = declarationNode->getParameters()->getElements();
+        } else if (node->getNodeType() == ASTNode::TYPE_DECLARATION) {
+            return getQualifiedFunctionIdentifierFromTypeSignature(variableName, dynamic_pointer_cast<TypeDeclarationNode>(node));
         } else {
             shared_ptr<FunctionInvocationNode> invocationNode = dynamic_pointer_cast<FunctionInvocationNode>(node);
             params = invocationNode->getParameters()->getElements();
@@ -238,6 +240,25 @@ namespace Theta {
                 shared_ptr<TypeDeclarationNode> paramType = dynamic_pointer_cast<TypeDeclarationNode>(params.at(i)->getResolvedType());
                 functionIdentifier += paramType->getType();
             }
+        }
+
+        return functionIdentifier;
+    }
+
+    string Compiler::getQualifiedFunctionIdentifierFromTypeSignature(string variableName, shared_ptr<TypeDeclarationNode> typeSig) {
+        vector<shared_ptr<ASTNode>> params;
+
+        // If typeSig is a function, and it has a value, that means the function takes in no parameters and only has a return value
+        if (typeSig->getType() == DataTypes::FUNCTION && typeSig->getValue() == nullptr) {
+            params.resize(typeSig->getElements().size() - 1);
+            copy(typeSig->getElements().begin(), typeSig->getElements().end() - 1, params.begin());
+        }
+
+        string functionIdentifier = variableName + to_string(params.size());
+
+        for (auto param : params) {
+            shared_ptr<TypeDeclarationNode> p = dynamic_pointer_cast<TypeDeclarationNode>(param);
+            functionIdentifier += p->getType();
         }
 
         return functionIdentifier;
@@ -283,5 +304,26 @@ namespace Theta {
         }
 
         return {};
+    }
+
+    shared_ptr<TypeDeclarationNode> Compiler::deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> original, shared_ptr<ASTNode> parent) {
+        shared_ptr<TypeDeclarationNode> copy = make_shared<TypeDeclarationNode>(original->getType(), parent);
+
+        if (original->getValue()) {
+            copy->setValue(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getValue()), copy));
+        } else if (original->getLeft()) {
+            copy->setLeft(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getLeft()), copy));
+            copy->setRight(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getRight()), copy));
+        } else if (original->getElements().size() > 0) {
+            vector<shared_ptr<ASTNode>> copyChildren;
+
+            for (int i = 0; i < original->getElements().size(); i++) {
+                copyChildren.push_back(deepCopyTypeDeclaration(dynamic_pointer_cast<TypeDeclarationNode>(original->getElements().at(i)), copy));
+            }
+
+            copy->setElements(copyChildren);
+        }
+
+        return copy;
     }
 }

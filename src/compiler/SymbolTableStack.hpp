@@ -1,41 +1,41 @@
 #pragma once
 
-#include "parser/ast/ASTNode.hpp"
 #include "SymbolTable.hpp"
 #include <stack>
 
 using namespace std;
 
 namespace Theta {
+    template<typename T>
     class SymbolTableStack {
         public:
             void enterScope() {
-                scopes.push(make_shared<SymbolTable>());
+                scopes.push(make_shared<SymbolTable<T>>());
             }
 
             void exitScope() {
                 if (!scopes.empty()) scopes.pop();
             }
 
-            void insert(const string &name, shared_ptr<ASTNode> type) {
-                if (!scopes.empty()) scopes.top()->insert(name, type);
+            void insert(const string &name, T value) {
+                if (!scopes.empty()) scopes.top()->insert(name, value);
             }
 
-            shared_ptr<ASTNode> lookup(const string &name) {
-                stack<shared_ptr<SymbolTable>> tmpScopes = scopes;
+            optional<T> lookup(const string &name) {
+                stack<shared_ptr<SymbolTable<T>>> tmpScopes = scopes;
 
                 while(!tmpScopes.empty()) {
-                    auto type = tmpScopes.top()->lookup(name);
+                    auto result = tmpScopes.top()->lookup(name);
                     
-                    if (type) return type;
+                    if (result.has_value()) return result.value();
 
                     tmpScopes.pop();
                 }
 
-                return nullptr;
+                return nullopt;
             }
 
         private:
-            stack<shared_ptr<SymbolTable>> scopes;
+            stack<shared_ptr<SymbolTable<T>>> scopes;
     };
 }
