@@ -39,6 +39,12 @@ namespace Theta {
                 BinaryenModuleRef &module,
                 bool addToExports = false
             );
+            BinaryenExpressionRef generateClosureFunctionDeclaration(
+                shared_ptr<FunctionDeclarationNode> node,
+                BinaryenModuleRef &module,
+                std::function<BinaryenExpressionRef(const BinaryenExpressionRef&)> returnValueFormatter = [](const BinaryenExpressionRef &addrExpr) { return addrExpr; },
+                optional<pair<string, int>> assignmentIdentifierPair = nullopt
+            );
             BinaryenExpressionRef generateFunctionInvocation(shared_ptr<FunctionInvocationNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateControlFlow(shared_ptr<ControlFlowNode> controlFlowNode, BinaryenModuleRef &module);
             BinaryenExpressionRef generateIdentifier(shared_ptr<IdentifierNode> node, BinaryenModuleRef &module);

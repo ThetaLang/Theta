@@ -96,7 +96,7 @@ namespace Theta {
         } else if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             // The only time we should get here is if we have a function defined inside a function,
             // because the normal function declaration flow goes through the generateAssignment flow
-            simplifyNestedFunctionDeclaration(dynamic_pointer_cast<FunctionDeclarationNode>(node), module);
+            return generateClosureFunctionDeclaration(dynamic_pointer_cast<FunctionDeclarationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::FUNCTION_INVOCATION) {
             return generateFunctionInvocation(dynamic_pointer_cast<FunctionInvocationNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CONTROL_FLOW) {
@@ -201,12 +201,29 @@ namespace Theta {
 
         }
 
-        shared_ptr<FunctionDeclarationNode> originalDeclaration = dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight());
+        return generateClosureFunctionDeclaration(
+            dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()),
+            module,
+            [module, idxOfAssignment, isLastInBlock](const BinaryenExpressionRef &addressRefExpression) {
+                if (isLastInBlock) return addressRefExpression;
 
-        shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = simplifyNestedFunctionDeclaration(
-            originalDeclaration,
-            module
+                return BinaryenLocalSet(
+                    module,
+                    idxOfAssignment,
+                    addressRefExpression
+                );
+            },
+            make_pair(assignmentIdentifier, idxOfAssignment)
         );
+    }
+
+    BinaryenExpressionRef CodeGen::generateClosureFunctionDeclaration(
+        shared_ptr<FunctionDeclarationNode> function,
+        BinaryenModuleRef &module,
+        std::function<BinaryenExpressionRef(const BinaryenExpressionRef&)> returnValueFormatter,
+        optional<pair<string, int>> assignmentIdentifierPair
+    ) {
+        shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = simplifyNestedFunctionDeclaration(function, module);
 
         // Generating a unique hash for this function is necessary because it will be stored on the module globally,
         // so we need to make sure there are no naming collisions
@@ -223,29 +240,33 @@ namespace Theta {
             simplifiedDeclaration
         );
 
+        // If an assignmentIdentifier was passed in, this function is being assigned to a variable.
+        // We need to add some items to the scope to make the function available elsewhere
+        if (assignmentIdentifierPair) {
+            simplifiedDeclaration->setMappedBinaryenIndex(assignmentIdentifierPair->second);
+            
+            string localQualifiedFunctionName = Compiler::getQualifiedFunctionIdentifier(
+                assignmentIdentifierPair->first,
+                function
+            );
+
+            // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced. This
+            // way the caller does not need to know the global function name in order to call it
+            scope.insert(globalQualifiedFunctionName, simplifiedDeclaration);
+            scopeReferences.insert(localQualifiedFunctionName, globalQualifiedFunctionName);
+
+            // Also insert the assignment identifier into scope referenecs so that if we want to return a reference to the function
+            // using the identifier, we can do that. This will overwrite any previous scope references with that identifier, so only
+            // the most recent identifier of a given name can be returned as a reference 
+            scopeReferences.insert(assignmentIdentifierPair->first, globalQualifiedFunctionName);
+        }
+
         pair<WasmClosure, vector<BinaryenExpressionRef>> storage = generateAndStoreClosure(
             globalQualifiedFunctionName,
             simplifiedDeclaration,
-            originalDeclaration,
+            function,
             module
         );
-
-        simplifiedDeclaration->setMappedBinaryenIndex(idxOfAssignment);
-
-        string localQualifiedFunctionName = Compiler::getQualifiedFunctionIdentifier(
-            assignmentIdentifier,
-            originalDeclaration
-        );
-
-        // Assign it in scope to the lhs identifier so we can always look it up later when it is referenced. This
-        // way the caller does not need to know the global function name in order to call it
-        scope.insert(globalQualifiedFunctionName, simplifiedDeclaration);
-        scopeReferences.insert(localQualifiedFunctionName, globalQualifiedFunctionName);
-
-        // Also insert the assignment identifier into scope referenecs so that if we want to return a reference to the function
-        // using the identifier, we can do that. This will overwrite any previous scope references with that identifier, so only
-        // the most recent identifier of a given name can be returned as a reference 
-        scopeReferences.insert(assignmentIdentifier, globalQualifiedFunctionName);
 
         vector<BinaryenExpressionRef> expressions = storage.second;
     
@@ -254,18 +275,10 @@ namespace Theta {
             BinaryenLiteralInt32(storage.first.getPointer().getAddress())
         );
 
+        BinaryenExpressionRef returnedValueExpression = returnValueFormatter(addressRefExpression);
+
         // Returns a reference to the closure memory address
-        if (isLastInBlock) {
-            expressions.push_back(addressRefExpression);
-        } else {
-            expressions.push_back(
-                BinaryenLocalSet(
-                    module,
-                    idxOfAssignment,
-                    addressRefExpression
-                )
-            );
-        }
+        expressions.push_back(returnedValueExpression);
 
         BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
         for (int i = 0; i < expressions.size(); i++) {
@@ -437,6 +450,8 @@ namespace Theta {
 
             exit(1);
         }
+
+        cout << "created simplified function declaration" << endl;
  
         return simplifiedDeclaration;
     }
