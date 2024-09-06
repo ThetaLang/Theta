@@ -1,6 +1,6 @@
+# Set C++ Standard and Project
 cmake_minimum_required(VERSION 3.10)
 project(Theta)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DBUILD_TESTS=OFF -Wno-maybe-uninitialized")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -16,6 +16,7 @@ set(OPTIMIZATION_DIR ${COMPILER_DIR}/optimization)
 set(TEST_DIR test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR lib/binaryen)
+set(WASMER_DIR ~/.wasmer)  # Adjust this path as necessary
 
 # Collect all source files except main.cpp
 file(GLOB SRC_FILES
@@ -50,18 +51,7 @@ add_dependencies(copy_wat theta)
 
 # Add the readline library
 if (WIN32)
-    # Add the readline library
-    set(READLINE_INCLUDE_DIR "C:/msys64/mingw64/include")
-    set(READLINE_LIBRARY "C:/msys64/mingw64/lib/libreadline.dll.a")
-
-    # Check if readline is found
-    if (EXISTS ${READLINE_INCLUDE_DIR}/readline/readline.h AND EXISTS ${READLINE_LIBRARY})
-        include_directories(${READLINE_INCLUDE_DIR})
-        link_directories("C:/msys64/mingw64/lib")
-        target_link_libraries(theta ${READLINE_LIBRARY})
-    else ()
-        message(FATAL_ERROR "Readline library not found.")
-    endif()
+    # Windows-specific setup for readline (if applicable)
 else()
     target_link_libraries(theta readline)
 endif()
@@ -72,8 +62,20 @@ add_subdirectory(${BINARYEN_DIR})
 # Include directories
 include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src)
 
-# Link Binaryen to the main target
-target_link_libraries(theta binaryen)
+# Include Wasmer C API
+include_directories(${WASMER_DIR}/include)
+
+# Link Wasmer library
+find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
+
+# Set RPATH for macOS
+set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_INSTALL_RPATH ${WASMER_DIR}/lib)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-rpath,${WASMER_DIR}/lib")
+
+# Link Wasmer and other libraries to the main target
+target_link_libraries(theta ${WASMER_LIB} binaryen)
 
 # Create build directories if they don't exist
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/fixtures)
@@ -89,7 +91,7 @@ target_compile_definitions(Catch2Main PUBLIC CATCH_CONFIG_MAIN)
 foreach(TEST_SRC ${TEST_SRC_FILES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SRC} ${SRC_FILES} $<TARGET_OBJECTS:Catch2Main>)
-    target_link_libraries(${TEST_NAME} readline)
+    target_link_libraries(${TEST_NAME} ${WASMER_LIB} readline binaryen)
 endforeach()
 
 # Custom target to copy fixtures
