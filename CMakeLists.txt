@@ -16,7 +16,7 @@ set(OPTIMIZATION_DIR ${COMPILER_DIR}/optimization)
 set(TEST_DIR test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR lib/binaryen)
-set(WASMER_DIR ~/.wasmer)  # Adjust this path as necessary
+set(WASMER_DIR lib/wasmer)
 
 # Collect all source files except main.cpp
 file(GLOB SRC_FILES
@@ -51,7 +51,17 @@ add_dependencies(copy_wat theta)
 
 # Add the readline library
 if (WIN32)
-    # Windows-specific setup for readline (if applicable)
+    set(READLINE_INCLUDE_DIR "C:/msys64/mingw64/include")
+    set(READLINE_LIBRARY "C:/msys64/mingw64/lib/libreadline.dll.a")
+
+    # Check if readline is found
+    if (EXISTS ${READLINE_INCLUDE_DIR}/readline/readline.h AND EXISTS ${READLINE_LIBRARY})
+        include_directories(${READLINE_INCLUDE_DIR})
+        link_directories("C:/msys64/mingw64/lib")
+        target_link_libraries(theta ${READLINE_LIBRARY})
+    else ()
+        message(FATAL_ERROR "Readline library not found.")
+    endif()
 else()
     target_link_libraries(theta readline)
 endif()
@@ -69,10 +79,10 @@ include_directories(${WASMER_DIR}/include)
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
 
 # Set RPATH for macOS
-set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_INSTALL_RPATH ${WASMER_DIR}/lib)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-rpath,${WASMER_DIR}/lib")
+# set(CMAKE_MACOSX_RPATH 1)
+# set(CMAKE_INSTALL_RPATH ${WASMER_DIR}/lib)
+# set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+# set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-rpath,${WASMER_DIR}/lib")
 
 # Link Wasmer and other libraries to the main target
 target_link_libraries(theta ${WASMER_LIB} binaryen)

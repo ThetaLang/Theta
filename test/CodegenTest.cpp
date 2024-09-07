@@ -1,0 +1,106 @@
+#define Catch Catch_Wasmer // Both wasmer and catch2 have an identifier "Catch". This fixes the naming collision
+#include <wasmer.h>
+#undef Catch
+#define CATCH_CONFIG_MAIN
+#include "catch2/catch_amalgamated.hpp"
+#include "../src/lexer/Lexer.cpp"
+#include "../src/parser/Parser.cpp"
+#include "../src/compiler/Compiler.hpp"
+#include "../src/compiler/TypeChecker.hpp"
+#include "../src/compiler/CodeGen.hpp"
+#include <cstdlib>
+#include "binaryen-c.h"
+
+using namespace std;
+using namespace Theta;
+
+class CodeGenTest {
+public:
+    Lexer lexer;
+    Parser parser;
+    TypeChecker typeChecker;
+    CodeGen codeGen;
+    shared_ptr<map<string, string>> filesByCapsuleName;
+
+    CodeGenTest() {
+        filesByCapsuleName = Compiler::getInstance().filesByCapsuleName;
+    }
+
+    wasm_instance_t* setup(string source) {
+        Compiler::getInstance().clearExceptions();
+
+        // IMPORTANT: This disables binaryen from outputting colors along with its print output.
+        // If we don't disable that, wasmer will try to parse the escape sequences as part of the
+        // module and will fail
+        BinaryenSetColorsEnabled(false);
+
+        lexer.lex(source);
+
+        shared_ptr<ASTNode> parsedAST = parser.parse(
+            lexer.tokens,
+            source,
+            "fakeFile.th",
+            filesByCapsuleName
+        );
+
+        Compiler::getInstance().optimizeAST(parsedAST, true);
+        typeChecker.checkAST(parsedAST);
+
+        BinaryenModuleRef module = codeGen.generateWasmFromAST(parsedAST);
+
+        vector<char> buffer(4096);
+        size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+        
+        wasm_byte_vec_t wasm;
+        wasm_byte_vec_new(&wasm, written, buffer.data());
+
+        wasm_engine_t *engine = wasm_engine_new();
+        wasm_store_t *store = wasm_store_new(engine);
+
+        wasm_module_t *wasmerModule = wasm_module_new(store, &wasm);
+
+        if (!wasmerModule) {
+            cout << "Error compiling module in wasmer" << endl;
+            exit(1);
+        }
+
+        wasm_byte_vec_delete(&wasm);
+
+        wasm_extern_vec_t importObject = WASM_EMPTY_VEC;
+        wasm_instance_t *instance = wasm_instance_new(store, wasmerModule, &importObject, NULL);
+
+        if (!instance) {
+            cout << "Error instantiating module" << endl;
+            exit(1);
+        }
+
+        return instance;
+    } 
+};
+
+TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
+    SECTION("Can codegen simple capsule") {
+        wasm_instance_t *instance = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> 10 + 5
+            }
+        )");
+
+        wasm_extern_vec_t exports;
+        wasm_instance_exports(instance, &exports);
+
+        REQUIRE(exports.size == 2);
+
+        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
+
+        wasm_val_t args_val[0] = {};
+        wasm_val_t results_val[1] = { WASM_INIT_VAL };
+        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
+        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
+
+        wasm_func_call(mainFunc, &args, &results);
+
+        REQUIRE(results_val[0].of.i64 == 15);
+    }
+}
+
