@@ -1151,6 +1151,8 @@ namespace Theta {
         if (op == Lexemes::INEQUALITY && dataType == DataTypes::BOOLEAN) return BinaryenEqInt32();
         if (op == Lexemes::LT && dataType == DataTypes::NUMBER) return BinaryenLtSInt64();
         if (op == Lexemes::GT && dataType == DataTypes::NUMBER) return BinaryenGtSInt64();
+        if (op == Lexemes::LTEQ && dataType == DataTypes::NUMBER) return BinaryenLeSInt64();
+        if (op == Lexemes::GTEQ && dataType == DataTypes::NUMBER) return BinaryenGeSInt64();
     }
 
     BinaryenType CodeGen::getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> typeDeclaration) {

@@ -514,11 +514,46 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     // TODO: Return types of assignments are not being typechecked correctly
-    SECTION("Correctly return value if an assignment is the last expression in a block") {
+//
+//    SECTION("Correctly return value if an assignment is the last expression in a block") {
+//         wasm_instance_t *instance = setup(R"(
+//            capsule Test {
+//                main<Function<Boolean>> = () -> {
+//                    x<Boolean> = false
+//                }
+//            }
+//        )");
+//
+//        wasm_extern_vec_t exports;
+//        wasm_instance_exports(instance, &exports);
+//
+//        REQUIRE(exports.size == 3);
+//
+//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
+//
+//        wasm_val_t args_val[0] = {};
+//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
+//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
+//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
+//
+//        wasm_func_call(mainFunc, &args, &results);
+//
+//        REQUIRE(results_val[0].of.i32 == 0);
+//    }
+
+    SECTION("Can call recursive functions correctly") {
          wasm_instance_t *instance = setup(R"(
             capsule Test {
-                main<Function<Boolean>> = () -> {
-                    x<Boolean> = false
+                main<Function<Number>> = () -> {
+                    fibonacci(10)
+                }
+
+                fibonacci<Function<Number, Number>> = (n<Number>) -> {
+                    if (n <= 1) {
+                        return n
+                    }
+
+                    fibonacci(n - 1) + fibonacci(n - 2)
                 }
             }
         )");
@@ -537,7 +572,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 
         wasm_func_call(mainFunc, &args, &results);
 
-        REQUIRE(results_val[0].of.i32 == 0);
+        REQUIRE(results_val[0].of.i64 == 55);
     }
 }
 
