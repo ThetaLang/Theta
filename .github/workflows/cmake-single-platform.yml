@@ -21,7 +21,7 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Install Wasmer
-      run: curl https://get.wasmer.io -sSfL | WASMER_DIR=libi/wasmer sh
+      run: curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
 
     - name: Cache CMake build
       uses: actions/cache@v3
