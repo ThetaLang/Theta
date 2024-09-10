@@ -23,6 +23,10 @@ jobs:
     - name: Install Wasmer
       run: curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
 
+    - name: Output directory
+      run: ls -laR ${{ github.workspace }}/lib/wasmer
+
+
     - name: Cache CMake build
       uses: actions/cache@v3
       with:
