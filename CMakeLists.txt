@@ -1,4 +1,3 @@
-# Set C++ Standard and Project
 cmake_minimum_required(VERSION 3.10)
 project(Theta)
 set(CMAKE_CXX_STANDARD 17)
