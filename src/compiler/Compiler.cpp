@@ -2,7 +2,6 @@
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
 #include "compiler/TypeChecker.hpp"
-#include <wasmer.h>
 
 using namespace std;
 
@@ -13,7 +12,6 @@ namespace Theta {
     }
 
     void Compiler::compile(string entrypoint, string outputFile, bool emitTokens, bool emitAST, bool emitWAT) {
-        printf("Wasmer version %s\n", wasmer_version());
         isEmitTokens = emitTokens;
         isEmitAST = emitAST;
         isEmitWAT = emitWAT;

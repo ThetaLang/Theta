@@ -78,12 +78,6 @@ include_directories(${WASMER_DIR}/include)
 # Link Wasmer library
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
 
-# Set RPATH for macOS
-# set(CMAKE_MACOSX_RPATH 1)
-# set(CMAKE_INSTALL_RPATH ${WASMER_DIR}/lib)
-# set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-# set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-rpath,${WASMER_DIR}/lib")
-
 # Link Wasmer and other libraries to the main target
 target_link_libraries(theta ${WASMER_LIB} binaryen)
 
