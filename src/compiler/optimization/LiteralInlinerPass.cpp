@@ -3,6 +3,7 @@
 #include "compiler/DataTypes.hpp"
 #include "exceptions/IllegalReassignmentError.hpp"
 #include "parser/ast/ASTNodeList.hpp"
+#include "parser/ast/BlockNode.hpp"
 #include "parser/ast/EnumNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/LiteralNode.hpp"
@@ -25,8 +26,14 @@ void LiteralInlinerPass::optimizeAST(shared_ptr<ASTNode> &ast, bool isCapsuleDir
     } else if (ast->getNodeType() == ASTNode::ASSIGNMENT && !isCapsuleDirectChild) {
         bindIdentifierToScope(ast, localScope);
 
-        // We dont want to remove variables defined directly in capsules
-        if (isLiteralAssignment(ast)) {
+        // We dont want to remove variables defined directly in capsules, or if it is the last element in a block
+        if (
+          isLiteralAssignment(ast) && 
+          !(
+            ast->getParent()->getNodeType() == ASTNode::BLOCK &&
+            dynamic_pointer_cast<BlockNode>(ast->getParent())->getElements().back()->getId() == ast->getId()
+          )
+        ) {
             ast = nullptr;
         }
     }
