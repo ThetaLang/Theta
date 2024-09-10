@@ -71,6 +71,9 @@ jobs:
     - name: Make LexerTest Executable
       run: chmod +x ${{ github.workspace }}/build/LexerTest
 
+    - name: Output directory
+      run: ls -laR ${{ github.workspace }}/lib/wasmer
+
     - name: Lexer Test
       working-directory: ${{ github.workspace }}/build
       run: ./LexerTest
