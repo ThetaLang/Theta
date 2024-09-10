@@ -41,8 +41,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          ~/.cache/CMake
-          ~/.conan/data
+          .cache
         key: ${{ runner.os }}-cmake-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-cmake-
