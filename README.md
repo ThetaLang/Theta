@@ -86,7 +86,11 @@ capsule DataStructures {
   ```sh
   git submodule update --init --recursive
   ```
-3. **Build the Project**:
+3. **Install Wasmer**
+  ```sh
+    curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
+  ```
+4. **Build the Project**:
   ```sh
   ./build.sh
   ```
