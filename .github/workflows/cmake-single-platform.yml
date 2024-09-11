@@ -37,7 +37,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-build-
 
-    - name: Cache CMake dependencies
+    - name: Cache CMake deps
       uses: actions/cache@v3
       with:
         path: |
