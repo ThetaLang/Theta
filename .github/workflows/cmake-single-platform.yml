@@ -46,13 +46,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-
 
-    - name: Configure CMake
-      working-directory: ${{ github.workspace }}
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-
     - name: Build project
       working-directory: ${{ github.workspace }}
-      run: cmake --build build --config ${{ env.BUILD_TYPE }}
+      run: ./build.sh
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
