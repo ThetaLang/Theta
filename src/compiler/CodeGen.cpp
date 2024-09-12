@@ -9,6 +9,8 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <unicode/unistr.h>
+#include <unicode/utf8.h>
 #include "asmjs/shared-constants.h"
 #include "binaryen-c.h"
 #include "compiler/Compiler.hpp"
@@ -1043,6 +1045,8 @@ namespace Theta {
     }
 
     BinaryenExpressionRef CodeGen::generateStringLiteral(shared_ptr<LiteralNode> literalNode, BinaryenModuleRef &module) {
+        // TODO: Implement UTF-8 strings
+        icu::UnicodeString unicodeStr = icu::UnicodeString::fromUTF8(icu::StringPiece(literalNode->getLiteralValue()));
         return BinaryenStringConst(module, literalNode->getLiteralValue().c_str());
     }
 

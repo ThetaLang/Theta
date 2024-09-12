@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(Theta)
+
+# Enable CMP0074 to allow find_package to use <PackageName>_ROOT variables
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DBUILD_TESTS=OFF -Wno-maybe-uninitialized")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -56,7 +62,6 @@ if (WIN32)
     # Check if readline is found
     if (EXISTS ${READLINE_INCLUDE_DIR}/readline/readline.h AND EXISTS ${READLINE_LIBRARY})
         include_directories(${READLINE_INCLUDE_DIR})
-        link_directories("C:/msys64/mingw64/lib")
         target_link_libraries(theta ${READLINE_LIBRARY})
     else ()
         message(FATAL_ERROR "Readline library not found.")
@@ -77,8 +82,28 @@ include_directories(${WASMER_DIR}/include)
 # Link Wasmer library
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
 
-# Link Wasmer and other libraries to the main target
-target_link_libraries(theta ${WASMER_LIB} binaryen)
+# Set ICU paths before calling find_package if on macOS
+if (APPLE)
+    # Homebrew paths for macOS (both Intel and ARM)
+    if (EXISTS /opt/homebrew/opt/icu4c)
+        set(ICU_ROOT /opt/homebrew/opt/icu4c)
+    elseif (EXISTS /usr/local/opt/icu4c)
+        set(ICU_ROOT /usr/local/opt/icu4c)
+    endif()
+
+    if (ICU_ROOT)
+        # Add ICU paths to CMAKE_PREFIX_PATH, so find_package can locate them
+        include_directories(${ICU_ROOT}/include)
+        set(CMAKE_PREFIX_PATH ${ICU_ROOT} ${CMAKE_PREFIX_PATH})
+    endif()
+endif()
+
+# Now find ICU after ensuring the correct paths are included
+find_package(ICU REQUIRED COMPONENTS uc i18n)
+include_directories(${ICU_INCLUDE_DIRS})
+
+# Link ICU libraries to the main target
+target_link_libraries(theta ${WASMER_LIB} binaryen ${ICU_LIBRARIES})
 
 # Create build directories if they don't exist
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/fixtures)
@@ -94,7 +119,7 @@ target_compile_definitions(Catch2Main PUBLIC CATCH_CONFIG_MAIN)
 foreach(TEST_SRC ${TEST_SRC_FILES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SRC} ${SRC_FILES} $<TARGET_OBJECTS:Catch2Main>)
-    target_link_libraries(${TEST_NAME} ${WASMER_LIB} readline binaryen)
+    target_link_libraries(${TEST_NAME} ${WASMER_LIB} readline binaryen ${ICU_LIBRARIES})
 endforeach()
 
 # Custom target to copy fixtures
@@ -104,9 +129,3 @@ add_custom_target(copy-fixtures ALL
 
 # Install target to create a symlink
 install(CODE "execute_process(COMMAND ln -sf ${CMAKE_BINARY_DIR}/theta /usr/local/bin/theta)")
-
-# Link Binaryen to the test targets
-foreach(TEST_SRC ${TEST_SRC_FILES})
-    get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
-    target_link_libraries(${TEST_NAME} binaryen)
-endforeach()

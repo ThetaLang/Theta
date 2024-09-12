@@ -90,7 +90,10 @@ capsule DataStructures {
   ```sh
     curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
   ```
-4. **Build the Project**:
+4. **Install ICU4C**
+  Check the [ICU website](https://unicode-org.github.io/icu/userguide/icu4c/faq.html#where-can-i-get-icu) for
+  information on installing. `brew install icu4c` works on osx.
+5. **Build the Project**:
   ```sh
   ./build.sh
   ```
