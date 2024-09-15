@@ -223,7 +223,7 @@ namespace Theta {
         std::function<BinaryenExpressionRef(const BinaryenExpressionRef&)> returnValueFormatter,
         optional<pair<string, int>> assignmentIdentifierPair
     ) {
-        shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = simplifyNestedFunctionDeclaration(function, module);
+        shared_ptr<FunctionDeclarationNode> simplifiedDeclaration = liftLambda(function, module);
 
         // Generating a unique hash for this function is necessary because it will be stored on the module globally,
         // so we need to make sure there are no naming collisions
@@ -370,7 +370,7 @@ namespace Theta {
     }
 
     // Transforms nested function declarations and generates an anonymous function in the function table
-    shared_ptr<FunctionDeclarationNode> CodeGen::simplifyNestedFunctionDeclaration(
+    shared_ptr<FunctionDeclarationNode> CodeGen::liftLambda(
         shared_ptr<FunctionDeclarationNode> fnDeclNode,
         BinaryenModuleRef &module
     ) {

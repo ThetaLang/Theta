@@ -56,7 +56,7 @@ namespace Theta {
             BinaryenExpressionRef generateExponentOperation(shared_ptr<BinaryOperationNode> node, BinaryenModuleRef &module);
             void generateSource(shared_ptr<SourceNode> node, BinaryenModuleRef &module);
 
-            shared_ptr<FunctionDeclarationNode> simplifyNestedFunctionDeclaration(
+            shared_ptr<FunctionDeclarationNode> liftLambda(
                 shared_ptr<FunctionDeclarationNode> node,
                 BinaryenModuleRef &module
             );
