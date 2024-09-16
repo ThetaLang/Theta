@@ -99,7 +99,7 @@ add_dependencies(theta v8_external)
 add_library(v8_monolith STATIC IMPORTED GLOBAL)
 
 set_target_properties(v8_monolith PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/out.gn/x64.release/obj/libv8_monolith.a"
+    IMPORTED_LOCATION "${V8_DIR}/v8/out.gn/x64.release/obj/libv8_monolith.a"
 )
 
 # Create interface library for V8 includes
