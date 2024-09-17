@@ -13,30 +13,16 @@ message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 # Include ExternalProject module
 include(ExternalProject)
 
-# Define source directories using absolute paths
+# Define source directories
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
-set(LEXER_DIR ${SRC_DIR}/lexer)
-set(COMPILER_DIR ${SRC_DIR}/compiler)
-set(PARSER_DIR ${SRC_DIR}/parser)
-set(EXCEPTIONS_DIR ${SRC_DIR}/exceptions)
-set(AST_DIR ${PARSER_DIR}/ast)
-set(OPTIMIZATION_DIR ${COMPILER_DIR}/optimization)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR ${CMAKE_SOURCE_DIR}/lib/binaryen)
 set(WASMER_DIR ${CMAKE_SOURCE_DIR}/lib/wasmer)
 set(V8_DIR ${CMAKE_SOURCE_DIR}/lib/v8)  # Path to V8 directory in your project
 
-# Collect all source files except main.cpp
-file(GLOB SRC_FILES
-    "${SRC_DIR}/*.cpp"
-    "${LEXER_DIR}/*.cpp"
-    "${PARSER_DIR}/*.cpp"
-    "${EXCEPTIONS_DIR}/*.cpp"
-    "${COMPILER_DIR}/*.cpp"
-    "${AST_DIR}/*.cpp"
-    "${OPTIMIZATION_DIR}/*.cpp"
-)
+# Collect all source files recursively from the src directory
+file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp")
 list(REMOVE_ITEM SRC_FILES "${CMAKE_SOURCE_DIR}/theta.cpp")
 
 # Add main source file separately
@@ -48,6 +34,7 @@ add_subdirectory(${BINARYEN_DIR})
 # Add executable for the main program
 add_executable(theta ${SRC_FILES} ${MAIN_SRC})
 
+# Set C++20 for the rest of the build
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wno-ambiguous-member-template -Wno-error=template -fpermissive)
 
@@ -78,7 +65,7 @@ else()
     target_link_libraries(theta readline)
 endif()
 
-# Include directories for Binaryen and Wasmer
+# Include directories for Binaryen, Wasmer, and V8
 include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include ${V8_DIR}/v8/include)
 
 # Add the V8 external project
@@ -102,7 +89,7 @@ ExternalProject_Add(
 # Custom target to apply patch to V8 headers
 add_custom_target(v8_patched
     COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 headers with typename fix..."
-    COMMAND patch -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_typename_patch.diff
+    COMMAND patch -N -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_typename_patch.diff || true
     WORKING_DIRECTORY ${V8_DIR}/v8
     DEPENDS v8_external
     COMMENT "Applying V8 typename patch..."
