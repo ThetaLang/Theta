@@ -99,8 +99,17 @@ ExternalProject_Add(
     LOG_BUILD ON
 )
 
-# Ensure theta depends on v8_external
-add_dependencies(theta v8_external)
+# Custom target to apply patch to V8 headers
+add_custom_target(v8_patched
+    COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 headers with typename fix..."
+    COMMAND patch -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_typename_patch.diff
+    WORKING_DIRECTORY ${V8_DIR}/v8
+    DEPENDS v8_external
+    COMMENT "Applying V8 typename patch..."
+)
+
+# Ensure theta depends on v8_external and the patching step
+add_dependencies(theta v8_external v8_patched)
 
 # Create imported target for V8 without INTERFACE_INCLUDE_DIRECTORIES
 add_library(v8_monolith STATIC IMPORTED GLOBAL)
