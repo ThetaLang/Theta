@@ -24,7 +24,7 @@ jobs:
       run: curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
 
     - name: Upload Wasmer as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@2
       with:
         name: wasmer
         path: ${{ github.workspace }}/lib/wasmer
@@ -51,7 +51,7 @@ jobs:
       run: ./build.sh
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: build
         path: ${{ github.workspace }}/build
@@ -64,13 +64,13 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: ${{ github.workspace }}/build
 
     - name: Download Wasmer artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: wasmer
         path: ${{ github.workspace }}/lib/wasmer
@@ -93,13 +93,13 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: ${{ github.workspace }}/build
 
     - name: Download Wasmer artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: wasmer
         path: ${{ github.workspace }}/lib/wasmer
@@ -119,13 +119,13 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: ${{ github.workspace }}/build
 
     - name: Download Wasmer artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: wasmer
         path: ${{ github.workspace }}/lib/wasmer
@@ -145,13 +145,13 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: ${{ github.workspace }}/build
 
     - name: Download Wasmer artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: wasmer
         path: ${{ github.workspace }}/lib/wasmer
