@@ -68,7 +68,7 @@ else()
 endif()
 
 # Include directories
-include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src)
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include)
 
 # Add Binaryen
 add_subdirectory(${BINARYEN_DIR})
