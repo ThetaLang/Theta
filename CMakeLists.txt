@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(Theta)
 
+# Set the global C++ standard to 17 for Binaryen by default
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DBUILD_TESTS=OFF -Wno-maybe-uninitialized")
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
+message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 
 # Include ExternalProject module
 include(ExternalProject)
@@ -20,7 +25,7 @@ set(TEST_DIR ${CMAKE_SOURCE_DIR}/test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR ${CMAKE_SOURCE_DIR}/lib/binaryen)
 set(WASMER_DIR ${CMAKE_SOURCE_DIR}/lib/wasmer)
-set(V8_DIR ${CMAKE_SOURCE_DIR}/lib/v8)  # Absolute path to the V8 directory within your project
+set(V8_DIR ${CMAKE_SOURCE_DIR}/lib/v8)  # Path to V8 directory in your project
 
 # Collect all source files except main.cpp
 file(GLOB SRC_FILES
@@ -37,8 +42,14 @@ list(REMOVE_ITEM SRC_FILES "${CMAKE_SOURCE_DIR}/theta.cpp")
 # Add main source file separately
 set(MAIN_SRC "${CMAKE_SOURCE_DIR}/theta.cpp")
 
+# Add Binaryen
+add_subdirectory(${BINARYEN_DIR})
+
 # Add executable for the main program
 add_executable(theta ${SRC_FILES} ${MAIN_SRC})
+
+set(CMAKE_CXX_STANDARD 20)
+add_compile_options(-Wno-ambiguous-member-template -Wno-error=template -fpermissive)
 
 # Add a custom command to copy the WAT file
 set(WAT_FILE_SRC "${CMAKE_SOURCE_DIR}/src/wasm/ThetaLangCore.wat")
@@ -67,23 +78,19 @@ else()
     target_link_libraries(theta readline)
 endif()
 
-# Include directories
-include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include)
+# Include directories for Binaryen and Wasmer
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include ${V8_DIR}/v8/include)
 
-# Add Binaryen
-add_subdirectory(${BINARYEN_DIR})
-
-
+# Add the V8 external project
 ExternalProject_Add(
     v8_external
     PREFIX ${CMAKE_SOURCE_DIR}/lib/v8
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/lib/v8
-    DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/lib/v8
     DOWNLOAD_COMMAND
         bash ${CMAKE_SOURCE_DIR}/scripts/fetch_v8.sh > ${CMAKE_SOURCE_DIR}/fetch_v8.log 2>&1
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND gclient sync
-    BUILD_COMMAND 
+    BUILD_COMMAND
         bash ${CMAKE_SOURCE_DIR}/scripts/build_v8.sh
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
@@ -97,22 +104,15 @@ add_dependencies(theta v8_external)
 
 # Create imported target for V8 without INTERFACE_INCLUDE_DIRECTORIES
 add_library(v8_monolith STATIC IMPORTED GLOBAL)
-
 set_target_properties(v8_monolith PROPERTIES
     IMPORTED_LOCATION "${V8_DIR}/v8/out.gn/x64.release/obj/libv8_monolith.a"
 )
 
-# Create interface library for V8 includes
-add_library(v8_includes INTERFACE)
-add_dependencies(v8_includes v8_external)
-
-# Use generator expression to set include directories
-target_include_directories(v8_includes INTERFACE
-    $<BUILD_INTERFACE:${V8_DIR}/include>
-)
+# Add the V8 include directory directly to the theta target
+target_include_directories(theta PRIVATE ${V8_DIR}/v8/include)
 
 # Link theta against V8
-target_link_libraries(theta v8_monolith v8_includes pthread dl)
+target_link_libraries(theta v8_monolith pthread dl)
 
 # Link Wasmer library
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
@@ -122,7 +122,7 @@ else()
     message(FATAL_ERROR "Wasmer library not found in ${WASMER_DIR}/lib")
 endif()
 
-# Link Binaryen
+# Link Binaryen (with C++17, set earlier as the global standard)
 target_link_libraries(theta binaryen)
 
 # Create build directories if they don't exist

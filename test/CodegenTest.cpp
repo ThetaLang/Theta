@@ -10,6 +10,7 @@
 #include "../src/compiler/CodeGen.hpp"
 #include <cstdlib>
 #include "binaryen-c.h"
+#include <v8.h>
 
 using namespace std;
 using namespace Theta;
