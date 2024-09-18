@@ -20,13 +20,8 @@ jobs:
     - name: Initialize submodules
       run: git submodule update --init --recursive
 
-    - name: Test Network Connectivity
-      run: |
-        nslookup get.wasmer.io
-        curl -I https://get.wasmer.io
-
     - name: Install Wasmer
-      run: curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
+      run: curl --dns-servers 8.8.8.8 https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
 
     - name: Upload Wasmer as artifact
       uses: actions/upload-artifact@v4
