@@ -1,3 +1,4 @@
+#include "v8-isolate.h"
 #define Catch Catch_Wasmer // Both wasmer and catch2 have an identifier "Catch". This fixes the naming collision
 #include <wasmer.h>
 #undef Catch
@@ -11,6 +12,7 @@
 #include <cstdlib>
 #include "binaryen-c.h"
 #include <v8.h>
+#include <libplatform/v8-platform.h>
 
 using namespace std;
 using namespace Theta;
@@ -22,9 +24,20 @@ public:
     TypeChecker typeChecker;
     CodeGen codeGen;
     shared_ptr<map<string, string>> filesByCapsuleName;
+    v8::Isolate *isolate;
 
     CodeGenTest() {
         filesByCapsuleName = Compiler::getInstance().filesByCapsuleName;
+          
+        //v8::V8::InitializeICUDefaultLocation(Compiler::resolveAbsolutePath("lib/v8/v8/out.gn/x64.release/idudtl.dat").c_str());
+  
+        v8::V8::InitializePlatform(v8::platform::NewDefaultPlatform().release());
+        v8::V8::Initialize();
+
+        v8::Isolate::CreateParams create_params;
+        v8::ArrayBuffer::Allocator *allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+        create_params.array_buffer_allocator = allocator;
+        isolate = v8::Isolate::New(create_params); 
     }
 
     wasm_instance_t* setup(string source) {

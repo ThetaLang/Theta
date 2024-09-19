@@ -6,10 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
-message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
-message(STATUS "C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
-
 # Include ExternalProject module
 include(ExternalProject)
 
@@ -104,11 +100,16 @@ set_target_properties(v8_monolith PROPERTIES
     IMPORTED_LOCATION "${V8_DIR}/v8/out.gn/x64.release/obj/libv8_monolith.a"
 )
 
+add_library(v8_platform STATIC IMPORTED GLOBAL)
+set_target_properties(v8_platform PROPERTIES
+    IMPORTED_LOCATION "${V8_DIR}/v8/out.gn/x64.release/obj/libplatform.a"
+)
+
 # Add the V8 include directory directly to the theta target
 target_include_directories(theta PRIVATE ${V8_DIR}/v8/include)
 
 # Link theta against V8
-target_link_libraries(theta v8_monolith pthread dl)
+target_link_libraries(theta v8_monolith v8_platform pthread dl)
 
 # Link Wasmer library
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
