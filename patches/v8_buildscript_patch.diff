@@ -1,0 +1,17 @@
+diff --git a/test/cctest/BUILD.gn b/test/cctest/BUILD.gn
+index 69e703e192a..1fe6a085ae8 100644
+--- a/test/cctest/BUILD.gn
++++ b/test/cctest/BUILD.gn
+@@ -6,9 +6,9 @@ import("../../gni/v8.gni")
+ 
+ config("cctest_config") {
+   # Work around a bug in the gold linker.
+-  if (use_gold && target_cpu == "x86") {
+-    ldflags = [ "-Wl,--icf=none" ]
+-  }
++  #  if (use_gold && target_cpu == "x86") {
++  #    ldflags = [ "-Wl,--icf=none" ]
++  #  }
+ }
+ 
+ v8_executable("cctest") {

@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include "binaryen-c.h"
 #include <v8.h>
-#include <libplatform/v8-platform.h>
+#include <libplatform/libplatform.h>
 
 using namespace std;
 using namespace Theta;
@@ -35,8 +35,7 @@ public:
         v8::V8::Initialize();
 
         v8::Isolate::CreateParams create_params;
-        v8::ArrayBuffer::Allocator *allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-        create_params.array_buffer_allocator = allocator;
+        create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();;
         isolate = v8::Isolate::New(create_params); 
     }
 

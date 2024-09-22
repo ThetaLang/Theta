@@ -3,7 +3,6 @@ project(Theta)
 
 # Set the global C++ standard to 17 for Binaryen by default
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Include ExternalProject module
@@ -29,10 +28,6 @@ add_subdirectory(${BINARYEN_DIR})
 
 # Add executable for the main program
 add_executable(theta ${SRC_FILES} ${MAIN_SRC})
-
-# Set C++20 for the rest of the build
-set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-Wno-ambiguous-member-template -Wno-error=template -fpermissive)
 
 # Add a custom command to copy the WAT file
 set(WAT_FILE_SRC "${CMAKE_SOURCE_DIR}/src/wasm/ThetaLangCore.wat")
@@ -70,9 +65,10 @@ ExternalProject_Add(
     PREFIX ${CMAKE_SOURCE_DIR}/lib/v8
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/lib/v8
     DOWNLOAD_COMMAND
-        bash ${CMAKE_SOURCE_DIR}/scripts/fetch_v8.sh > ${CMAKE_SOURCE_DIR}/fetch_v8.log 2>&1
+        bash ${CMAKE_SOURCE_DIR}/scripts/fetch_v8.sh
     UPDATE_COMMAND ""
-    CONFIGURE_COMMAND gclient sync
+    CONFIGURE_COMMAND 
+bash -c "DEPOT_TOOLS_UPDATE=0 gclient config https://chromium.googlesource.com/v8/v8.git && cd src/v8 && git checkout branch-heads/12.5 && gclient sync"
     BUILD_COMMAND
         bash ${CMAKE_SOURCE_DIR}/scripts/build_v8.sh
     BUILD_IN_SOURCE 1
@@ -83,33 +79,44 @@ ExternalProject_Add(
 )
 
 # Custom target to apply patch to V8 headers
-add_custom_target(v8_patched
-    COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 headers with typename fix..."
-    COMMAND patch -N -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_typename_patch.diff || true
-    WORKING_DIRECTORY ${V8_DIR}/v8
-    DEPENDS v8_external
-    COMMENT "Applying V8 typename patch..."
-)
+#add_custom_target(v8_patched
+#    COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 headers with typename fix..."
+#    COMMAND patch -N -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_typename_patch.diff || true
+#    COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 build to remove gold compiler check..."
+#    COMMAND patch -N -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_buildscript_patch.diff || true
+#    WORKING_DIRECTORY ${V8_DIR}/v8
+#    DEPENDS v8_external
+#    COMMENT "Applying V8 patches..."
+#)
 
 # Ensure theta depends on v8_external and the patching step
-add_dependencies(theta v8_external v8_patched)
+add_dependencies(theta v8_external)# v8_patched)
 
 # Create imported target for V8 without INTERFACE_INCLUDE_DIRECTORIES
 add_library(v8_monolith STATIC IMPORTED GLOBAL)
 set_target_properties(v8_monolith PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/v8/out.gn/x64.release/obj/libv8_monolith.a"
+    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_monolith.a"
 )
 
 add_library(v8_platform STATIC IMPORTED GLOBAL)
 set_target_properties(v8_platform PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/v8/out.gn/x64.release/obj/libplatform.a"
+    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_libplatform.a"
 )
 
+add_library(v8_init STATIC IMPORTED GLOBAL)
+set_target_properties(v8_init PROPERTIES
+    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_init.a"
+)
+
+add_library(v8_libbase STATIC IMPORTED GLOBAL)
+set_target_properties(v8_libbase PROPERTIES
+    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_libbase.a"
+)
 # Add the V8 include directory directly to the theta target
-target_include_directories(theta PRIVATE ${V8_DIR}/v8/include)
+target_include_directories(theta PRIVATE ${V8_DIR}/src/v8/include)
 
 # Link theta against V8
-target_link_libraries(theta v8_monolith v8_platform pthread dl)
+target_link_libraries(theta v8_monolith v8_platform v8_init v8_libbase pthread dl)
 
 # Link Wasmer library
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)

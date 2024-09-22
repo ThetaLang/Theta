@@ -1,7 +1,10 @@
 #!/bin/bash
-cd v8
+
+echo "pwd is $PWD"
+cd src/v8
+
 
 # Generate build files
-gn gen out.gn/x64.release --args='is_debug=false v8_static_library=true v8_monolithic=true is_component_build=false v8_enable_i18n_support=false v8_use_external_startup_data=false extra_cxxflags="-std=c++20"'
+gn gen out.gn/x64.release --args='dcheck_always_on=false is_component_build=false is_debug=false target_cpu="x64" use_custom_libcxx=false v8_monolithic=true v8_use_external_startup_data=false'
 # Build V8
-ninja -C out.gn/x64.release v8_monolith platform
+ninja -C out.gn/x64.release v8_monolith platform v8_init v8_libbase
