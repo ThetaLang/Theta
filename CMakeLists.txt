@@ -57,7 +57,7 @@ else()
 endif()
 
 # Include directories for Binaryen, Wasmer, and V8
-include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include ${V8_DIR}/v8/include)
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include ${V8_DIR}/src/v8/include)
 
 # Add the V8 external project
 ExternalProject_Add(
@@ -78,17 +78,6 @@ bash -c "DEPOT_TOOLS_UPDATE=0 gclient config https://chromium.googlesource.com/v
     LOG_BUILD ON
 )
 
-# Custom target to apply patch to V8 headers
-#add_custom_target(v8_patched
-#    COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 headers with typename fix..."
-#    COMMAND patch -N -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_typename_patch.diff || true
-#    COMMAND ${CMAKE_COMMAND} -E echo "Patching V8 build to remove gold compiler check..."
-#    COMMAND patch -N -p3 < ${CMAKE_SOURCE_DIR}/patches/v8_buildscript_patch.diff || true
-#    WORKING_DIRECTORY ${V8_DIR}/v8
-#    DEPENDS v8_external
-#    COMMENT "Applying V8 patches..."
-#)
-
 # Ensure theta depends on v8_external and the patching step
 add_dependencies(theta v8_external)# v8_patched)
 
@@ -98,25 +87,21 @@ set_target_properties(v8_monolith PROPERTIES
     IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_monolith.a"
 )
 
-add_library(v8_platform STATIC IMPORTED GLOBAL)
-set_target_properties(v8_platform PROPERTIES
+add_library(v8_libplatform STATIC IMPORTED GLOBAL)
+set_target_properties(v8_libplatform PROPERTIES
     IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_libplatform.a"
-)
-
-add_library(v8_init STATIC IMPORTED GLOBAL)
-set_target_properties(v8_init PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_init.a"
 )
 
 add_library(v8_libbase STATIC IMPORTED GLOBAL)
 set_target_properties(v8_libbase PROPERTIES
     IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_libbase.a"
 )
+
 # Add the V8 include directory directly to the theta target
 target_include_directories(theta PRIVATE ${V8_DIR}/src/v8/include)
 
 # Link theta against V8
-target_link_libraries(theta v8_monolith v8_platform v8_init v8_libbase pthread dl)
+target_link_libraries(theta v8_monolith v8_libplatform v8_libbase pthread dl)
 
 # Link Wasmer library
 find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
@@ -144,7 +129,7 @@ file(GLOB TEST_SRC_FILES "${TEST_DIR}/*.cpp")
 foreach(TEST_SRC ${TEST_SRC_FILES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SRC} ${SRC_FILES} $<TARGET_OBJECTS:Catch2Main>)
-    target_link_libraries(${TEST_NAME} ${WASMER_LIB} readline binaryen)
+    target_link_libraries(${TEST_NAME} ${WASMER_LIB} readline binaryen v8_monolith v8_libplatform v8_libbase pthread dl)
 endforeach()
 
 # Custom target to copy fixtures

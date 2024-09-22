@@ -1,4 +1,3 @@
-#include "v8-isolate.h"
 #define Catch Catch_Wasmer // Both wasmer and catch2 have an identifier "Catch". This fixes the naming collision
 #include <wasmer.h>
 #undef Catch
@@ -13,6 +12,13 @@
 #include "binaryen-c.h"
 #include <v8.h>
 #include <libplatform/libplatform.h>
+
+#include "v8-context.h"
+#include "v8-initialization.h"
+#include "v8-isolate.h"
+#include "v8-local-handle.h"
+#include "v8-primitive.h"
+#include "v8-script.h"
 
 using namespace std;
 using namespace Theta;
