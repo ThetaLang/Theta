@@ -23,6 +23,27 @@
 using namespace std;
 using namespace Theta;
 
+struct V8GlobalSetup {
+  unique_ptr<v8::Platform> platform;
+
+  V8GlobalSetup() {
+    string pwd = Compiler::resolveAbsolutePath("");
+    v8::V8::InitializeICUDefaultLocation(pwd.c_str());
+    v8::V8::InitializeExternalStartupData(pwd.c_str());
+
+    platform = v8::platform::NewDefaultPlatform();
+    v8::V8::InitializePlatform(platform.get());
+    v8::V8::Initialize();
+  }
+
+  ~V8GlobalSetup() {
+    v8::V8::Dispose();
+    v8::V8::DisposePlatform();
+  }
+};
+
+V8GlobalSetup v8GlobalSetup;
+
 class CodeGenTest {
 public:
     Lexer lexer;
@@ -34,15 +55,37 @@ public:
 
     CodeGenTest() {
         filesByCapsuleName = Compiler::getInstance().filesByCapsuleName;
-          
-        //v8::V8::InitializeICUDefaultLocation(Compiler::resolveAbsolutePath("lib/v8/v8/out.gn/x64.release/idudtl.dat").c_str());
-  
-        v8::V8::InitializePlatform(v8::platform::NewDefaultPlatform().release());
-        v8::V8::Initialize();
-
+        
         v8::Isolate::CreateParams create_params;
-        create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();;
+        create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
         isolate = v8::Isolate::New(create_params); 
+        // TODO: Move this to the setup function 
+        {
+          v8::Isolate::Scope isolate_scope(isolate);
+
+          v8::HandleScope handle_scope(isolate);
+
+          v8::Local<v8::Context> context = v8::Context::New(isolate);
+
+          v8::Context::Scope context_scope(context);
+
+          {
+            v8::Local<v8::String> source = v8::String::NewFromUtf8Literal(isolate, "'Hello' + ', World!'");
+
+            v8::Local<v8::Script> script = v8::Script::Compile(context, source).ToLocalChecked();
+
+            v8::Local<v8::Value> result = script->Run(context).ToLocalChecked();
+
+            v8::String::Utf8Value utf8(isolate, result);
+            printf("%s\n", *utf8);
+          }
+        }
+
+        delete create_params.array_buffer_allocator;
+    }
+
+    ~CodeGenTest() {
+      isolate->Dispose();
     }
 
     wasm_instance_t* setup(string source) {
