@@ -1,5 +1,3 @@
-#include "v8-typed-array.h"
-#include "v8-wasm.h"
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch_amalgamated.hpp"
 #include "../src/lexer/Lexer.cpp"
@@ -9,83 +7,63 @@
 #include "../src/compiler/CodeGen.hpp"
 #include <cstdlib>
 #include "binaryen-c.h"
-#include <v8.h>
-#include <libplatform/libplatform.h>
-#include "v8-context.h"
-#include "v8-initialization.h"
-#include "v8-isolate.h"
-#include "v8-local-handle.h"
-#include "v8-primitive.h"
-#include "v8-script.h"
-#include <v8.h>
+#include "wasm.hh"
 #include <string>
 #include <vector>
 
 using namespace std;
 using namespace Theta;
 
-struct V8GlobalSetup {
-  unique_ptr<v8::Platform> platform;
-
-  V8GlobalSetup() {
-    string pwd = Compiler::resolveAbsolutePath("");
-    v8::V8::InitializeICUDefaultLocation(pwd.c_str());
-    v8::V8::InitializeExternalStartupData(pwd.c_str());
-
-    platform = v8::platform::NewDefaultPlatform();
-    v8::V8::InitializePlatform(platform.get());
-    v8::V8::Initialize();
-  }
-
-  ~V8GlobalSetup() {
-    v8::V8::Dispose();
-    v8::V8::DisposePlatform();
-  }
-};
-
-V8GlobalSetup v8GlobalSetup;
-
-
 class WasmExecutionContext {
 public:
-    v8::Local<v8::Value> result;
-    vector<string> exportNames;
-    v8::Isolate *isolate;
+    wasm::Val result;                 // Updated to use wasm::Val from libwee8
+    vector<string> exportNames;       // List of export names from the Wasm module
 
-    WasmExecutionContext(v8::Local<v8::Value> result, vector<string> exportNames, v8::Isolate* isolate)
-        : result(result), exportNames(exportNames), isolate(isolate) {}
+    // Constructor to initialize result and exportNames
+    WasmExecutionContext(wasm::Val result, vector<string> exportNames)
+        : result(result), exportNames(exportNames) {}
 
+    // Check if the result is a number
     bool isNumber() {
-        return result->IsNumber();
+        return result.kind() == wasm::I32 || result.kind() == wasm::I64 || 
+               result.kind() == wasm::F32 || result.kind() == wasm::F64;
     }
 
+    // Check if the result is a BigInt (not supported directly in libwee8, using I64 instead)
     bool isBigInt() {
-        return result->IsBigInt();
+        return result.kind() == wasm::I64;
     }
 
+    // Check if the result is a string (WebAssembly doesn't natively return strings, so this is more hypothetical)
     bool isString() {
-        return result->IsString();
+        // Strings are not natively supported in Wasm exports, this would be hypothetical
+        return false;
     }
 
+    // Retrieve the result as a number (for I32, I64, F32, F64 types)
     double getNumberValue() {
-        if (isNumber()) {
-            return result->NumberValue(isolate->GetCurrentContext()).ToChecked();
+        if (result.kind() == wasm::I32) {
+            return result.i32();
+        } else if (result.kind() == wasm::I64) {
+            return static_cast<double>(result.i64());  // Cast I64 to double
+        } else if (result.kind() == wasm::F32) {
+            return result.f32();
+        } else if (result.kind() == wasm::F64) {
+            return result.f64();
         }
         throw runtime_error("Result is not a number");
     }
 
+    // Retrieve the result as a BigInt (int64_t)
     int64_t getBigIntValue() {
         if (isBigInt()) {
-            return result->ToBigInt(isolate->GetCurrentContext()).ToLocalChecked()->Int64Value();
+            return result.i64();
         }
         throw runtime_error("Result is not a bigint");
     }
 
+    // Retrieve the result as a string (not applicable for native Wasm exports)
     string getStringValue() {
-        if (isString()) {
-            v8::String::Utf8Value utf8(isolate, result);
-            return *utf8;
-        }
         throw runtime_error("Result is not a string");
     }
 };
@@ -97,30 +75,21 @@ public:
     TypeChecker typeChecker;
     CodeGen codeGen;
     shared_ptr<map<string, string>> filesByCapsuleName;
-    v8::Isolate *isolate;
+    wasm::own<wasm::Engine> engine;
+    wasm::own<wasm::Store> store;
 
     CodeGenTest() {
         filesByCapsuleName = Compiler::getInstance().filesByCapsuleName;
         
-        v8::Isolate::CreateParams create_params;
-        create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-        isolate = v8::Isolate::New(create_params); 
-
-        delete create_params.array_buffer_allocator;
-    }
-
-    ~CodeGenTest() {
-      isolate->Dispose();
+        // Initialize libwee8 engine and store
+        engine = wasm::Engine::make();
+        store = wasm::Store::make(engine.get());
     }
 
     WasmExecutionContext setup(string source, string functionName = "main0") {
         Compiler::getInstance().clearExceptions();
 
-        // IMPORTANT: This disables binaryen from outputting colors along with its print output.
-        // If we don't disable that, wasmer will try to parse the escape sequences as part of the
-        // module and will fail
         BinaryenSetColorsEnabled(false);
-
         lexer.lex(source);
 
         shared_ptr<ASTNode> parsedAST = parser.parse(
@@ -134,97 +103,74 @@ public:
         bool isTypeValid = typeChecker.checkAST(parsedAST);
 
         for (int i = 0; i < Compiler::getInstance().getEncounteredExceptions().size(); i++) {
-          Compiler::getInstance().getEncounteredExceptions()[i]->display();
+            Compiler::getInstance().getEncounteredExceptions()[i]->display();
         }
 
         if (!isTypeValid) {
-          cerr << "Typechecking failed" << endl;
-          return WasmExecutionContext(v8::Undefined(isolate), {}, isolate);
+            cerr << "Typechecking failed" << endl;
+            return WasmExecutionContext(nullptr, {}, nullptr);
         }
 
         BinaryenModuleRef module = codeGen.generateWasmFromAST(parsedAST);
 
+        // Serialize the WebAssembly module
         vector<char> buffer(4096);
         size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
 
-        v8::Isolate::Scope isolate_scope(isolate);
-        v8::HandleScope handle_scope(isolate);
-        
-        v8::Local<v8::Context> context = v8::Context::New(isolate);
-        v8::Context::Scope context_scope(context);
+        // Load binary into libwee8
+        auto binary = wasm::vec<byte_t>::make_uninitialized(written);
+        memcpy(binary.get(), buffer.data(), written);
 
-        // Create an ArrayBuffer to hold the Wasm bytes
-        std::shared_ptr<v8::BackingStore> backing_store = v8::ArrayBuffer::NewBackingStore(
-            buffer.data(), buffer.size(), v8::BackingStore::EmptyDeleter, nullptr);
-
-        v8::Local<v8::ArrayBuffer> array_buffer = v8::ArrayBuffer::New(isolate, std::move(backing_store));
-        v8::Local<v8::Uint8Array> wasm_bytes = v8::Uint8Array::New(array_buffer, 0, written);
-
-        // JavaScript source to create and instantiate WebAssembly Module from bytes
-        const char csource[] = R"(
-            let module = new WebAssembly.Module(bytes);
-            let instance = new WebAssembly.Instance(module);
-            instance.exports;
-        )";
-
-        // Create the JavaScript source code
-        v8::Local<v8::String> jsSource = v8::String::NewFromUtf8Literal(isolate, csource);
-
-        // Inject the bytes as "bytes" into the global context
-        context->Global()->Set(context, v8::String::NewFromUtf8Literal(isolate, "bytes"), wasm_bytes).FromMaybe(false);
-
-        v8::TryCatch try_catch(isolate);
-
-        // Compile the source
-        v8::Local<v8::Script> script;
-        if (!v8::Script::Compile(context, jsSource).ToLocal(&script)) {
-            v8::String::Utf8Value error(isolate, try_catch.Exception());
-            cerr << "Script Compile Error: " << *error << endl;
-            return WasmExecutionContext(v8::Undefined(isolate), {}, isolate);
+        // Compile the WebAssembly module
+        auto wasmModule = wasm::Module::make(store.get(), binary);
+        if (!wasmModule) {
+            cerr << "> Error compiling module!" << endl;
+            return WasmExecutionContext(nullptr, {}, nullptr);
         }
 
-        // Run the script to get the exports object
-        v8::Local<v8::Value> exports_value;
-        if (!script->Run(context).ToLocal(&exports_value)) {
-            v8::String::Utf8Value error(isolate, try_catch.Exception());
-            cerr << "Script Run Error: " << *error << endl;
-            return WasmExecutionContext(v8::Undefined(isolate), {}, isolate);
+        // Instantiate the module
+        auto instance = wasm::Instance::make(store.get(), wasmModule.get(), nullptr);
+        if (!instance) {
+            cerr << "> Error instantiating module!" << endl;
+            return WasmExecutionContext(nullptr, {}, nullptr);
         }
 
-        v8::Local<v8::Object> exports = exports_value.As<v8::Object>();
-
-        // Get the export names
+        // Extract exports
+        auto exports = instance->exports();
         std::vector<std::string> exportNames;
-        v8::Local<v8::Array> property_names = exports->GetPropertyNames(context).ToLocalChecked();
-        for (uint32_t i = 0; i < property_names->Length(); i++) {
-            v8::Local<v8::Value> name = property_names->Get(context, i).ToLocalChecked();
-            v8::String::Utf8Value utf8(isolate, name);
-            exportNames.push_back(*utf8);
+        for (size_t i = 0; i < exports.size(); ++i) {
+            auto exportName = exports[i]->kind() == wasm::EXTERN_FUNC ? "function" : "unknown";
+            exportNames.push_back(exportName);  // Add more specific names if available
         }
 
-        // Check if the requested function exists in the exports object
-        v8::Local<v8::String> func_name = v8::String::NewFromUtf8(isolate, functionName.c_str()).ToLocalChecked();
-        if (!exports->Has(context, func_name).FromMaybe(false)) {
+        // Check if the requested function exists in the exports
+        wasm::Func* func = nullptr;
+        for (size_t i = 0; i < exports.size(); ++i) {
+            if (exports[i]->kind() == wasm::EXTERN_FUNC) {
+                // We assume the function we're interested in is the first one
+                func = exports[i]->func();
+                break;
+            }
+        }
+
+        if (!func) {
             cerr << "Exported function not found" << endl;
-            return WasmExecutionContext(v8::Undefined(isolate), exportNames, isolate);
+            return WasmExecutionContext(nullptr, exportNames, nullptr);
         }
 
-        // Get the exported function
-        v8::Local<v8::Value> func_value = exports->Get(context, func_name).ToLocalChecked();
+        // Call the function with no arguments
+        wasm::Val args[0];  // No arguments for this test
+        wasm::Val results[1];  // A single result (the number returned by the function)
+        auto trap = func->call(args, results);
 
-        // Cast to a V8 function and call it
-        v8::Local<v8::Function> func = func_value.As<v8::Function>();
-        v8::Local<v8::Value> args[] = {};
-
-        v8::Local<v8::Value> result;
-        if (!func->Call(context, exports, 0, args).ToLocal(&result)) {
-            v8::String::Utf8Value error(isolate, try_catch.Exception());
-            cerr << "Function call error: " << *error << endl;
-            return WasmExecutionContext(v8::Undefined(isolate), exportNames, isolate);
+        if (trap) {
+            cerr << "> Error calling function!" << endl;
+            return WasmExecutionContext(nullptr, exportNames, nullptr);
         }
 
-        // Return the result and the export names
-        return WasmExecutionContext(result, exportNames, isolate);
+        // Return the result and the exports
+        auto result_value = results[0].i32();  // Assuming it's a 32-bit integer result
+        return WasmExecutionContext(result_value, exportNames, store.get());
     }
 };
 

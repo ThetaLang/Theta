@@ -56,7 +56,7 @@ else()
 endif()
 
 # Include directories for Binaryen, catch2, and V8
-include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${V8_DIR}/src/v8/include)
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${V8_DIR}/src/v8/include ${V8_DIR}/src/v8/third_party/wasm-api)
 
 # Add the V8 external project
 ExternalProject_Add(
@@ -74,33 +74,22 @@ bash -c "DEPOT_TOOLS_UPDATE=0 gclient config https://chromium.googlesource.com/v
     INSTALL_COMMAND ""
     LOG_DOWNLOAD ON
     LOG_CONFIGURE ON
-    LOG_BUILD ON
 )
 
 # Ensure theta depends on v8_external and the patching step
 add_dependencies(theta v8_external)# v8_patched)
 
 # Create imported target for V8 without INTERFACE_INCLUDE_DIRECTORIES
-add_library(v8_monolith STATIC IMPORTED GLOBAL)
-set_target_properties(v8_monolith PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_monolith.a"
-)
-
-add_library(v8_libplatform STATIC IMPORTED GLOBAL)
-set_target_properties(v8_libplatform PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_libplatform.a"
-)
-
-add_library(v8_libbase STATIC IMPORTED GLOBAL)
-set_target_properties(v8_libbase PROPERTIES
-    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/x64.release/obj/libv8_libbase.a"
+add_library(v8_libwee8 STATIC IMPORTED GLOBAL)
+set_target_properties(v8_libwee8 PROPERTIES
+    IMPORTED_LOCATION "${V8_DIR}/src/v8/out.gn/wee8/obj/libwee8.a"
 )
 
 # Add the V8 include directory directly to the theta target
-target_include_directories(theta PRIVATE ${V8_DIR}/src/v8/include)
+target_include_directories(theta PRIVATE ${V8_DIR}/src/v8/third_party/wasm-api)
 
 # Link theta against V8
-target_link_libraries(theta v8_monolith v8_libplatform v8_libbase pthread dl)
+target_link_libraries(theta v8_libwee8 pthread dl)
 
 # Link Binaryen (with C++17, set earlier as the global standard)
 target_link_libraries(theta binaryen)
@@ -120,7 +109,7 @@ file(GLOB TEST_SRC_FILES "${TEST_DIR}/*.cpp")
 foreach(TEST_SRC ${TEST_SRC_FILES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SRC} ${SRC_FILES} $<TARGET_OBJECTS:Catch2Main>)
-    target_link_libraries(${TEST_NAME} readline binaryen v8_monolith v8_libplatform v8_libbase pthread dl)
+    target_link_libraries(${TEST_NAME} readline binaryen v8_libwee8 pthread dl)
 endforeach()
 
 # Custom target to copy fixtures
