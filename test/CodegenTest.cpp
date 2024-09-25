@@ -1,8 +1,5 @@
 #include "v8-typed-array.h"
 #include "v8-wasm.h"
-#define Catch Catch_Wasmer // Both wasmer and catch2 have an identifier "Catch". This fixes the naming collision
-#include <wasmer.h>
-#undef Catch
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch_amalgamated.hpp"
 #include "../src/lexer/Lexer.cpp"
@@ -14,13 +11,15 @@
 #include "binaryen-c.h"
 #include <v8.h>
 #include <libplatform/libplatform.h>
-
 #include "v8-context.h"
 #include "v8-initialization.h"
 #include "v8-isolate.h"
 #include "v8-local-handle.h"
 #include "v8-primitive.h"
 #include "v8-script.h"
+#include <v8.h>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace Theta;
@@ -46,57 +45,48 @@ struct V8GlobalSetup {
 
 V8GlobalSetup v8GlobalSetup;
 
-#include <v8.h>
-#include <string>
-#include <vector>
 
 class WasmExecutionContext {
 public:
     v8::Local<v8::Value> result;
-    std::vector<std::string> exportNames;
-    v8::Isolate* isolate;
+    vector<string> exportNames;
+    v8::Isolate *isolate;
 
-    WasmExecutionContext(v8::Local<v8::Value> result, std::vector<std::string> exportNames, v8::Isolate* isolate)
+    WasmExecutionContext(v8::Local<v8::Value> result, vector<string> exportNames, v8::Isolate* isolate)
         : result(result), exportNames(exportNames), isolate(isolate) {}
 
-    // Method to check if the result is a number
     bool isNumber() {
         return result->IsNumber();
     }
 
-    // Method to check if the result is a bigint
     bool isBigInt() {
         return result->IsBigInt();
     }
 
-    // Method to check if the result is a string
     bool isString() {
         return result->IsString();
     }
 
-    // Method to convert the result to a number, if applicable
     double getNumberValue() {
         if (isNumber()) {
             return result->NumberValue(isolate->GetCurrentContext()).ToChecked();
         }
-        throw std::runtime_error("Result is not a number");
+        throw runtime_error("Result is not a number");
     }
 
-    // Method to convert the result to a bigint, if applicable
     int64_t getBigIntValue() {
         if (isBigInt()) {
             return result->ToBigInt(isolate->GetCurrentContext()).ToLocalChecked()->Int64Value();
         }
-        throw std::runtime_error("Result is not a bigint");
+        throw runtime_error("Result is not a bigint");
     }
 
-    // Method to get the result as a string, if applicable
-    std::string getStringValue() {
+    string getStringValue() {
         if (isString()) {
             v8::String::Utf8Value utf8(isolate, result);
             return *utf8;
         }
-        throw std::runtime_error("Result is not a string");
+        throw runtime_error("Result is not a string");
     }
 };
 
@@ -311,7 +301,6 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
         REQUIRE(result.getBigIntValue() == -35);
     }
 
-
     SECTION("Negative division outputs correct result") {
         WasmExecutionContext result = setup(R"(
             capsule Test {
@@ -373,73 +362,68 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
         REQUIRE(result.isBigInt());
         REQUIRE(result.getBigIntValue() == 10);
     }
+
+    SECTION("Can codegen with capsule variables") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                count<Number> = 11
+                                          
+                main<Function<Number>> = () -> {
+                    return count + 1
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 12);
+    }
+
+    SECTION("Can codegen with local variables") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> {
+                    x<Number> = 43
+
+                    if (x == 12) {
+                        return 10
+                    }
+                    
+                    return 2
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 2);
+    }
+
+    SECTION("Can call capsule functions") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> double(5)
+
+                double<Function<Number, Number>> = (x<Number>) -> x * 2
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 3);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 10);
+    }
+
+// TODO: Fix this test case. This is failing because of the unary comparison
+// to i64.eqz that the !isOdd is doing. 
 //
-//    SECTION("Can codegen with capsule variables") {
+//    SECTION("Can call capsule functions that reference other functions") {
 //        wasm_instance_t *instance = setup(R"(
 //            capsule Test {
-//                count<Number> = 11
-//                                          
-//                main<Function<Number>> = () -> {
-//                    return count + 1
-//                }
-//            }
-//        )");
+//                main<Function<Boolean>> = () -> isEven(5)
 //
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
+//                isEven<Function<Number, Boolean>> = (x<Number>) -> !isOdd(x)
 //
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 12);
-//    }
-//
-//    SECTION("Can codegen with local variables") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> {
-//                    x<Number> = 43
-//
-//                    if (x == 12) {
-//                        return 10
-//                    }
-//                    
-//                    return 2
-//                }
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 2);
-//    }
-//
-//    SECTION("Can call capsule functions") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> double(5)
-//
-//                double<Function<Number, Number>> = (x<Number>) -> x * 2
+//                isOdd<Function<Number, Boolean>> = (x<Number>) -> x % 3 == 0 
 //            }
 //        )");
 //
@@ -447,126 +431,6 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 //        wasm_instance_exports(instance, &exports);
 //
 //        REQUIRE(exports.size == 3);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 10);
-//    }
-//
-//// TODO: Fix this test case. This is failing because of the unary comparison
-//// to i64.eqz that the !isOdd is doing. 
-////
-////    SECTION("Can call capsule functions that reference other functions") {
-////        wasm_instance_t *instance = setup(R"(
-////            capsule Test {
-////                main<Function<Boolean>> = () -> isEven(5)
-////
-////                isEven<Function<Number, Boolean>> = (x<Number>) -> !isOdd(x)
-////
-////                isOdd<Function<Number, Boolean>> = (x<Number>) -> x % 3 == 0 
-////            }
-////        )");
-////
-////        wasm_extern_vec_t exports;
-////        wasm_instance_exports(instance, &exports);
-////
-////        REQUIRE(exports.size == 3);
-////
-////        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-////
-////        wasm_val_t args_val[0] = {};
-////        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-////        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-////        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-////
-////        wasm_func_call(mainFunc, &args, &results);
-////
-////        REQUIRE(results_val[0].of.i32 == 0);
-////    }
-//    
-//    SECTION("Can call functions that are curried") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> {
-//                    multiplyBy10<Function<Number, Number>> = curriedMultiply(10) 
-//                
-//                    return multiplyBy10(50)
-//                }
-//
-//                curriedMultiply<Function<Number, Function<Number, Number>>> = (x<Number>) -> (y<Number>) -> x * y
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 3);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 500);
-//    }
-//
-//    SECTION("Can call functions that have an internal function as part of its result") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> add1000(5)
-//
-//                add1000<Function<Number, Number>> = (x<Number>) -> {
-//                    add<Function<Number, Number>> = (y<Number>) -> x + y
-//
-//                    result<Number> = add(1000)
-//
-//                    return result
-//                }
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 3);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 1005);
-//    }
-//
-//    // TODO: Return types of assignments are not being typechecked correctly
-//    SECTION("Correctly return value if an assignment is the last expression in a block") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Boolean>> = () -> {
-//                    x<Boolean> = false
-//                }
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
 //
 //        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
 //
@@ -579,39 +443,79 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 //
 //        REQUIRE(results_val[0].of.i32 == 0);
 //    }
-//
-//    SECTION("Can call recursive functions correctly") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> {
-//                    fibonacci(10)
-//                }
-//
-//                fibonacci<Function<Number, Number>> = (n<Number>) -> {
-//                    if (n <= 1) {
-//                        return n
-//                    }
-//
-//                    fibonacci(n - 1) + fibonacci(n - 2)
-//                }
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 3);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 55);
-//    }
+    
+    SECTION("Can call functions that are curried") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> {
+                    multiplyBy10<Function<Number, Number>> = curriedMultiply(10) 
+                
+                    return multiplyBy10(50)
+                }
+
+                curriedMultiply<Function<Number, Function<Number, Number>>> = (x<Number>) -> (y<Number>) -> x * y
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 3);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 500);
+    }
+
+    SECTION("Can call functions that have an internal function as part of its result") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> add1000(5)
+
+                add1000<Function<Number, Number>> = (x<Number>) -> {
+                    add<Function<Number, Number>> = (y<Number>) -> x + y
+
+                    result<Number> = add(1000)
+
+                    return result
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 3);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 1005);
+    }
+
+    SECTION("Correctly return value if an assignment is the last expression in a block") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Boolean>> = () -> {
+                    x<Boolean> = false
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isNumber());
+        REQUIRE(result.getNumberValue() == 0);
+    }
+
+    SECTION("Can call recursive functions correctly") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> {
+                    fibonacci(10)
+                }
+
+                fibonacci<Function<Number, Number>> = (n<Number>) -> {
+                    if (n <= 1) {
+                        return n
+                    }
+
+                    fibonacci(n - 1) + fibonacci(n - 2)
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 3);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 55);
+    }
 }
 

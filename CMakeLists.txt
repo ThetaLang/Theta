@@ -13,7 +13,6 @@ set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/test)
 set(CATCH2_DIR ${TEST_DIR}/catch2)
 set(BINARYEN_DIR ${CMAKE_SOURCE_DIR}/lib/binaryen)
-set(WASMER_DIR ${CMAKE_SOURCE_DIR}/lib/wasmer)
 set(V8_DIR ${CMAKE_SOURCE_DIR}/lib/v8)  # Path to V8 directory in your project
 
 # Collect all source files recursively from the src directory
@@ -56,8 +55,8 @@ else()
     target_link_libraries(theta readline)
 endif()
 
-# Include directories for Binaryen, Wasmer, and V8
-include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${WASMER_DIR}/include ${V8_DIR}/src/v8/include)
+# Include directories for Binaryen, catch2, and V8
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${V8_DIR}/src/v8/include)
 
 # Add the V8 external project
 ExternalProject_Add(
@@ -103,14 +102,6 @@ target_include_directories(theta PRIVATE ${V8_DIR}/src/v8/include)
 # Link theta against V8
 target_link_libraries(theta v8_monolith v8_libplatform v8_libbase pthread dl)
 
-# Link Wasmer library
-find_library(WASMER_LIB wasmer HINTS ${WASMER_DIR}/lib)
-if (WASMER_LIB)
-    target_link_libraries(theta ${WASMER_LIB})
-else()
-    message(FATAL_ERROR "Wasmer library not found in ${WASMER_DIR}/lib")
-endif()
-
 # Link Binaryen (with C++17, set earlier as the global standard)
 target_link_libraries(theta binaryen)
 
@@ -129,7 +120,7 @@ file(GLOB TEST_SRC_FILES "${TEST_DIR}/*.cpp")
 foreach(TEST_SRC ${TEST_SRC_FILES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_SRC} ${SRC_FILES} $<TARGET_OBJECTS:Catch2Main>)
-    target_link_libraries(${TEST_NAME} ${WASMER_LIB} readline binaryen v8_monolith v8_libplatform v8_libbase pthread dl)
+    target_link_libraries(${TEST_NAME} readline binaryen v8_monolith v8_libplatform v8_libbase pthread dl)
 endforeach()
 
 # Custom target to copy fixtures
