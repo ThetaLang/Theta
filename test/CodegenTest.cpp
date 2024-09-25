@@ -240,249 +240,139 @@ public:
 
 TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     SECTION("Can codegen multiplication") {
-       WasmExecutionContext result = setup(R"(
+        WasmExecutionContext result = setup(R"(
             capsule Test {
-                main<Function<Number>> = () -> 10 + 5
+                main<Function<Number>> = () -> 10 * 5
             }
         )");
 
         REQUIRE(result.exportNames.size() == 2);
-
-
         REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 15);
+        REQUIRE(result.getBigIntValue() == 50);
     }
 
-//    SECTION("Can codegen addition") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> 9 + 27
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 36);
-//    }
-//
-//    SECTION("Can codegen division") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> 10 / 2
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 5);
-//    }
-//
-//    SECTION("Can codegen subtraction") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> 47 - 10
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 37);
-//    }
-//
-//    SECTION("Correctly codegens negative numbers") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> -10 + 20
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 10);
-//    }
-//
-//    SECTION("Negative multiplication outputs correct result") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> 5 * -7
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == -35);
-//    }
-//
-//
-//    SECTION("Negative division outputs correct result") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> -90 / 30
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == -3);
-//    }
-//
-//    SECTION("More complex arithmetic outputs correct retult") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> 10 * (5 - 1) + (8 / (23 - 5))
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        // Note: this is 40 because all numbers are currently being treated as integers instead of
-//        // being typecast to floats. Once we fix this, it'll be 40.44
-//        REQUIRE(results_val[0].of.i64 == 40);
-//    }
-//
-//    SECTION("Can codegen conditionals") {
-//         wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> {
-//                    if (1 == 1) {
-//                        return 4
-//                    } else {
-//                        return 3
-//                    }
-//                }
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 4);
-//    }
-//
-//    SECTION("Can codegen early returns") {
-//        wasm_instance_t *instance = setup(R"(
-//            capsule Test {
-//                main<Function<Number>> = () -> {
-//                    if (1 == 1) {
-//                        return 10
-//                    }
-//
-//                    return 5
-//                }
-//            }
-//        )");
-//
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 2);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i64 == 10);
-//    }
+    SECTION("Can codegen addition") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> 9 + 27
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 36);
+    }
+
+    SECTION("Can codegen division") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> 10 / 2
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 5);
+    }
+
+    SECTION("Can codegen subtraction") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> 47 - 10
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 37);
+    }
+
+    SECTION("Correctly codegens negative numbers") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> -10 + 20
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 10);
+    }
+
+    SECTION("Negative multiplication outputs correct result") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> 5 * -7
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == -35);
+    }
+
+
+    SECTION("Negative division outputs correct result") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> -90 / 30
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == -3);
+    }
+
+    SECTION("More complex arithmetic outputs correct result") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> 10 * (5 - 1) + (8 / (23 - 5))
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        // Note: this is 40 because all numbers are currently being treated as integers instead of
+        // being typecast to floats. Once we fix this, it'll be 40.44
+        REQUIRE(result.getBigIntValue() == 40);
+    }
+
+    SECTION("Can codegen conditionals") {
+         WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> {
+                    if (1 == 1) {
+                        return 4
+                    } else {
+                        return 3
+                    }
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 4);
+    }
+
+    SECTION("Can codegen early returns") {
+        WasmExecutionContext result = setup(R"(
+            capsule Test {
+                main<Function<Number>> = () -> {
+                    if (1 == 1) {
+                        return 10
+                    }
+
+                    return 5
+                }
+            }
+        )");
+
+        REQUIRE(result.exportNames.size() == 2);
+        REQUIRE(result.isBigInt());
+        REQUIRE(result.getBigIntValue() == 10);
+    }
 //
 //    SECTION("Can codegen with capsule variables") {
 //        wasm_instance_t *instance = setup(R"(
