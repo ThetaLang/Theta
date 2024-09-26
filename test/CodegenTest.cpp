@@ -14,58 +14,40 @@
 using namespace std;
 using namespace Theta;
 
+class WasmEngine {
+public:
+    wasm::own<wasm::Engine> engine;
+    wasm::own<wasm::Store> store;
+
+    // Constructor initializes engine and store only once
+    WasmEngine() {
+        engine = wasm::Engine::make();
+        store = wasm::Store::make(engine.get());
+    }
+
+    // Provide access to the store
+    wasm::Store* getStore() {
+        return store.get();
+    }
+
+    // Provide access to the engine (if needed)
+    wasm::Engine* getEngine() {
+        return engine.get();
+    }
+};
+
+// Create a singleton instance of WasmEngine
+WasmEngine& getWasmEngine() {
+    static WasmEngine wasmEngine;
+    return wasmEngine;
+}
+
 class WasmExecutionContext {
 public:
-    wasm::Val result;                 // Updated to use wasm::Val from libwee8
-    vector<string> exportNames;       // List of export names from the Wasm module
+    wasm::Val result;
+    vector<string> exportNames;
 
-    // Constructor to initialize result and exportNames
-    WasmExecutionContext(wasm::Val result, vector<string> exportNames)
-        : result(result), exportNames(exportNames) {}
-
-    // Check if the result is a number
-    bool isNumber() {
-        return result.kind() == wasm::I32 || result.kind() == wasm::I64 || 
-               result.kind() == wasm::F32 || result.kind() == wasm::F64;
-    }
-
-    // Check if the result is a BigInt (not supported directly in libwee8, using I64 instead)
-    bool isBigInt() {
-        return result.kind() == wasm::I64;
-    }
-
-    // Check if the result is a string (WebAssembly doesn't natively return strings, so this is more hypothetical)
-    bool isString() {
-        // Strings are not natively supported in Wasm exports, this would be hypothetical
-        return false;
-    }
-
-    // Retrieve the result as a number (for I32, I64, F32, F64 types)
-    double getNumberValue() {
-        if (result.kind() == wasm::I32) {
-            return result.i32();
-        } else if (result.kind() == wasm::I64) {
-            return static_cast<double>(result.i64());  // Cast I64 to double
-        } else if (result.kind() == wasm::F32) {
-            return result.f32();
-        } else if (result.kind() == wasm::F64) {
-            return result.f64();
-        }
-        throw runtime_error("Result is not a number");
-    }
-
-    // Retrieve the result as a BigInt (int64_t)
-    int64_t getBigIntValue() {
-        if (isBigInt()) {
-            return result.i64();
-        }
-        throw runtime_error("Result is not a bigint");
-    }
-
-    // Retrieve the result as a string (not applicable for native Wasm exports)
-    string getStringValue() {
-        throw runtime_error("Result is not a string");
-    }
+    WasmExecutionContext(wasm::Val result, vector<string> exportNames) : result(std::move(result)), exportNames(exportNames) {}
 };
 
 class CodeGenTest {
@@ -75,18 +57,13 @@ public:
     TypeChecker typeChecker;
     CodeGen codeGen;
     shared_ptr<map<string, string>> filesByCapsuleName;
-    wasm::own<wasm::Engine> engine;
-    wasm::own<wasm::Store> store;
 
     CodeGenTest() {
         filesByCapsuleName = Compiler::getInstance().filesByCapsuleName;
-        
-        // Initialize libwee8 engine and store
-        engine = wasm::Engine::make();
-        store = wasm::Store::make(engine.get());
     }
 
     WasmExecutionContext setup(string source, string functionName = "main0") {
+        cout << "in setup!" << endl;
         Compiler::getInstance().clearExceptions();
 
         BinaryenSetColorsEnabled(false);
@@ -106,34 +83,23 @@ public:
             Compiler::getInstance().getEncounteredExceptions()[i]->display();
         }
 
-        if (!isTypeValid) {
-            cerr << "Typechecking failed" << endl;
-            return WasmExecutionContext(nullptr, {}, nullptr);
-        }
+        if (!isTypeValid) FAIL("Typechecking failed");
 
         BinaryenModuleRef module = codeGen.generateWasmFromAST(parsedAST);
 
-        // Serialize the WebAssembly module
         vector<char> buffer(4096);
         size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
 
-        // Load binary into libwee8
         auto binary = wasm::vec<byte_t>::make_uninitialized(written);
         memcpy(binary.get(), buffer.data(), written);
 
-        // Compile the WebAssembly module
-        auto wasmModule = wasm::Module::make(store.get(), binary);
-        if (!wasmModule) {
-            cerr << "> Error compiling module!" << endl;
-            return WasmExecutionContext(nullptr, {}, nullptr);
-        }
+        // Use the shared WasmEngine's store
+        auto wasmModule = wasm::Module::make(getWasmEngine().getStore(), binary);
+        if (!wasmModule) FAIL("Error compiling module");
 
-        // Instantiate the module
-        auto instance = wasm::Instance::make(store.get(), wasmModule.get(), nullptr);
-        if (!instance) {
-            cerr << "> Error instantiating module!" << endl;
-            return WasmExecutionContext(nullptr, {}, nullptr);
-        }
+        // Can pass imports in place of nullptr if needed
+        auto instance = wasm::Instance::make(getWasmEngine().getStore(), wasmModule.get(), nullptr);
+        if (!instance) FAIL("Error instantiating module");
 
         // Extract exports
         auto exports = instance->exports();
@@ -153,128 +119,122 @@ public:
             }
         }
 
-        if (!func) {
-            cerr << "Exported function not found" << endl;
-            return WasmExecutionContext(nullptr, exportNames, nullptr);
-        }
+        if (!func) FAIL("Exported function not found");
 
         // Call the function with no arguments
         wasm::Val args[0];  // No arguments for this test
         wasm::Val results[1];  // A single result (the number returned by the function)
         auto trap = func->call(args, results);
 
-        if (trap) {
-            cerr << "> Error calling function!" << endl;
-            return WasmExecutionContext(nullptr, exportNames, nullptr);
-        }
+        if (trap) FAIL("Error calling function");
 
-        // Return the result and the exports
-        auto result_value = results[0].i32();  // Assuming it's a 32-bit integer result
-        return WasmExecutionContext(result_value, exportNames, store.get());
+        cout << "Made wasm execution!" << endl;
+
+        return WasmExecutionContext(std::move(results[0]), exportNames);
     }
 };
 
 TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     SECTION("Can codegen multiplication") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 10 * 5
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 50);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 50);
     }
 
     SECTION("Can codegen addition") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 9 + 27
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 36);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 36);
     }
 
     SECTION("Can codegen division") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 10 / 2
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 5);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 5);
     }
 
     SECTION("Can codegen subtraction") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 47 - 10
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 37);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 37);
     }
 
     SECTION("Correctly codegens negative numbers") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> -10 + 20
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 10);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 10);
     }
 
     SECTION("Negative multiplication outputs correct result") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 5 * -7
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == -35);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == -35);
     }
 
     SECTION("Negative division outputs correct result") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> -90 / 30
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == -3);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == -3);
     }
 
     SECTION("More complex arithmetic outputs correct result") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 10 * (5 - 1) + (8 / (23 - 5))
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
         // Note: this is 40 because all numbers are currently being treated as integers instead of
         // being typecast to floats. Once we fix this, it'll be 40.44
-        REQUIRE(result.getBigIntValue() == 40);
+        REQUIRE(context.result.i64() == 40);
     }
 
     SECTION("Can codegen conditionals") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     if (1 == 1) {
@@ -286,13 +246,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 4);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 4);
     }
 
     SECTION("Can codegen early returns") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     if (1 == 1) {
@@ -304,13 +264,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 10);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 10);
     }
 
     SECTION("Can codegen with capsule variables") {
-        WasmExecutionContext result = setup(R"(
+        WasmExecutionContext context = setup(R"(
             capsule Test {
                 count<Number> = 11
                                           
@@ -320,13 +280,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 12);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 12);
     }
 
     SECTION("Can codegen with local variables") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     x<Number> = 43
@@ -340,13 +300,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 2);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 2);
     }
 
     SECTION("Can call capsule functions") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> double(5)
 
@@ -354,9 +314,9 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 3);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 10);
+        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 10);
     }
 
 // TODO: Fix this test case. This is failing because of the unary comparison
@@ -391,7 +351,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 //    }
     
     SECTION("Can call functions that are curried") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     multiplyBy10<Function<Number, Number>> = curriedMultiply(10) 
@@ -403,13 +363,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 3);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 500);
+        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 500);
     }
 
     SECTION("Can call functions that have an internal function as part of its result") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> add1000(5)
 
@@ -423,13 +383,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 3);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 1005);
+        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 1005);
     }
 
     SECTION("Correctly return value if an assignment is the last expression in a block") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Boolean>> = () -> {
                     x<Boolean> = false
@@ -437,13 +397,13 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 2);
-        REQUIRE(result.isNumber());
-        REQUIRE(result.getNumberValue() == 0);
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::I32);
+        REQUIRE(context.result.i32() == 0);
     }
 
     SECTION("Can call recursive functions correctly") {
-         WasmExecutionContext result = setup(R"(
+         WasmExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     fibonacci(10)
@@ -459,9 +419,9 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(result.exportNames.size() == 3);
-        REQUIRE(result.isBigInt());
-        REQUIRE(result.getBigIntValue() == 55);
+        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.result.kind() == wasm::I64);
+        REQUIRE(context.result.i64() == 55);
     }
 }
 
