@@ -447,8 +447,6 @@ namespace Theta {
             exit(1);
         }
 
-        cout << "created simplified function declaration" << endl;
- 
         return simplifiedDeclaration;
     }
     

@@ -5,7 +5,7 @@
 #include "../src/compiler/Compiler.hpp"
 #include "../src/compiler/TypeChecker.hpp"
 #include "../src/compiler/CodeGen.hpp"
-#include <cstdlib>
+#include "runtime/Runtime.hpp"
 #include "binaryen-c.h"
 #include "wasm.hh"
 #include <string>
@@ -13,42 +13,6 @@
 
 using namespace std;
 using namespace Theta;
-
-class WasmEngine {
-public:
-    wasm::own<wasm::Engine> engine;
-    wasm::own<wasm::Store> store;
-
-    // Constructor initializes engine and store only once
-    WasmEngine() {
-        engine = wasm::Engine::make();
-        store = wasm::Store::make(engine.get());
-    }
-
-    // Provide access to the store
-    wasm::Store* getStore() {
-        return store.get();
-    }
-
-    // Provide access to the engine (if needed)
-    wasm::Engine* getEngine() {
-        return engine.get();
-    }
-};
-
-// Create a singleton instance of WasmEngine
-WasmEngine& getWasmEngine() {
-    static WasmEngine wasmEngine;
-    return wasmEngine;
-}
-
-class WasmExecutionContext {
-public:
-    wasm::Val result;
-    vector<string> exportNames;
-
-    WasmExecutionContext(wasm::Val result, vector<string> exportNames) : result(std::move(result)), exportNames(exportNames) {}
-};
 
 class CodeGenTest {
 public:
@@ -62,8 +26,7 @@ public:
         filesByCapsuleName = Compiler::getInstance().filesByCapsuleName;
     }
 
-    WasmExecutionContext setup(string source, string functionName = "main0") {
-        cout << "in setup!" << endl;
+    ExecutionContext setup(string source, string functionName = "main0") {
         Compiler::getInstance().clearExceptions();
 
         BinaryenSetColorsEnabled(false);
@@ -87,56 +50,15 @@ public:
 
         BinaryenModuleRef module = codeGen.generateWasmFromAST(parsedAST);
 
-        vector<char> buffer(4096);
-        size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+        vector<char> buffer = Compiler::writeModuleToBuffer(module);
 
-        auto binary = wasm::vec<byte_t>::make_uninitialized(written);
-        memcpy(binary.get(), buffer.data(), written);
-
-        // Use the shared WasmEngine's store
-        auto wasmModule = wasm::Module::make(getWasmEngine().getStore(), binary);
-        if (!wasmModule) FAIL("Error compiling module");
-
-        // Can pass imports in place of nullptr if needed
-        auto instance = wasm::Instance::make(getWasmEngine().getStore(), wasmModule.get(), nullptr);
-        if (!instance) FAIL("Error instantiating module");
-
-        // Extract exports
-        auto exports = instance->exports();
-        std::vector<std::string> exportNames;
-        for (size_t i = 0; i < exports.size(); ++i) {
-            auto exportName = exports[i]->kind() == wasm::EXTERN_FUNC ? "function" : "unknown";
-            exportNames.push_back(exportName);  // Add more specific names if available
-        }
-
-        // Check if the requested function exists in the exports
-        wasm::Func* func = nullptr;
-        for (size_t i = 0; i < exports.size(); ++i) {
-            if (exports[i]->kind() == wasm::EXTERN_FUNC) {
-                // We assume the function we're interested in is the first one
-                func = exports[i]->func();
-                break;
-            }
-        }
-
-        if (!func) FAIL("Exported function not found");
-
-        // Call the function with no arguments
-        wasm::Val args[0];  // No arguments for this test
-        wasm::Val results[1];  // A single result (the number returned by the function)
-        auto trap = func->call(args, results);
-
-        if (trap) FAIL("Error calling function");
-
-        cout << "Made wasm execution!" << endl;
-
-        return WasmExecutionContext(std::move(results[0]), exportNames);
+        return Runtime::getInstance().execute(buffer, functionName);
     }
 };
 
 TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     SECTION("Can codegen multiplication") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 10 * 5
             }
@@ -148,7 +70,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen addition") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 9 + 27
             }
@@ -160,7 +82,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen division") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 10 / 2
             }
@@ -172,7 +94,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen subtraction") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 47 - 10
             }
@@ -184,7 +106,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Correctly codegens negative numbers") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> -10 + 20
             }
@@ -196,7 +118,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Negative multiplication outputs correct result") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 5 * -7
             }
@@ -208,7 +130,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Negative division outputs correct result") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> -90 / 30
             }
@@ -220,7 +142,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("More complex arithmetic outputs correct result") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> 10 * (5 - 1) + (8 / (23 - 5))
             }
@@ -234,7 +156,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen conditionals") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     if (1 == 1) {
@@ -252,7 +174,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen early returns") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     if (1 == 1) {
@@ -270,7 +192,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen with capsule variables") {
-        WasmExecutionContext context = setup(R"(
+        ExecutionContext context = setup(R"(
             capsule Test {
                 count<Number> = 11
                                           
@@ -286,7 +208,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can codegen with local variables") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     x<Number> = 43
@@ -306,7 +228,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can call capsule functions") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> double(5)
 
@@ -351,7 +273,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 //    }
     
     SECTION("Can call functions that are curried") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     multiplyBy10<Function<Number, Number>> = curriedMultiply(10) 
@@ -369,7 +291,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can call functions that have an internal function as part of its result") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> add1000(5)
 
@@ -389,7 +311,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Correctly return value if an assignment is the last expression in a block") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Boolean>> = () -> {
                     x<Boolean> = false
@@ -403,7 +325,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
     }
 
     SECTION("Can call recursive functions correctly") {
-         WasmExecutionContext context = setup(R"(
+         ExecutionContext context = setup(R"(
             capsule Test {
                 main<Function<Number>> = () -> {
                     fibonacci(10)

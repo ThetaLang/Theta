@@ -189,19 +189,32 @@ namespace Theta {
         return true;
     }
 
-    void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {
-        // TODO: This isnt the right way to do this. This will only allow 4k to be written.
-        // Figure out a better way to decide on size
-        vector<char> buffer(4096);
+    vector<char> Compiler::writeModuleToBuffer(BinaryenModuleRef &module) {
+        vector<char> buffer(1024); // Start with 1KB buffer
 
         size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+
+        // If the written size is equal to the buffer size, resize the buffer and try again
+        while (written == buffer.size()) {
+            buffer.resize(buffer.size() * 2);
+            
+            written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+        }
+
+        buffer.resize(written);
+
+        return buffer;
+    }
+
+    void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {
+        vector<char> buffer = writeModuleToBuffer(module);
 
         ofstream outFile(fileName, std::ios::binary);
         if (!outFile) {
             throw std::runtime_error("Failed to open file for writing: " + fileName);
         }
 
-        outFile.write(buffer.data(), written);
+        outFile.write(buffer.data(), buffer.size());
         outFile.close();
 
         if (!outFile.good()) {
