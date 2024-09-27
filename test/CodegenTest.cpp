@@ -8,6 +8,7 @@
 #include "runtime/Runtime.hpp"
 #include "binaryen-c.h"
 #include "wasm.hh"
+#include <v8.h>
 #include <string>
 #include <vector>
 
@@ -103,6 +104,36 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
         REQUIRE(context.exportNames.size() == 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 37);
+    }
+
+    SECTION("Can codegen string concatenation") {
+        ExecutionContext context = setup(R"(
+            capsule Test {
+                main<Function<String>> = () -> 'Hello, ' + 'world!'
+            }
+        )");
+
+        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.result.kind() == wasm::ANYREF);
+
+        // Cast the wasm::Ref to a v8::Value.
+        wasm::Ref* ref = context.result.ref();
+        REQUIRE(ref != nullptr);  // Ensure it's a valid reference.
+
+        // Convert the wasm::Ref to a v8::Value (V8 object).
+        v8::Isolate* isolate = v8::Isolate::GetCurrent();
+        v8::HandleScope handle_scope(isolate);
+        v8::Local<v8::Value> v8_value = *reinterpret_cast<v8::Local<v8::Value>*>(ref);
+
+        // Check if the value is a string.
+        REQUIRE(v8_value->IsString());  // Make sure the result is a string.
+
+        // Convert the v8::String to std::string.
+        v8::String::Utf8Value utf8_string(isolate, v8_value);
+        std::string result_string(*utf8_string);
+
+        // Check if the result matches the expected value.
+        REQUIRE(result_string == "Hello, world!");
     }
 
     SECTION("Correctly codegens negative numbers") {
@@ -245,7 +276,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 // to i64.eqz that the !isOdd is doing. 
 //
 //    SECTION("Can call capsule functions that reference other functions") {
-//        wasm_instance_t *instance = setup(R"(
+//        ExecutionContext context = setup(R"(
 //            capsule Test {
 //                main<Function<Boolean>> = () -> isEven(5)
 //
@@ -255,21 +286,9 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
 //            }
 //        )");
 //
-//        wasm_extern_vec_t exports;
-//        wasm_instance_exports(instance, &exports);
-//
-//        REQUIRE(exports.size == 3);
-//
-//        wasm_func_t *mainFunc = wasm_extern_as_func(exports.data[1]);
-//
-//        wasm_val_t args_val[0] = {};
-//        wasm_val_t results_val[1] = { WASM_INIT_VAL };
-//        wasm_val_vec_t args = WASM_ARRAY_VEC(args_val);
-//        wasm_val_vec_t results = WASM_ARRAY_VEC(results_val);
-//
-//        wasm_func_call(mainFunc, &args, &results);
-//
-//        REQUIRE(results_val[0].of.i32 == 0);
+//        REQUIRE(context.exportNames.size() == 3);
+//        REQUIRE(context.result.kind() == wasm::I32);
+//        REQUIRE(context.result.i32() == 0);
 //    }
     
     SECTION("Can call functions that are curried") {
