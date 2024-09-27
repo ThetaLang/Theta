@@ -86,7 +86,7 @@ namespace Theta {
         if (node->getNodeType() == ASTNode::SOURCE) {
             generateSource(dynamic_pointer_cast<SourceNode>(node), module);
         } else if (node->getNodeType() == ASTNode::CAPSULE) {
-            return generateCapsule(dynamic_pointer_cast<CapsuleNode>(node), module);
+            generateCapsule(dynamic_pointer_cast<CapsuleNode>(node), module);
         } else if (node->getNodeType() == ASTNode::ASSIGNMENT) {
             return generateAssignment(dynamic_pointer_cast<AssignmentNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BLOCK) {
@@ -123,7 +123,7 @@ namespace Theta {
         return nullptr;
     }
 
-    BinaryenExpressionRef CodeGen::generateCapsule(shared_ptr<CapsuleNode> capsuleNode, BinaryenModuleRef &module) {
+    void CodeGen::generateCapsule(shared_ptr<CapsuleNode> capsuleNode, BinaryenModuleRef &module) {
         vector<shared_ptr<ASTNode>> capsuleElements = dynamic_pointer_cast<ASTNodeList>(capsuleNode->getValue())->getElements();
 
         hoistCapsuleElements(capsuleElements);
@@ -513,7 +513,7 @@ namespace Theta {
         collectClosureScope(node->getParent(), identifiersToFind, parameters, bodyExpressions);
     }
 
-    BinaryenExpressionRef CodeGen::generateFunctionDeclaration(
+    void CodeGen::generateFunctionDeclaration(
         string identifier,
         shared_ptr<FunctionDeclarationNode> fnDeclNode,
         BinaryenModuleRef &module,
@@ -690,18 +690,20 @@ namespace Theta {
             // If a refIdentifier was passed, that means we have an existing closure
             // in memory that we want to populate.
             if (refIdentifier != "") {
+                BinaryenExpressionRef closureArgs[2] = {
+                  BinaryenLocalGet(
+                      module,
+                      scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
+                      BinaryenTypeInt32()
+                  ),
+                  BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress()))
+                };
+
                 expressions.push_back(
                     BinaryenCall(
                         module,
                         "Theta.Function.populateClosure",
-                        (BinaryenExpressionRef[]){
-                            BinaryenLocalGet(
-                                module,
-                                scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
-                                BinaryenTypeInt32()
-                            ),
-                            BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress()))
-                        },
+                        closureArgs,
                         2,
                         BinaryenTypeNone()
                     )
@@ -1061,10 +1063,12 @@ namespace Theta {
             throw runtime_error("Invalid operand types for binary operation");
         }
 
+        BinaryenExpressionRef args[2] = { binaryenLeft, binaryenRight };
+
         return BinaryenCall(
             module,
             "Theta.Math.pow",
-            (BinaryenExpressionRef[]){ binaryenLeft, binaryenRight },
+            args,
             2,
             BinaryenTypeInt64()
         );
@@ -1153,6 +1157,8 @@ namespace Theta {
         if (op == Lexemes::GT && dataType == DataTypes::NUMBER) return BinaryenGtSInt64();
         if (op == Lexemes::LTEQ && dataType == DataTypes::NUMBER) return BinaryenLeSInt64();
         if (op == Lexemes::GTEQ && dataType == DataTypes::NUMBER) return BinaryenGeSInt64();
+
+        throw runtime_error("No matching WASM opcode for binary operation: " + binOpNode->getOperator());
     }
 
     BinaryenType CodeGen::getBinaryenTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> typeDeclaration) {
@@ -1162,6 +1168,8 @@ namespace Theta {
 
         // Function references are returned as i32 pointers to a closure in the function table
         if (typeDeclaration->getType() == DataTypes::FUNCTION) return BinaryenTypeInt32();
+
+        throw runtime_error("No matching WASM type for TypeDeclaration: " + typeDeclaration->getType());
     }
 
     BinaryenType CodeGen::getBinaryenStorageTypeFromTypeDeclaration(shared_ptr<TypeDeclarationNode> typeDeclaration) {

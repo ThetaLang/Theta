@@ -110,10 +110,12 @@ namespace Theta {
                     BinaryenLocalGet(module, 2, BinaryenTypeInt64())
                 };
 
+                BinaryenType fnTypes[2] = { BinaryenTypeInt64(), BinaryenTypeInt64() };
+
                 BinaryenFunctionRef powFn = BinaryenAddFunction(
                     module,
                     "Theta.Math.pow",
-                    BinaryenTypeCreate((BinaryenType[]){ BinaryenTypeInt64(), BinaryenTypeInt64() }, 2),
+                    BinaryenTypeCreate(fnTypes, 2),
                     BinaryenTypeInt64(),
                     (BinaryenType[]){ BinaryenTypeInt64() },
                     1,
