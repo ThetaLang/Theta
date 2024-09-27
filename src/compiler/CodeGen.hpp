@@ -21,6 +21,7 @@
 #include <binaryen-c.h>
 #include <set>
 #include <unordered_map>
+#include <optional>
 
 using namespace std;
 
