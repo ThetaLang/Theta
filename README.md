@@ -1,4 +1,4 @@
-![Discord](https://img.shields.io/discord/1289060671971000320)
+![Discord](https://img.shields.io/discord/1289060671971000320?style=social&logo=discord)
 ![ThetaLang](https://github.com/user-attachments/assets/fd4238c5-096a-43a6-96c7-40343572b4d4)
 
 ## Introduction
