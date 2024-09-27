@@ -2,6 +2,8 @@
 
 set -e
 
+g++ --version
+
 if [ ! -d "build" ]; then
   mkdir build
 fi
