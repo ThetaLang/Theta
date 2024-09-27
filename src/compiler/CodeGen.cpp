@@ -213,7 +213,7 @@ namespace Theta {
                     addressRefExpression
                 );
             },
-            make_pair(assignmentIdentifier, idxOfAssignment)
+            make_optional(make_pair(assignmentIdentifier, idxOfAssignment))
         );
     }
 
