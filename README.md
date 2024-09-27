@@ -12,7 +12,7 @@ Welcome to Theta! If you're into modern, functional programming languages with a
 1. [Features](#features)
 2. [Example Code](#example-code)
 3. [Building Theta](#building-theta)
-4. [Contributing](#contributing)
+4. [Contributing](/CONTRIBUTING.md)
 5. [Reporting Issues](#reporting-issues)
 6. [Language Specification](#theta-language-specification)
 
@@ -108,23 +108,6 @@ theta --version
 ```
 
 You should see the current version of Theta displayed.
-
-## Contributing
-
-Thanks for checking out Theta! We’re excited to have you contribute. Here’s how you can get started:
-
-1. **Fork the Repository**: Create a fork on GitHub.
-2. **Create a Branch**: 
-  ```sh
-  git checkout -b some-feature-branch
-  ```
-3. **Make Changes**: Implement your changes and commit them.
-4. **Run the Tests**: 
-  ```sh
-  ./build/LexerTest
-  ./build/ParserTest
-  ```
-5. **Submit a Pull Request**: Push your changes to your fork and open a pull request.
 
 ### Testing Changes
 
