@@ -29,6 +29,8 @@
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
+#pragma push_macro("RETURN")
+#undef RETURN
 
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
@@ -1397,3 +1399,4 @@ namespace Theta {
         return stream.str();
     }
 }
+#pragma pop_macro("RETURN")

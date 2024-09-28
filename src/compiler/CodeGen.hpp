@@ -21,7 +21,7 @@
 #include <binaryen-c.h>
 #include <set>
 #include <unordered_map>
-
+#include <functional>
 using namespace std;
 
 namespace Theta {

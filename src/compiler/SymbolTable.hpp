@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <map>
+#include <optional>
 using namespace std;
 
 namespace Theta {
