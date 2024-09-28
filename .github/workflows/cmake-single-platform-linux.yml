@@ -46,6 +46,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-
 
+    - name: Install libreadline-dev
+      run: sudo apt-get install -y libreadline-dev
+
     - name: Build project
       working-directory: ${{ github.workspace }}
       run: ./build.sh
