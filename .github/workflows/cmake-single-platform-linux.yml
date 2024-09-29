@@ -60,7 +60,7 @@ jobs:
         path: ${{ github.workspace }}/build
 
   lexer-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -89,7 +89,7 @@ jobs:
       run: ./LexerTest
 
   parser-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -115,7 +115,7 @@ jobs:
       run: ./ParserTest
 
   typechecker-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -141,7 +141,7 @@ jobs:
       run: ./TypeCheckerTest
 
   codegen-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
