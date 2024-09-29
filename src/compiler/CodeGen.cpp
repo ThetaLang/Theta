@@ -30,6 +30,9 @@
 #include <mach-o/dyld.h>
 #endif
 
+#pragma push_macro("RETURN")
+#undef RETURN
+
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
         BinaryenModuleRef module = initializeWasmModule();        
@@ -1405,3 +1408,5 @@ namespace Theta {
         return stream.str();
     }
 }
+
+#pragma pop_macro("RETURN")
