@@ -21,7 +21,7 @@
 #include <binaryen-c.h>
 #include <set>
 #include <unordered_map>
-
+#include <functional>
 using namespace std;
 
 namespace Theta {
@@ -29,11 +29,11 @@ namespace Theta {
         public:
             BinaryenModuleRef generateWasmFromAST(shared_ptr<ASTNode> ast);
             BinaryenExpressionRef generate(shared_ptr<ASTNode> node, BinaryenModuleRef &module);
-            BinaryenExpressionRef generateCapsule(shared_ptr<CapsuleNode> node, BinaryenModuleRef &module);
+            void generateCapsule(shared_ptr<CapsuleNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateAssignment(shared_ptr<AssignmentNode> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateBlock(shared_ptr<ASTNodeList> node, BinaryenModuleRef &module);
             BinaryenExpressionRef generateReturn(shared_ptr<ReturnNode> node, BinaryenModuleRef &module);
-            BinaryenExpressionRef generateFunctionDeclaration(
+            void generateFunctionDeclaration(
                 string identifier, 
                 shared_ptr<FunctionDeclarationNode> node,
                 BinaryenModuleRef &module,

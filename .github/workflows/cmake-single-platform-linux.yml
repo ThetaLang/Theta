@@ -1,4 +1,4 @@
-name: CMake on a single platform
+name: CMake on a single platform on Linux
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -46,6 +46,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-
 
+    - name: Install libreadline-dev
+      run: sudo apt-get install -y libreadline-dev
+
     - name: Build project
       working-directory: ${{ github.workspace }}
       run: ./build.sh
@@ -57,7 +60,7 @@ jobs:
         path: ${{ github.workspace }}/build
 
   lexer-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -86,7 +89,7 @@ jobs:
       run: ./LexerTest
 
   parser-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -112,7 +115,7 @@ jobs:
       run: ./ParserTest
 
   typechecker-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -138,7 +141,7 @@ jobs:
       run: ./TypeCheckerTest
 
   codegen-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
