@@ -7,6 +7,6 @@ if [ ! -d "build" ]; then
 fi
 cd build
 clang++ --version
-CC=/usr/bin/clang CXX=/usr/bin/clang++ cmake ..
+cmake -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ ..
 make
 cd ..
