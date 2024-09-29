@@ -148,7 +148,8 @@ namespace Theta {
                     attemptLex(Lexemes::BRACKET_OPEN, Token::BRACKET_OPEN, token, currentChar, nextChar, source, i) ||
                     attemptLex(Lexemes::BRACKET_CLOSE, Token::BRACKET_CLOSE, token, currentChar, nextChar, source, i) ||
                     attemptLex(Lexemes::COMMA, Token::COMMA, token, currentChar, nextChar, source, i) ||
-                    attemptLex(Lexemes::COLON, Token::COLON, token, currentChar, nextChar, source, i)
+                    attemptLex(Lexemes::COLON, Token::COLON, token, currentChar, nextChar, source, i) ||
+                    attemptLex(Lexemes::TERNARY, Token::OPERATOR, token, currentChar, nextChar, source, i)
                 ) {
                     return token;
                 }

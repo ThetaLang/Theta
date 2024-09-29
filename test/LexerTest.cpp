@@ -445,4 +445,26 @@ TEST_CASE("Lexer") {
         verifyTokens(lexer.tokens, expectedTokens);
     }
 
+
+    SECTION("Can tokenize with ternary operator") {
+        string source = "x<String> = 1 == 1 ? 'YES' : 'NO'";
+        lexer.lex(source);
+
+        std::vector<std::pair<Token::Types, std::string>> expectedTokens = {
+            { Token::IDENTIFIER, "x" },
+            { Token::OPERATOR, Lexemes::LT },
+            { Token::IDENTIFIER, "String" },
+            { Token::OPERATOR, Lexemes::GT },
+            { Token::ASSIGNMENT, Lexemes::ASSIGNMENT },
+            { Token::NUMBER, "1" },
+            { Token::OPERATOR, Lexemes::EQUALITY },
+            { Token::NUMBER, "1" },
+            { Token::OPERATOR, Lexemes::TERNARY },
+            { Token::STRING, "'YES'" },
+            { Token::COLON, Lexemes::COLON },
+            { Token::STRING, "'NO'" },
+        };
+
+        verifyTokens(lexer.tokens, expectedTokens);
+    }
 }
