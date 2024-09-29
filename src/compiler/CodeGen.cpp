@@ -1,6 +1,5 @@
 #include <iostream>
 #include <libgen.h>
-#include <functional>
 #include <limits.h>
 #include <unistd.h>
 #include <iterator>

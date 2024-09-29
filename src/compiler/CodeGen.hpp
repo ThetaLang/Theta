@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/BinaryOperationNode.hpp"
 #include "../parser/ast/UnaryOperationNode.hpp"
