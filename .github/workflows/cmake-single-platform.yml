@@ -48,7 +48,7 @@ jobs:
 
     - name: Build project
       working-directory: ${{ github.workspace }}
-      run: ./build.sh
+      run: ./build_clang.sh
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
