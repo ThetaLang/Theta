@@ -29,6 +29,8 @@
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
+#pragma push_macro("RETURN")
+#undef RETURN
 
 #pragma push_macro("RETURN")
 #undef RETURN
