@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/BinaryOperationNode.hpp"
 #include "../parser/ast/UnaryOperationNode.hpp"
@@ -21,7 +22,8 @@
 #include <binaryen-c.h>
 #include <set>
 #include <unordered_map>
-#include <functional>
+#include <optional>
+
 using namespace std;
 
 namespace Theta {

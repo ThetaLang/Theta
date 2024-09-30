@@ -815,6 +815,9 @@ TEST_CASE("Parser") {
             parser.parse(lexer.tokens, source, "fakeFile.th", filesByCapsuleName)
         );
 
+        cout << "THE PARSED AST IS: " << endl;
+        cout << parsedAST->toJSON() << endl;
+
         REQUIRE(parsedAST->getNodeType() == ASTNode::SOURCE);
         REQUIRE(parsedAST->getLinks().size() == 0);
         REQUIRE(parsedAST->getValue()->getNodeType() == ASTNode::ASSIGNMENT);

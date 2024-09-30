@@ -32,6 +32,9 @@
 #pragma push_macro("RETURN")
 #undef RETURN
 
+#pragma push_macro("RETURN")
+#undef RETURN
+
 namespace Theta {
     BinaryenModuleRef CodeGen::generateWasmFromAST(shared_ptr<ASTNode> ast) {
         BinaryenModuleRef module = initializeWasmModule();        
@@ -93,7 +96,7 @@ namespace Theta {
             return generateAssignment(dynamic_pointer_cast<AssignmentNode>(node), module);
         } else if (node->getNodeType() == ASTNode::BLOCK) {
             return generateBlock(dynamic_pointer_cast<ASTNodeList>(node), module);
-        } else if (node->getNodeType() == ASTNode::RETURN) {
+        } else if (node->getNodeType() == Theta::ASTNode::RETURN) {
             return generateReturn(dynamic_pointer_cast<ReturnNode>(node), module); 
         } else if (node->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
             // The only time we should get here is if we have a function defined inside a function,
@@ -1407,4 +1410,5 @@ namespace Theta {
         return stream.str();
     }
 }
+
 #pragma pop_macro("RETURN")

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SymbolTable.hpp"
+#include <optional>
 #include <stack>
 
 using namespace std;
