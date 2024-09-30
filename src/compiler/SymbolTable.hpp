@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <map>
+#include <optional>
 using namespace std;
 
 namespace Theta {

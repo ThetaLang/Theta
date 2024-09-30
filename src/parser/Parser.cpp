@@ -338,12 +338,18 @@ namespace Theta {
             shared_ptr<ASTNode> parseControlFlow(shared_ptr<ASTNode> parent) {
                 if (match(Token::KEYWORD, Lexemes::IF)) {
                     shared_ptr<ControlFlowNode> cfNode = make_shared<ControlFlowNode>(parent);
+
+                    shared_ptr<ASTNode> cnd = parseExpression(cfNode);
+                    shared_ptr<ASTNode> expr = parseBlock(cfNode);
+
                     vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = {
-                        make_pair(parseExpression(cfNode), parseBlock(cfNode))
+                        make_pair(cnd, expr)
                     };
 
                     while (match(Token::KEYWORD, Lexemes::ELSE) && match(Token::KEYWORD, Lexemes::IF)) {
-                        conditionExpressionPairs.push_back(make_pair(parseExpression(cfNode), parseBlock(cfNode)));
+                        cnd = parseExpression(cfNode);
+                        expr = parseBlock(cfNode);
+                        conditionExpressionPairs.push_back(make_pair(cnd, expr));
                     }
 
                     // If we just matched an else but no if afterwards. This way it only matches one else block per control flow
