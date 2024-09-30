@@ -347,7 +347,9 @@ namespace Theta {
                     };
 
                     while (match(Token::KEYWORD, Lexemes::ELSE) && match(Token::KEYWORD, Lexemes::IF)) {
-                        conditionExpressionPairs.push_back(make_pair(parseExpression(cfNode), parseBlock(cfNode)));
+                        cnd = parseExpression(cfNode);
+                        expr = parseBlock(cfNode);
+                        conditionExpressionPairs.push_back(make_pair(cnd, expr));
                     }
 
                     // If we just matched an else but no if afterwards. This way it only matches one else block per control flow
