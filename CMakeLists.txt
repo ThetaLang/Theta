@@ -72,7 +72,7 @@ bash -c "DEPOT_TOOLS_UPDATE=0 gclient config https://chromium.googlesource.com/v
         bash ${CMAKE_SOURCE_DIR}/scripts/build_v8.sh
     BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
-    LOG_DOWNLOAD ON
+    #LOG_DOWNLOAD ON
     LOG_CONFIGURE ON
 )
 
