@@ -47,6 +47,7 @@ jobs:
       run: |
         cat $GITHUB_ENV
         ls -la ${{ github.workspace }}/depot_tools/fetch
+        echo $PATH
         which fetch
         ./build.sh
 
