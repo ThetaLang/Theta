@@ -24,14 +24,7 @@ jobs:
       run: |
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
         echo "export PATH=$PATH:${{ github.workspace }}/depot_tools" >> $GITHUB_ENV
-
-    - name: Cache depot_tools
-      uses: actions/cache@v3
-      with:
-        path: depot_tools
-        key: ${{ runner.os }}-depot_tools-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-depot_tools-
+        which fetch
 
     - name: Cache CMake build
       uses: actions/cache@v3
