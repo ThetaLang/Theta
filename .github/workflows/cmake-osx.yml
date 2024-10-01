@@ -13,8 +13,6 @@ env:
 jobs:
   build:
     runs-on: macos-latest
-    env:
-      PATH: ${{ github.workspace }}/depot_tools:$PATH
 
     steps:
     - uses: actions/checkout@v4
@@ -25,6 +23,7 @@ jobs:
     - name: Install depot_tools
       run: |
         git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        export PATH=$PATH:${{ github.workspace }}/depot_tools
 
     - name: Cache CMake build
       uses: actions/cache@v3
