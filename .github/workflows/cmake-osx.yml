@@ -46,7 +46,7 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: |
         cat $GITHUB_ENV
-        ls ${{ github.workspace }}/depot_tools
+        ls -la ${{ github.workspace }}/depot_tools/fetch
         ./build.sh
 
     - name: Upload build artifacts
