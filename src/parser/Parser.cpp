@@ -232,10 +232,10 @@ namespace Theta {
                         expr = make_shared<ASTNodeList>(func_def);
                     }
 
-                    shared_ptr<ASTNodeList> params = dynamic_pointer_cast<ASTNodeList>(expr); 
+                    shared_ptr<ASTNodeList> params = dynamic_pointer_cast<ASTNodeList>(expr);
                     for (auto param : params->getElements()) {
                         param->setParent(params);
-                    } 
+                    }
 
                     func_def->setParameters(params);
 
@@ -269,7 +269,7 @@ namespace Theta {
                     match(Token::IDENTIFIER);
 
                     shared_ptr<StructDeclarationNode> str = make_shared<StructDeclarationNode>(currentToken.getLexeme(), parent);
-            
+
                     match(Token::BRACE_OPEN);
 
                     str->setValue(parseDict(str));
@@ -399,7 +399,7 @@ namespace Theta {
 
                     expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
                     left->setParent(expr);
-                
+
                     expr->setLeft(left);
                     expr->setRight(parseComparison(expr));
                 }
@@ -607,7 +607,7 @@ namespace Theta {
 
                     expr = make_shared<TupleNode>(parent);
                     left->setParent(expr);
-                
+
                     expr->setLeft(left);
                     expr->setRight(parseExpression(expr));
                 } else if (expr == nullptr) {
@@ -708,10 +708,8 @@ namespace Theta {
 
                 shared_ptr<ASTNode> ident = make_shared<IdentifierNode>(currentToken.getLexeme(), parent);
 
-                if (match(Token::OPERATOR, Lexemes::LT)) {
+                if (match(Token::COLON)) {
                     ident->setValue(parseType(ident));
-
-                    match(Token::OPERATOR, Lexemes::GT);
                 }
 
                 return ident;

@@ -79,7 +79,7 @@ capsule DataStructures {
 ### Prerequisites
 - **C++ Compiler**: Make sure you have a compiler that supports C++17.
 
-1. **Clone the Repository**: 
+1. **Clone the Repository**:
   ```sh
   git clone https://github.com/alexdovzhanyn/ThetaLang.git
   cd ThetaLang
