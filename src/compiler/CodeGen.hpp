@@ -146,7 +146,5 @@ namespace Theta {
             int getByteSizeForType(BinaryenType type);
 
             BinaryenModuleRef importCoreLangWasm();
-
-            string resolveAbsolutePath(string relativePath);
     };
 }

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
+#include <libgen.h>
 #include <binaryen-c.h>
 #include "../parser/ast/ASTNode.hpp"
 #include "../parser/ast/LinkNode.hpp"
@@ -139,7 +140,11 @@ namespace Theta {
              */
             static shared_ptr<TypeDeclarationNode> deepCopyTypeDeclaration(shared_ptr<TypeDeclarationNode> node, shared_ptr<ASTNode> parent);
 
+            static vector<char> writeModuleToBuffer(BinaryenModuleRef &module);
+
             shared_ptr<map<string, string>> filesByCapsuleName;
+
+            static string resolveAbsolutePath(string relativePath);
         private:
             /**
              * @brief Private constructor for Compiler. Initializes the compiler and discovers all capsules in the source files.

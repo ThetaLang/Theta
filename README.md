@@ -88,6 +88,11 @@ capsule DataStructures {
   ```sh
   git submodule update --init --recursive
   ```
+3. **Install depot_tools**
+  ```sh
+  git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+  export PATH="$PATH:/path/to/depot_tools"
+  ```
 3. **Install Wasmer**
   ```sh
     curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh

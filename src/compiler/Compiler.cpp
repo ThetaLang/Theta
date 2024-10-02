@@ -2,6 +2,13 @@
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
 #include "compiler/TypeChecker.hpp"
+#include <limits.h>
+#include <cstring>
+#include <unistd.h>
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
 using namespace std;
 
@@ -185,19 +192,32 @@ namespace Theta {
         return true;
     }
 
-    void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {
-        // TODO: This isnt the right way to do this. This will only allow 4k to be written.
-        // Figure out a better way to decide on size
-        vector<char> buffer(4096);
+    vector<char> Compiler::writeModuleToBuffer(BinaryenModuleRef &module) {
+        vector<char> buffer(1024); // Start with 1KB buffer
 
         size_t written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+
+        // If the written size is equal to the buffer size, resize the buffer and try again
+        while (written == buffer.size()) {
+            buffer.resize(buffer.size() * 2);
+            
+            written = BinaryenModuleWrite(module, buffer.data(), buffer.size());
+        }
+
+        buffer.resize(written);
+
+        return buffer;
+    }
+
+    void Compiler::writeModuleToFile(BinaryenModuleRef &module, string fileName) {
+        vector<char> buffer = writeModuleToBuffer(module);
 
         ofstream outFile(fileName, std::ios::binary);
         if (!outFile) {
             throw std::runtime_error("Failed to open file for writing: " + fileName);
         }
 
-        outFile.write(buffer.data(), written);
+        outFile.write(buffer.data(), buffer.size());
         outFile.close();
 
         if (!outFile.good()) {
@@ -325,5 +345,42 @@ namespace Theta {
         }
 
         return copy;
+    }
+
+    string Compiler::resolveAbsolutePath(string relativePath) {
+        char path[PATH_MAX];
+
+        #ifdef __APPLE__
+            uint32_t size = sizeof(path);
+            if (_NSGetExecutablePath(path, &size) != 0) {
+                cerr << "Buffer too small; should be resized to " << size << " bytes\n" << endl;
+                return "";
+            }
+        #else
+            ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
+            if (count <= 0) {
+                cerr << "Failed to read the path of the executable." << endl;
+                return "";
+            }
+            path[count] = '\0'; // Ensure null termination
+        #endif
+
+        char realPath[PATH_MAX];
+        if (realpath(path, realPath) == NULL) {
+            cerr << "Error resolving symlink for " << path << endl;
+            return "";
+        }
+            
+        string exePath = string(realPath);
+        if (exePath.empty()) return "";
+
+        char *pathCStr = new char[exePath.size() + 1];
+        strcpy(pathCStr, exePath.c_str());
+
+        string dirPath = dirname(pathCStr); // Use dirname to get the directory part
+  
+        delete[] pathCStr;
+
+        return dirPath + "/" + relativePath;
     }
 }

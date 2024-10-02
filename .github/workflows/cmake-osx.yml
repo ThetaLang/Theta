@@ -1,10 +1,10 @@
-name: CMake on Linux
+name: CMake on OSX 
 
 on:
   push:
-    branches: ["master"]
+    branches: [ "master" ]
   pull_request:
-    branches: ["master"]
+    branches: [ "master" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -12,7 +12,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -20,14 +20,10 @@ jobs:
     - name: Initialize submodules
       run: git submodule update --init --recursive
 
-    - name: Install Wasmer
-      run: curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
-
-    - name: Upload Wasmer as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: wasmer
-        path: ${{ github.workspace }}/lib/wasmer
+    - name: Install depot_tools
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        echo "${{ github.workspace }}/depot_tools" >> $GITHUB_PATH
 
     - name: Cache CMake build
       uses: actions/cache@v3
@@ -46,9 +42,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-
 
-    - name: Install libreadline-dev
-      run: sudo apt-get install -y libreadline-dev
-
     - name: Build project
       working-directory: ${{ github.workspace }}
       run: ./build.sh
@@ -60,33 +53,7 @@ jobs:
         path: ${{ github.workspace }}/build
 
   lexer-test:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build
-          path: ${{ github.workspace }}/build
-
-      - name: Download Wasmer artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: wasmer
-          path: ${{ github.workspace }}/lib/wasmer
-
-      - name: Make LexerTest Executable
-        run: chmod +x ${{ github.workspace }}/build/LexerTest
-
-      - name: Run Lexer Test
-        working-directory: ${{ github.workspace }}/build
-        run: ./LexerTest
-
-  parser-test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: build
 
     steps:
@@ -98,11 +65,25 @@ jobs:
         name: build
         path: ${{ github.workspace }}/build
 
-    - name: Download Wasmer artifacts
+    - name: Make LexerTest Executable
+      run: chmod +x ${{ github.workspace }}/build/LexerTest
+
+    - name: Run Lexer Test
+      working-directory: ${{ github.workspace }}/build
+      run: ./LexerTest
+
+  parser-test:
+    runs-on: macos-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: wasmer
-        path: ${{ github.workspace }}/lib/wasmer
+        name: build
+        path: ${{ github.workspace }}/build
 
     - name: Make ParserTest Executable
       run: chmod +x ${{ github.workspace }}/build/ParserTest
@@ -112,7 +93,7 @@ jobs:
       run: ./ParserTest
 
   typechecker-test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: build
 
     steps:
@@ -123,12 +104,6 @@ jobs:
       with:
         name: build
         path: ${{ github.workspace }}/build
-
-    - name: Download Wasmer artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: wasmer
-        path: ${{ github.workspace }}/lib/wasmer
 
     - name: Make TypeCheckerTest Executable
       run: chmod +x ${{ github.workspace }}/build/TypeCheckerTest
@@ -138,22 +113,17 @@ jobs:
       run: ./TypeCheckerTest
 
   codegen-test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: build
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
         name: build
         path: ${{ github.workspace }}/build
-
-    - name: Download Wasmer artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: wasmer
-        path: ${{ github.workspace }}/lib/wasmer
 
     - name: Make CodegenTest Executable
       run: chmod +x ${{ github.workspace }}/build/CodegenTest
@@ -161,4 +131,3 @@ jobs:
     - name: Run Codegen Test
       working-directory: ${{ github.workspace }}/build
       run: ./CodegenTest
-
