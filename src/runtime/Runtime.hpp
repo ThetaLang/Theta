@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "runtime/ExecutionContext.hpp"
 #include <iostream>
+#include <v8.h>
 
 using namespace std;
 
@@ -68,6 +69,7 @@ namespace Theta {
   
   private:
     Runtime() {
+      v8::V8::SetFlagsFromString("--experimental-wasm-stringref");
       engine = wasm::Engine::make();
       store = wasm::Store::make(engine.get());
     } 

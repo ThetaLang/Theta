@@ -67,13 +67,13 @@ namespace Theta {
             MEMORY_NAME.c_str()
         );
         
-        // BinaryenAddTable(
-        //     module,
-        //     STRINGREF_TABLE.c_str(),
-        //     1000,
-        //     100000000,
-        //     BinaryenTypeStringref()
-        // );
+        BinaryenAddTable(
+            module,
+            STRINGREF_TABLE.c_str(),
+            1000,
+            100000000,
+            BinaryenTypeStringref()
+        );
     
         StandardLibrary::registerFunctions(module);
 
