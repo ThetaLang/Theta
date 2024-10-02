@@ -2,6 +2,8 @@
 #include "../lexer/Lexer.cpp"
 #include "../parser/Parser.cpp"
 #include "compiler/TypeChecker.hpp"
+#include <limits.h>
+#include <unistd.h>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
