@@ -373,9 +373,12 @@ namespace Theta {
         string exePath = string(realPath);
         if (exePath.empty()) return "";
 
-        char *pathCStr = strdup(exePath.c_str());
+        char *pathCStr = new char[exePath.size() + 1];
+        strcpy(pathCStr, exePath.c_str());
+
         string dirPath = dirname(pathCStr); // Use dirname to get the directory part
-        free(pathCStr); // Free the duplicated string
+  
+        delete[] pathCStr;
 
         return dirPath + "/" + relativePath;
     }
