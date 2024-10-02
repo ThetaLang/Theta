@@ -53,6 +53,7 @@ namespace Theta {
         const string GT = ">";
         const string LTEQ = "<=";
         const string GTEQ = ">=";
+        const string TERNARY = "?";
 
         // Function Declaration
         const string FUNC_DECLARATION = "->";
