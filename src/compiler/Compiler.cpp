@@ -3,6 +3,7 @@
 #include "../parser/Parser.cpp"
 #include "compiler/TypeChecker.hpp"
 #include <limits.h>
+#include <cstring>
 #include <unistd.h>
 
 #ifdef __APPLE__
