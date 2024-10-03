@@ -40,9 +40,9 @@ namespace Theta {
             /**
              * @brief Compiles the Theta source code starting from the specified entry point.
              * @param source The source code to compile.
-             * @return A shared pointer to the root node of the constructed AST
+             * @return A buffer containing the compiled WASM module
              */
-            shared_ptr<Theta::ASTNode> compileDirect(string source);
+            vector<char> compileDirect(string source);
 
             /**
              * @brief Builds the Abstract Syntax Tree (AST) for the Theta source code starting from the specified file.
