@@ -24,7 +24,7 @@
 #include "parser/ast/FunctionDeclarationNode.hpp"
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
-#include "cli/CLI.cpp"
+#include "cli/CLI.hpp"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>

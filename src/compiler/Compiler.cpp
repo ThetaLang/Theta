@@ -49,10 +49,10 @@ namespace Theta {
         writeModuleToFile(module, outputFile);
     }
 
-    shared_ptr<ASTNode> Compiler::compileDirect(string source) {
+    vector<char> Compiler::compileDirect(string source) {
         shared_ptr<ASTNode> ast = buildAST(source, "ith");
 
-        if (!optimizeAST(ast)) return nullptr;
+        if (!optimizeAST(ast)) return {};
         
         outputAST(ast, "ith");
 
@@ -63,17 +63,12 @@ namespace Theta {
             encounteredExceptions[i]->display();
         }
 
-        if (!isTypeValid) return ast;
+        if (!isTypeValid) return {};
 
         CodeGen codeGen;
         BinaryenModuleRef module = codeGen.generateWasmFromAST(ast);
 
-        cout << "-> " + ast->toJSON() << endl;
-        cout << "-> ";
-        BinaryenModulePrint(module);
-        cout << endl;
-
-        return ast;
+        return writeModuleToBuffer(module);
     }
 
     shared_ptr<ASTNode> Compiler::buildAST(string file) {
