@@ -1,5 +1,4 @@
 #include "REPL.hpp"
-#include <iostream>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "compiler/Compiler.hpp"
