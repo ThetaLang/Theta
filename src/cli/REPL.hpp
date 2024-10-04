@@ -13,7 +13,19 @@ namespace Theta {
 
     void readInput();
     
-    static int prefillIndentation(const char *text, int count);
+    #ifdef __APPLE__
+    static int preInputHook(const char *text, int count) {
+      prefillIndentation();
+      return 0;
+    }
+    #else
+    static int preInputHook() {
+      prefillIndentation();
+      return 0;
+    }
+    #endif
+
+    static void prefillIndentation();
 
   private:
     static stack<char> delimeterStack;

@@ -27,7 +27,7 @@ void REPL::readInput() {
   char* input;
   string accumulatedInput;
 
-  rl_pre_input_hook = prefillIndentation;
+  rl_pre_input_hook = preInputHook;
 
   while ((input = readline(getPrompt().c_str())) != nullptr) {
     accumulatedInput += string(input);
@@ -77,14 +77,12 @@ void REPL::execute(string source) {
   Compiler::getInstance().clearExceptions();
 }
 
-int REPL::prefillIndentation(const char *text, int count) {
+void REPL::prefillIndentation() {
   string indents(delimeterStack.size() * 2, ' ');
 
   rl_insert_text(indents.c_str());
   rl_point = rl_end;
   rl_redisplay();
- 
-  return 0;
 }
 
 string REPL::getPrompt() { 
