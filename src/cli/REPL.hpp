@@ -1,4 +1,7 @@
 #pragma once
+#include <stack>
+
+using namespace std;
 
 namespace Theta {
   class REPL {
@@ -7,5 +10,17 @@ namespace Theta {
     ~REPL();
 
     void readInput();
+    
+    static int prefillIndentation(const char *text, int count);
+
+  private:
+    static stack<char> delimeterStack;
+    static int lineNumber;
+
+    bool isMatchingDelimeter(char &c, stack<char> delimeterStack);
+
+    string getPrompt();
+
+    void execute(string source);
   };
 }
