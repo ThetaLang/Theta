@@ -5,13 +5,13 @@
 using namespace std;
 
 namespace Theta {
-    class ParseError : public exception {
-        public:
-            ParseError(string typ) : errorParseType(typ) {}
+  class ParseError : public exception {
+  public:
+    ParseError(string typ) : errorParseType(typ) {}
 
-            string getErrorParseType() { return errorParseType; }
+    string getErrorParseType() { return errorParseType; }
 
-        private:
-            string errorParseType;
-    };
+  private:
+    string errorParseType;
+  };
 }

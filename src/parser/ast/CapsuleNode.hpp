@@ -8,27 +8,26 @@
 using namespace std;
 
 namespace Theta {
-    class CapsuleNode : public ASTNode {
-        public:
-            string name;
+  class CapsuleNode : public ASTNode {
+  public:
+    string name;
 
-            CapsuleNode(string n, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::CAPSULE, parent), name(n) {};
+    CapsuleNode(string n, shared_ptr<ASTNode> parent) : ASTNode(ASTNode::CAPSULE, parent), name(n) {};
 
-            string getName() { return name; }
+    string getName() { return name; }
 
-            bool hasOwnScope() override { return true; }
+    bool hasOwnScope() override { return true; }
 
-            string toJSON() const override {
-                ostringstream oss;
+    string toJSON() const override {
+      ostringstream oss;
 
-                oss << "{";
-                oss << "\"type\": \"" << getNodeTypePretty() << "\"";
-                oss << ", \"name\": \"" << name << "\"";
-                oss << ", \"value\": " << (value ? value->toJSON() : "null");
-                oss << "}";
+      oss << "{";
+      oss << "\"type\": \"" << getNodeTypePretty() << "\"";
+      oss << ", \"name\": \"" << name << "\"";
+      oss << ", \"value\": " << (value ? value->toJSON() : "null");
+      oss << "}";
 
-                return oss.str();
-            }
-    };
-
+      return oss.str();
+    }
+  };
 }

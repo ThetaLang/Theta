@@ -8,25 +8,24 @@
 using namespace std;
 
 namespace Theta {
-    class LiteralNode : public ASTNode {
-        public:
-            string literalValue;
+  class LiteralNode : public ASTNode {
+  public:
+    string literalValue;
 
-            LiteralNode(ASTNode::Types typ, string val, shared_ptr<ASTNode> parent) : ASTNode(typ, parent), literalValue(val) {};
+    LiteralNode(ASTNode::Types typ, string val, shared_ptr<ASTNode> parent) : ASTNode(typ, parent), literalValue(val) {};
 
-            string getLiteralValue() { return literalValue; }
-            void setLiteralValue(string val) { literalValue = val; }
+    string getLiteralValue() { return literalValue; }
+    void setLiteralValue(string val) { literalValue = val; }
 
-            string toJSON() const override {
-                ostringstream oss;
+    string toJSON() const override {
+      ostringstream oss;
 
-                oss << "{";
-                oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
-                oss << "\"value\": \"" << literalValue << "\" ";
-                oss << "}";
+      oss << "{";
+      oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
+      oss << "\"value\": \"" << literalValue << "\" ";
+      oss << "}";
 
-                return oss.str();
-            }
-    };
-
+      return oss.str();
+    }
+  };
 }

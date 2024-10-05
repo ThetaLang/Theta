@@ -9,36 +9,36 @@
 using namespace std;
 
 namespace Theta {
-    class EnumNode : public ASTNodeList {
-        public:
-            shared_ptr<ASTNode> identifier;
+  class EnumNode : public ASTNodeList {
+  public:
+    shared_ptr<ASTNode> identifier;
 
-            EnumNode(shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::ENUM) {};
+    EnumNode(shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::ENUM) {};
 
-            void setIdentifier(shared_ptr<ASTNode> ident) { identifier = ident; }
+    void setIdentifier(shared_ptr<ASTNode> ident) { identifier = ident; }
 
-            shared_ptr<ASTNode> getIdentifier() { return identifier; }
+    shared_ptr<ASTNode> getIdentifier() { return identifier; }
 
-            string toJSON() const override {
-                ostringstream oss;
+    string toJSON() const override {
+      ostringstream oss;
 
-                oss << "{";
-                oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
-                oss << "\"identifier\": " << (identifier ? identifier->toJSON() : "null") << ", ";
-                oss << "\"elements\": [";
+      oss << "{";
+      oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
+      oss << "\"identifier\": " << (identifier ? identifier->toJSON() : "null") << ", ";
+      oss << "\"elements\": [";
 
-                for (int i = 0; i < elements.size(); i++) {
-                    if (i > 0) {
-                        oss << ", ";
-                    }
+      for (int i = 0; i < elements.size(); i++) {
+        if (i > 0) {
+          oss << ", ";
+        }
 
-                    oss << (elements[i] ? elements[i]->toJSON() : "null");
-                }
+        oss << (elements[i] ? elements[i]->toJSON() : "null");
+      }
 
-                oss << "] ";
-                oss << "}";
+      oss << "] ";
+      oss << "}";
 
-                return oss.str();
-            }
-    };
+      return oss.str();
+    }
+  };
 }

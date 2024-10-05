@@ -8,78 +8,78 @@
 using namespace std;
 
 namespace Theta {
-    class WasmClosure {
-    public:
-        WasmClosure(Pointer<PointerType::Function> ptr, int initialArity) : fnPointer(ptr), arity(initialArity) {
-            argPointers.resize(arity);
+  class WasmClosure {
+  public:
+    WasmClosure(Pointer<PointerType::Function> ptr, int initialArity) : fnPointer(ptr), arity(initialArity) {
+      argPointers.resize(arity);
+    }
+
+    WasmClosure(
+      Pointer<PointerType::Function> ptr,
+      int initialArity,
+      vector<Pointer<PointerType::Data>> args
+    ) : fnPointer(ptr), arity(initialArity) {
+      argPointers.resize(arity);
+
+      for (int i = 0; i < args.size(); i++) {
+        if (args.at(i).getAddress() != -1) {
+          argPointers[arity - 1] = args.at(i);
+
+          arity--;
         }
+      }
+    }
 
-        WasmClosure(
-            Pointer<PointerType::Function> ptr,
-            int initialArity,
-            vector<Pointer<PointerType::Data>> args
-        ) : fnPointer(ptr), arity(initialArity) {
-            argPointers.resize(arity);
+    void setAddress(int closureMemAddress) {
+      pointer = Pointer<PointerType::Closure>(closureMemAddress);
+    }
 
-            for (int i = 0; i < args.size(); i++) {
-                if (args.at(i).getAddress() != -1) {
-                    argPointers[arity - 1] = args.at(i);
+    Pointer<PointerType::Closure> getPointer() { return pointer; }
 
-                    arity--;
-                }
-            }
-        }
+    Pointer<PointerType::Function> getFunctionPointer() { return fnPointer; }
 
-        void setAddress(int closureMemAddress) {
-            pointer = Pointer<PointerType::Closure>(closureMemAddress);
-        }
+    int getArity() { return arity; }
 
-        Pointer<PointerType::Closure> getPointer() { return pointer; }
+    vector<Pointer<PointerType::Data>> getArgPointers() { return argPointers; }
 
-        Pointer<PointerType::Function> getFunctionPointer() { return fnPointer; }
+    void addArgs(vector<Pointer<PointerType::Data>> argPtrs) {
+      for (auto argPtr : argPtrs) {
+        argPointers[arity - 1] = argPtr;
+        arity--;
+      }
+    }
 
-        int getArity() { return arity; }
+    string toJSON() {
+      ostringstream oss;
 
-        vector<Pointer<PointerType::Data>> getArgPointers() { return argPointers; }
+      oss << "{";
+      oss << "\"ptr\": \"" << to_string(fnPointer.getAddress()) << "\"";
+      oss << ", \"arity\": " << to_string(arity);
+      oss << ", \"argPointers\": [";
 
-        void addArgs(vector<Pointer<PointerType::Data>> argPtrs) {
-            for (auto argPtr : argPtrs) {
-                argPointers[arity - 1] = argPtr;
-                arity--;
-            }
-        }
+      for (int i = 0; i < argPointers.size(); i++) {
+        if (i > 0) oss << ", ";
 
-        string toJSON() {
-            ostringstream oss;
+        oss << to_string(argPointers[i].getAddress());
+      }
 
-            oss << "{";
-            oss << "\"ptr\": \"" << to_string(fnPointer.getAddress()) << "\"";
-            oss << ", \"arity\": " << to_string(arity);
-            oss << ", \"argPointers\": [";
+      oss << "] ";
+      oss << "}";
 
-            for (int i = 0; i < argPointers.size(); i++) {
-                if (i > 0) oss << ", ";
+      return oss.str();
+    }
 
-                oss << to_string(argPointers[i].getAddress());
-            }
+    static WasmClosure clone(WasmClosure toClone) {
+      return WasmClosure(
+        toClone.getFunctionPointer(),
+        toClone.arity
+      );
+    }
 
-            oss << "] ";
-            oss << "}";
-
-            return oss.str();
-        }
-
-        static WasmClosure clone(WasmClosure toClone) {
-            return WasmClosure(
-                toClone.getFunctionPointer(),
-                toClone.arity
-            );
-        }
-
-    private:
-        Pointer<PointerType::Closure> pointer;
-        Pointer<PointerType::Function> fnPointer;
-        int arity;
-        vector<Pointer<PointerType::Data>> argPointers;
-    };
+  private:
+    Pointer<PointerType::Closure> pointer;
+    Pointer<PointerType::Function> fnPointer;
+    int arity;
+    vector<Pointer<PointerType::Data>> argPointers;
+  };
 }

@@ -8,19 +8,19 @@
 using namespace std;
 
 namespace Theta {
-    class ReturnNode : public ASTNode {
-        public:
-            ReturnNode(shared_ptr<ASTNode> parent) : ASTNode(ASTNode::RETURN, parent) {};
+  class ReturnNode : public ASTNode {
+  public:
+    ReturnNode(shared_ptr<ASTNode> parent) : ASTNode(ASTNode::RETURN, parent) {};
 
-            string toJSON() const override {
-                ostringstream oss;
+    string toJSON() const override {
+      ostringstream oss;
 
-                oss << "{";
-                oss << "\"type\": \"" << getNodeTypePretty() << "\"";
-                oss << ", \"value\": " << (value ? value->toJSON() : "null");
-                oss << "}";
+      oss << "{";
+      oss << "\"type\": \"" << getNodeTypePretty() << "\"";
+      oss << ", \"value\": " << (value ? value->toJSON() : "null");
+      oss << "}";
 
-                return oss.str();
-            }
-    };
+      return oss.str();
+    }
+  };
 }

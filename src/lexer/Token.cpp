@@ -4,8 +4,8 @@
 Theta::Token::Token() {}
 
 Theta::Token::Token(Token::Types tokenType, string tokenLexeme) {
-    lexeme = tokenLexeme;
-    type = tokenType;
+  lexeme = tokenLexeme;
+  type = tokenType;
 }
 
 Theta::Token::Types Theta::Token::getType() { return type; }
@@ -29,13 +29,13 @@ void Theta::Token::setStartLine(int start) { line = start; }
 void Theta::Token::setStartColumn(int start) { column = start; }
 
 string Theta::Token::toJSON() {
-    ostringstream oss;
+  ostringstream oss;
 
-    oss << "{";
-    oss << " \"type\": \"" << tokenTypeToString(type) << "\"";
-    oss << ", \"lexeme\": \"" << lexeme << "\"";
-    oss << ", \"location\": \"" << getStartLocationString() << "\"";
-    oss << " }";
+  oss << "{";
+  oss << " \"type\": \"" << tokenTypeToString(type) << "\"";
+  oss << ", \"lexeme\": \"" << lexeme << "\"";
+  oss << ", \"location\": \"" << getStartLocationString() << "\"";
+  oss << " }";
 
-    return oss.str();
+  return oss.str();
 }

@@ -9,37 +9,37 @@
 using namespace std;
 
 namespace Theta {
-    class ASTNodeList : public ASTNode {
-        public:
-            vector<shared_ptr<ASTNode>> elements;
+  class ASTNodeList : public ASTNode {
+  public:
+    vector<shared_ptr<ASTNode>> elements;
 
-            ASTNodeList(shared_ptr<ASTNode> parent, ASTNode::Types type = ASTNode::AST_NODE_LIST) : ASTNode(type, parent) {};
+    ASTNodeList(shared_ptr<ASTNode> parent, ASTNode::Types type = ASTNode::AST_NODE_LIST) : ASTNode(type, parent) {};
 
-            void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
+    void setElements(vector<shared_ptr<ASTNode>> el) { elements = el; }
 
-            vector<shared_ptr<ASTNode>>& getElements() { return elements; }
+    vector<shared_ptr<ASTNode>>& getElements() { return elements; }
 
-            bool hasMany() override { return true; }
+    bool hasMany() override { return true; }
 
-            string toJSON() const override {
-                ostringstream oss;
+    string toJSON() const override {
+      ostringstream oss;
 
-                oss << "{";
-                oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
-                oss << "\"elements\": [";
+      oss << "{";
+      oss << "\"type\": \"" << getNodeTypePretty() << "\", ";
+      oss << "\"elements\": [";
 
-                for (int i = 0; i < elements.size(); i++) {
-                    if (i > 0) {
-                        oss << ", ";
-                    }
+      for (int i = 0; i < elements.size(); i++) {
+          if (i > 0) {
+              oss << ", ";
+          }
 
-                    oss << (elements[i] ? elements[i]->toJSON() : "null");
-                }
+          oss << (elements[i] ? elements[i]->toJSON() : "null");
+      }
 
-                oss << "] ";
-                oss << "}";
+      oss << "] ";
+      oss << "}";
 
-                return oss.str();
-            }
-    };
+      return oss.str();
+    }
+  };
 }

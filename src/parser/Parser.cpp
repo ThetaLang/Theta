@@ -37,781 +37,780 @@
 using namespace std;
 
 namespace Theta {
-    class Parser {
-        public:
-            shared_ptr<ASTNode> parse(deque<Token> &tokens, string &src, string file, shared_ptr<map<string, string>> filesByCapsuleName) {
-                source = src;
-                fileName = file;
-                remainingTokens = &tokens;
-                filesByCapsule = filesByCapsuleName;
-
-                shared_ptr<ASTNode> parsedSource = parseSource();
-
-                // Throw parse errors for any remaining tokens after we've finished our parser run
-                for (int i = 0; i < tokens.size(); i++) {
-                    Theta::Compiler::getInstance().addException(
-                        make_shared<Theta::CompilationError>(
-                            "ParseError",
-                            "Unparsed token " + tokens[i].getLexeme(),
-                            tokens[i],
-                            source,
-                            fileName
-                        )
-                    );
-                }
-
-                return parsedSource;
-            }
-
-        private:
-            string source;
-            string fileName;
-            deque<Token> *remainingTokens;
-
-            shared_ptr<map<string, string>> filesByCapsule;
-            Token currentToken;
-
-            shared_ptr<ASTNode> parseSource() {
-                vector<shared_ptr<ASTNode>> links;
-                shared_ptr<SourceNode> sourceNode = make_shared<SourceNode>();
-
-                while (match(Token::KEYWORD, Lexemes::LINK)) {
-                    links.push_back(parseLink(sourceNode));
-                }
-
-                sourceNode->setLinks(links);
-                sourceNode->setValue(parseCapsule(sourceNode));
+  class Parser {
+  public:
+    shared_ptr<ASTNode> parse(deque<Token> &tokens, string &src, string file, shared_ptr<map<string, string>> filesByCapsuleName) {
+      source = src;
+      fileName = file;
+      remainingTokens = &tokens;
+      filesByCapsule = filesByCapsuleName;
+
+      shared_ptr<ASTNode> parsedSource = parseSource();
+
+      // Throw parse errors for any remaining tokens after we've finished our parser run
+      for (int i = 0; i < tokens.size(); i++) {
+        Theta::Compiler::getInstance().addException(
+          make_shared<Theta::CompilationError>(
+            "ParseError",
+            "Unparsed token " + tokens[i].getLexeme(),
+            tokens[i],
+            source,
+            fileName
+          )
+        );
+      }
+
+      return parsedSource;
+    }
+
+  private:
+    string source;
+    string fileName;
+    deque<Token> *remainingTokens;
+
+    shared_ptr<map<string, string>> filesByCapsule;
+    Token currentToken;
+
+    shared_ptr<ASTNode> parseSource() {
+      vector<shared_ptr<ASTNode>> links;
+      shared_ptr<SourceNode> sourceNode = make_shared<SourceNode>();
+
+      while (match(Token::KEYWORD, Lexemes::LINK)) {
+        links.push_back(parseLink(sourceNode));
+      }
+
+      sourceNode->setLinks(links);
+      sourceNode->setValue(parseCapsule(sourceNode));
 
-                return sourceNode;
-            }
+      return sourceNode;
+    }
 
-            shared_ptr<ASTNode> parseLink(shared_ptr<ASTNode> parent) {
-                match(Token::IDENTIFIER);
-                shared_ptr<LinkNode> linkNode = Theta::Compiler::getInstance().getIfExistsParsedLinkAST(currentToken.getLexeme());
+    shared_ptr<ASTNode> parseLink(shared_ptr<ASTNode> parent) {
+      match(Token::IDENTIFIER);
+      shared_ptr<LinkNode> linkNode = Theta::Compiler::getInstance().getIfExistsParsedLinkAST(currentToken.getLexeme());
 
-                if (linkNode) return linkNode;
+      if (linkNode) return linkNode;
 
-                linkNode = make_shared<LinkNode>(currentToken.getLexeme(), parent);
+      linkNode = make_shared<LinkNode>(currentToken.getLexeme(), parent);
 
-                auto fileContainingLinkedCapsule = filesByCapsule->find(currentToken.getLexeme());
+      auto fileContainingLinkedCapsule = filesByCapsule->find(currentToken.getLexeme());
 
-                if (fileContainingLinkedCapsule == filesByCapsule->end()) {
-                    Theta::Compiler::getInstance().addException(
-                        make_shared<Theta::CompilationError>(
-                            "LinkageError",
-                            "Could not find capsule " + currentToken.getLexeme() + " referenced",
-                            currentToken,
-                            source,
-                            fileName
-                        )
-                    );
-                } else {
-                    shared_ptr<ASTNode> linkedAST = Theta::Compiler::getInstance().buildAST(fileContainingLinkedCapsule->second);
+      if (fileContainingLinkedCapsule == filesByCapsule->end()) {
+        Theta::Compiler::getInstance().addException(
+          make_shared<Theta::CompilationError>(
+            "LinkageError",
+            "Could not find capsule " + currentToken.getLexeme() + " referenced",
+            currentToken,
+            source,
+            fileName
+          )
+        );
+      } else {
+        shared_ptr<ASTNode> linkedAST = Theta::Compiler::getInstance().buildAST(fileContainingLinkedCapsule->second);
 
-                    linkNode->setValue(linkedAST);
-                }
+        linkNode->setValue(linkedAST);
+      }
 
-                Theta::Compiler::getInstance().addParsedLinkAST(currentToken.getLexeme(), linkNode);
+      Theta::Compiler::getInstance().addParsedLinkAST(currentToken.getLexeme(), linkNode);
 
-                return linkNode;
-            }
+      return linkNode;
+    }
 
-            shared_ptr<ASTNode> parseCapsule(shared_ptr<ASTNode> parent) {
-                if (match(Token::KEYWORD, Lexemes::CAPSULE)) {
-                    match(Token::IDENTIFIER);
+    shared_ptr<ASTNode> parseCapsule(shared_ptr<ASTNode> parent) {
+      if (match(Token::KEYWORD, Lexemes::CAPSULE)) {
+        match(Token::IDENTIFIER);
 
-                    shared_ptr<ASTNode> capsule = make_shared<CapsuleNode>(currentToken.getLexeme(), parent);
-                    capsule->setValue(parseBlock(capsule));
+        shared_ptr<ASTNode> capsule = make_shared<CapsuleNode>(currentToken.getLexeme(), parent);
+        capsule->setValue(parseBlock(capsule));
 
-                    return capsule;
-                }
+        return capsule;
+      }
 
-                return parseAssignment(parent);
-            }
+      return parseAssignment(parent);
+    }
 
-            shared_ptr<ASTNode> parseReturn(shared_ptr<ASTNode> parent) {
-                if (match(Token::KEYWORD, Lexemes::RETURN)) {
-                    shared_ptr<ASTNode> ret = make_shared<ReturnNode>(parent);
-                    ret->setValue(parseAssignment(ret));
+    shared_ptr<ASTNode> parseReturn(shared_ptr<ASTNode> parent) {
+      if (match(Token::KEYWORD, Lexemes::RETURN)) {
+        shared_ptr<ASTNode> ret = make_shared<ReturnNode>(parent);
+        ret->setValue(parseAssignment(ret));
 
-                    return ret;
-                }
+        return ret;
+      }
 
-                return parseStructDefinition(parent);
-            }
+      return parseStructDefinition(parent);
+    }
 
-            shared_ptr<ASTNode> parseStructDefinition(shared_ptr<ASTNode> parent) {
-                if (match(Token::KEYWORD, Lexemes::STRUCT)) {
-                    match(Token::IDENTIFIER);
+    shared_ptr<ASTNode> parseStructDefinition(shared_ptr<ASTNode> parent) {
+      if (match(Token::KEYWORD, Lexemes::STRUCT)) {
+        match(Token::IDENTIFIER);
 
-                    shared_ptr<StructDefinitionNode> str = make_shared<StructDefinitionNode>(currentToken.getLexeme(), parent);
+        shared_ptr<StructDefinitionNode> str = make_shared<StructDefinitionNode>(currentToken.getLexeme(), parent);
 
-                    if (!match(Token::BRACE_OPEN)) {
-                        Theta::Compiler::getInstance().addException(
-                            make_shared<Theta::CompilationError>(
-                                "SyntaxError",
-                                "Expected open brace during struct definition",
-                                currentToken,
-                                source,
-                                fileName
-                            )
-                        );
-                    }
+        if (!match(Token::BRACE_OPEN)) {
+          Theta::Compiler::getInstance().addException(
+            make_shared<Theta::CompilationError>(
+              "SyntaxError",
+              "Expected open brace during struct definition",
+              currentToken,
+              source,
+              fileName
+            )
+          );
+        }
 
-                    vector<shared_ptr<ASTNode>> items;
+        vector<shared_ptr<ASTNode>> items;
 
-                    while (!match(Token::BRACE_CLOSE)) {
-                        match(Token::IDENTIFIER);
-                        shared_ptr<ASTNode> el = parseIdentifier(str);
+        while (!match(Token::BRACE_CLOSE)) {
+          match(Token::IDENTIFIER);
+          shared_ptr<ASTNode> el = parseIdentifier(str);
 
-                        if (el == nullptr) break;
+          if (el == nullptr) break;
 
-                        items.push_back(el);
-                    }
+          items.push_back(el);
+        }
 
-                    str->setElements(items);
+        str->setElements(items);
 
-                    return str;
-                }
+        return str;
+      }
 
-                return parseAssignment(parent);
-            }
+      return parseAssignment(parent);
+    }
 
-            shared_ptr<ASTNode> parseAssignment(shared_ptr<ASTNode> parent) {
-                shared_ptr<ASTNode> expr = parseExpression(parent);
+    shared_ptr<ASTNode> parseAssignment(shared_ptr<ASTNode> parent) {
+      shared_ptr<ASTNode> expr = parseExpression(parent);
 
-                if (match(Token::ASSIGNMENT)) {
-                    shared_ptr<ASTNode> left = expr;
+      if (match(Token::ASSIGNMENT)) {
+        shared_ptr<ASTNode> left = expr;
 
-                    expr = make_shared<AssignmentNode>(parent);
+        expr = make_shared<AssignmentNode>(parent);
 
-                    left->setParent(expr);
+        left->setParent(expr);
 
-                    expr->setLeft(left);
-                    expr->setRight(parseFunctionDeclaration(expr));
-                }
+        expr->setLeft(left);
+        expr->setRight(parseFunctionDeclaration(expr));
+      }
 
-                return expr;
-            }
+      return expr;
+    }
 
-            shared_ptr<ASTNode> parseBlock(shared_ptr<ASTNode> parent) {
-                if (match(Token::BRACE_OPEN)) {
-                    vector<shared_ptr<ASTNode>> blockExpr;
-                    shared_ptr<BlockNode> block = make_shared<BlockNode>(parent);
+    shared_ptr<ASTNode> parseBlock(shared_ptr<ASTNode> parent) {
+      if (match(Token::BRACE_OPEN)) {
+        vector<shared_ptr<ASTNode>> blockExpr;
+        shared_ptr<BlockNode> block = make_shared<BlockNode>(parent);
 
-                    while (!match(Token::BRACE_CLOSE)) {
-                        shared_ptr<ASTNode> expr = parseReturn(block);
+        while (!match(Token::BRACE_CLOSE)) {
+          shared_ptr<ASTNode> expr = parseReturn(block);
 
-                        if (expr == nullptr) break;
+          if (expr == nullptr) break;
 
-                        blockExpr.push_back(expr);
-                    }
+          blockExpr.push_back(expr);
+        }
 
-                    block->setElements(blockExpr);
+        block->setElements(blockExpr);
 
-                    return block;
-                }
+        return block;
+      }
 
-                return parseFunctionDeclaration(parent);
-            }
+      return parseFunctionDeclaration(parent);
+    }
 
-            shared_ptr<ASTNode> parseFunctionDeclaration(shared_ptr<ASTNode> parent) {
-                shared_ptr<ASTNode> expr = parseAssignment(parent);
+    shared_ptr<ASTNode> parseFunctionDeclaration(shared_ptr<ASTNode> parent) {
+      shared_ptr<ASTNode> expr = parseAssignment(parent);
 
-                if (match(Token::FUNC_DECLARATION)) {
-                    shared_ptr<FunctionDeclarationNode> func_def = make_shared<FunctionDeclarationNode>(parent);
+      if (match(Token::FUNC_DECLARATION)) {
+        shared_ptr<FunctionDeclarationNode> func_def = make_shared<FunctionDeclarationNode>(parent);
 
-                    if (expr && expr->getNodeType() != ASTNode::AST_NODE_LIST) {
-                        shared_ptr<ASTNodeList> parameters = make_shared<ASTNodeList>(func_def);
-                        expr->setParent(parameters);
+        if (expr && expr->getNodeType() != ASTNode::AST_NODE_LIST) {
+          shared_ptr<ASTNodeList> parameters = make_shared<ASTNodeList>(func_def);
+          expr->setParent(parameters);
 
-                        parameters->setElements({ expr });
+          parameters->setElements({ expr });
 
-                        expr = parameters;
-                    } else if (!expr) {
-                        expr = make_shared<ASTNodeList>(func_def);
-                    }
+          expr = parameters;
+        } else if (!expr) {
+          expr = make_shared<ASTNodeList>(func_def);
+        }
 
-                    shared_ptr<ASTNodeList> params = dynamic_pointer_cast<ASTNodeList>(expr); 
-                    for (auto param : params->getElements()) {
-                        param->setParent(params);
-                    } 
+        shared_ptr<ASTNodeList> params = dynamic_pointer_cast<ASTNodeList>(expr); 
+        for (auto param : params->getElements()) {
+          param->setParent(params);
+        } 
 
-                    func_def->setParameters(params);
+        func_def->setParameters(params);
 
-                    shared_ptr<ASTNode> definitionBlock = parseBlock(func_def);
+        shared_ptr<ASTNode> definitionBlock = parseBlock(func_def);
 
-                    // In the case of shorthand single-line function bodies, we still want to wrap them in a block within the ast
-                    // for scoping reasons
-                    if (definitionBlock->getNodeType() != ASTNode::BLOCK) {
-                        shared_ptr<BlockNode> block = make_shared<BlockNode>(func_def);
-                        definitionBlock->setParent(block);
+        // In the case of shorthand single-line function bodies, we still want to wrap them in a block within the ast
+        // for scoping reasons
+        if (definitionBlock->getNodeType() != ASTNode::BLOCK) {
+          shared_ptr<BlockNode> block = make_shared<BlockNode>(func_def);
+          definitionBlock->setParent(block);
 
-                        block->setElements({ definitionBlock });
+          block->setElements({ definitionBlock });
 
-                        definitionBlock = block;
-                    }
+          definitionBlock = block;
+        }
 
-                    func_def->setDefinition(definitionBlock);
+        func_def->setDefinition(definitionBlock);
 
-                    expr = func_def;
-                }
+        expr = func_def;
+      }
 
-                return expr;
-            }
+      return expr;
+    }
 
-            shared_ptr<ASTNode> parseExpression(shared_ptr<ASTNode> parent) {
-                return parseStructDeclaration(parent);
-            }
+    shared_ptr<ASTNode> parseExpression(shared_ptr<ASTNode> parent) {
+      return parseStructDeclaration(parent);
+    }
 
-            shared_ptr<ASTNode> parseStructDeclaration(shared_ptr<ASTNode> parent) {
-                if (match(Token::AT)) {
-                    match(Token::IDENTIFIER);
+    shared_ptr<ASTNode> parseStructDeclaration(shared_ptr<ASTNode> parent) {
+      if (match(Token::AT)) {
+        match(Token::IDENTIFIER);
 
-                    shared_ptr<StructDeclarationNode> str = make_shared<StructDeclarationNode>(currentToken.getLexeme(), parent);
-            
-                    match(Token::BRACE_OPEN);
+        shared_ptr<StructDeclarationNode> str = make_shared<StructDeclarationNode>(currentToken.getLexeme(), parent);
 
-                    str->setValue(parseDict(str));
+        match(Token::BRACE_OPEN);
 
-                    return str;
-                }
+        str->setValue(parseDict(str));
 
-                return parseEnum(parent);
-            }
+        return str;
+      }
 
-            shared_ptr<ASTNode> parseEnum(shared_ptr<ASTNode> parent) {
-                if (match(Token::KEYWORD, Lexemes::ENUM)) {
-                    match(Token::IDENTIFIER);
+      return parseEnum(parent);
+    }
 
-                    shared_ptr<EnumNode> root = make_shared<EnumNode>(parent);
-                    root->setIdentifier(parseIdentifier(root));
+    shared_ptr<ASTNode> parseEnum(shared_ptr<ASTNode> parent) {
+      if (match(Token::KEYWORD, Lexemes::ENUM)) {
+        match(Token::IDENTIFIER);
 
-                    if (!match(Token::BRACE_OPEN)) {
-                        Theta::Compiler::getInstance().addException(
-                            make_shared<Theta::CompilationError>(
-                                "SyntaxError",
-                                "Expected opening brace during enum declaration",
-                                currentToken,
-                                source,
-                                fileName
-                            )
-                        );
+        shared_ptr<EnumNode> root = make_shared<EnumNode>(parent);
+        root->setIdentifier(parseIdentifier(root));
 
-                        return root;
-                    }
+        if (!match(Token::BRACE_OPEN)) {
+          Theta::Compiler::getInstance().addException(
+            make_shared<Theta::CompilationError>(
+              "SyntaxError",
+              "Expected opening brace during enum declaration",
+              currentToken,
+              source,
+              fileName
+            )
+          );
 
-                    vector<shared_ptr<ASTNode>> enumVals;
+          return root;
+        }
 
-                    while (!match(Token::BRACE_CLOSE)) {
-                        if (!match(Token::COLON)) {
-                            Theta::Compiler::getInstance().addException(
-                                make_shared<Theta::CompilationError>(
-                                    "SyntaxError",
-                                    "Enum must only contain symbols",
-                                    remainingTokens->front(),
-                                    source,
-                                    fileName
-                                )
-                            );
+        vector<shared_ptr<ASTNode>> enumVals;
 
-                            remainingTokens->pop_front();
+        while (!match(Token::BRACE_CLOSE)) {
+          if (!match(Token::COLON)) {
+            Theta::Compiler::getInstance().addException(
+              make_shared<Theta::CompilationError>(
+                "SyntaxError",
+                "Enum must only contain symbols",
+                remainingTokens->front(),
+                source,
+                fileName
+              )
+            );
 
-                            continue;
-                        }
+            remainingTokens->pop_front();
 
-                        shared_ptr<ASTNode> node = parseSymbol(root);
+            continue;
+          }
 
-                        if (!node) break;
+          shared_ptr<ASTNode> node = parseSymbol(root);
 
-                        enumVals.push_back(node);
-                    }
+          if (!node) break;
 
-                    root->setElements(enumVals);
+          enumVals.push_back(node);
+        }
 
-                    return root;
-                }
+        root->setElements(enumVals);
 
-                return parseControlFlow(parent);
-            }
+        return root;
+      }
 
-            shared_ptr<ASTNode> parseControlFlow(shared_ptr<ASTNode> parent) {
-                if (match(Token::KEYWORD, Lexemes::IF)) {
-                    shared_ptr<ControlFlowNode> cfNode = make_shared<ControlFlowNode>(parent);
+      return parseControlFlow(parent);
+    }
 
-                    shared_ptr<ASTNode> cnd = parseExpression(cfNode);
-                    shared_ptr<ASTNode> expr = parseBlock(cfNode);
+    shared_ptr<ASTNode> parseControlFlow(shared_ptr<ASTNode> parent) {
+      if (match(Token::KEYWORD, Lexemes::IF)) {
+        shared_ptr<ControlFlowNode> cfNode = make_shared<ControlFlowNode>(parent);
 
-                    vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = {
-                        make_pair(cnd, expr)
-                    };
+        shared_ptr<ASTNode> cnd = parseExpression(cfNode);
+        shared_ptr<ASTNode> expr = parseBlock(cfNode);
 
-                    while (match(Token::KEYWORD, Lexemes::ELSE) && match(Token::KEYWORD, Lexemes::IF)) {
-                        cnd = parseExpression(cfNode);
-                        expr = parseBlock(cfNode);
-                        conditionExpressionPairs.push_back(make_pair(cnd, expr));
-                    }
+        vector<pair<shared_ptr<ASTNode>, shared_ptr<ASTNode>>> conditionExpressionPairs = {
+          make_pair(cnd, expr)
+        };
 
-                    // If we just matched an else but no if afterwards. This way it only matches one else block per control flow
-                    if (currentToken.getType() == Token::KEYWORD && currentToken.getLexeme() == Lexemes::ELSE) {
-                        conditionExpressionPairs.push_back(make_pair(nullptr, parseBlock(cfNode)));
-                    }
+        while (match(Token::KEYWORD, Lexemes::ELSE) && match(Token::KEYWORD, Lexemes::IF)) {
+          cnd = parseExpression(cfNode);
+          expr = parseBlock(cfNode);
+          conditionExpressionPairs.push_back(make_pair(cnd, expr));
+        }
 
-                    cfNode->setConditionExpressionPairs(conditionExpressionPairs);
+        // If we just matched an else but no if afterwards. This way it only matches one else block per control flow
+        if (currentToken.getType() == Token::KEYWORD && currentToken.getLexeme() == Lexemes::ELSE) {
+          conditionExpressionPairs.push_back(make_pair(nullptr, parseBlock(cfNode)));
+        }
 
-                    return cfNode;
-                }
+        cfNode->setConditionExpressionPairs(conditionExpressionPairs);
 
-                return parsePipeline(parent);
-            }
+        return cfNode;
+      }
 
-            shared_ptr<ASTNode> parsePipeline(shared_ptr<ASTNode> parent) {
-                shared_ptr<ASTNode> expr = parseBooleanComparison(parent);
+      return parsePipeline(parent);
+    }
 
-                while (match(Token::OPERATOR, Lexemes::PIPE)) {
-                    expr = parseBooleanComparison(parent, expr);
-                }
+    shared_ptr<ASTNode> parsePipeline(shared_ptr<ASTNode> parent) {
+      shared_ptr<ASTNode> expr = parseBooleanComparison(parent);
 
-                return expr;
-            }
+      while (match(Token::OPERATOR, Lexemes::PIPE)) {
+        expr = parseBooleanComparison(parent, expr);
+      }
 
-            shared_ptr<ASTNode> parseBooleanComparison(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseEquality(parent, passedLeftArg);
+      return expr;
+    }
 
-                while (match(Token::OPERATOR, Lexemes::OR) || match(Token::OPERATOR, Lexemes::AND)) {
-                    shared_ptr<ASTNode> left = expr;
+    shared_ptr<ASTNode> parseBooleanComparison(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseEquality(parent, passedLeftArg);
 
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
-                    left->setParent(expr);
+      while (match(Token::OPERATOR, Lexemes::OR) || match(Token::OPERATOR, Lexemes::AND)) {
+        shared_ptr<ASTNode> left = expr;
 
-                    expr->setLeft(left);
-                    expr->setRight(parseExpression(expr));
-                }
+        expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
+        left->setParent(expr);
 
-                return expr;
-            }
+        expr->setLeft(left);
+        expr->setRight(parseExpression(expr));
+      }
 
-            shared_ptr<ASTNode> parseEquality(shared_ptr<ASTNode>parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseComparison(parent, passedLeftArg);
+      return expr;
+    }
 
-                while (match(Token::OPERATOR, Lexemes::EQUALITY) || match(Token::OPERATOR, Lexemes::INEQUALITY)) {
-                    shared_ptr<ASTNode> left = expr;
+    shared_ptr<ASTNode> parseEquality(shared_ptr<ASTNode>parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseComparison(parent, passedLeftArg);
 
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
-                    left->setParent(expr);
-                
-                    expr->setLeft(left);
-                    expr->setRight(parseComparison(expr));
-                }
+      while (match(Token::OPERATOR, Lexemes::EQUALITY) || match(Token::OPERATOR, Lexemes::INEQUALITY)) {
+        shared_ptr<ASTNode> left = expr;
 
-                return expr;
-            }
+        expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
+        left->setParent(expr);
+    
+        expr->setLeft(left);
+        expr->setRight(parseComparison(expr));
+      }
 
-            shared_ptr<ASTNode> parseComparison(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseTerm(parent, passedLeftArg);
+      return expr;
+    }
 
-                while (
-                    match(Token::OPERATOR, Lexemes::GT) ||
-                    match(Token::OPERATOR, Lexemes::GTEQ) ||
-                    match(Token::OPERATOR, Lexemes::LT) ||
-                    match(Token::OPERATOR, Lexemes::LTEQ)
-                ) {
-                    shared_ptr<ASTNode> left = expr;
+    shared_ptr<ASTNode> parseComparison(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseTerm(parent, passedLeftArg);
 
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
-                    left->setParent(expr);
+      while (
+        match(Token::OPERATOR, Lexemes::GT) ||
+        match(Token::OPERATOR, Lexemes::GTEQ) ||
+        match(Token::OPERATOR, Lexemes::LT) ||
+        match(Token::OPERATOR, Lexemes::LTEQ)
+      ) {
+        shared_ptr<ASTNode> left = expr;
 
-                    expr->setLeft(left);
-                    expr->setRight(parseTerm(expr));
-                }
+        expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
+        left->setParent(expr);
 
-                return expr;
-            }
+        expr->setLeft(left);
+        expr->setRight(parseTerm(expr));
+      }
 
-            shared_ptr<ASTNode> parseTerm(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseFactor(parent, passedLeftArg);
+      return expr;
+    }
 
-                while (match(Token::OPERATOR, Lexemes::MINUS) || match(Token::OPERATOR, Lexemes::PLUS)) {
-                    shared_ptr<ASTNode> left = expr;
+    shared_ptr<ASTNode> parseTerm(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseFactor(parent, passedLeftArg);
 
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
-                    left->setParent(expr);
+      while (match(Token::OPERATOR, Lexemes::MINUS) || match(Token::OPERATOR, Lexemes::PLUS)) {
+        shared_ptr<ASTNode> left = expr;
 
-                    expr->setLeft(left);
-                    expr->setRight(parseFactor(expr));
-                }
+        expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
+        left->setParent(expr);
 
-                return expr;
-            }
+        expr->setLeft(left);
+        expr->setRight(parseFactor(expr));
+      }
 
-            shared_ptr<ASTNode> parseFactor(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseExponent(parent, passedLeftArg);
+      return expr;
+    }
 
-                while (
-                    match(Token::OPERATOR, Lexemes::DIVISION) ||
-                    match(Token::OPERATOR, Lexemes::TIMES) ||
-                    match(Token::OPERATOR, Lexemes::MODULO)
-                ) {
-                    shared_ptr<ASTNode> left = expr;
+    shared_ptr<ASTNode> parseFactor(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseExponent(parent, passedLeftArg);
 
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
-                    left->setParent(expr);
+      while (
+        match(Token::OPERATOR, Lexemes::DIVISION) ||
+        match(Token::OPERATOR, Lexemes::TIMES) ||
+        match(Token::OPERATOR, Lexemes::MODULO)
+      ) {
+        shared_ptr<ASTNode> left = expr;
 
-                    expr->setLeft(left);
-                    expr->setRight(parseExponent(expr));
-                }
+        expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
+        left->setParent(expr);
 
-                return expr;
-            }
+        expr->setLeft(left);
+        expr->setRight(parseExponent(expr));
+      }
 
-            shared_ptr<ASTNode> parseExponent(shared_ptr<ASTNode>parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseUnary(parent, passedLeftArg);
+      return expr;
+    }
 
-                while (match(Token::OPERATOR, Lexemes::EXPONENT)) {
-                    shared_ptr<ASTNode> left = expr;
+    shared_ptr<ASTNode> parseExponent(shared_ptr<ASTNode>parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseUnary(parent, passedLeftArg);
 
-                    expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
-                    left->setParent(expr);
+      while (match(Token::OPERATOR, Lexemes::EXPONENT)) {
+        shared_ptr<ASTNode> left = expr;
 
-                    expr->setLeft(left);
-                    expr->setRight(parseUnary(expr));
-                }
+        expr = make_shared<BinaryOperationNode>(currentToken.getLexeme(), parent);
+        left->setParent(expr);
 
-                return expr;
-            }
+        expr->setLeft(left);
+        expr->setRight(parseUnary(expr));
+      }
 
-            shared_ptr<ASTNode> parseUnary(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                // Unary cant have a left arg, so if we get one passed in we can skip straight to primary
-                if (!passedLeftArg && (match(Token::OPERATOR, Lexemes::NOT) || match(Token::OPERATOR, Lexemes::MINUS))) {
-                    shared_ptr<ASTNode> un = make_shared<UnaryOperationNode>(currentToken.getLexeme(), parent);
-                    un->setValue(parseUnary(un, passedLeftArg));
+      return expr;
+    }
 
-                    return un;
-                }
+    shared_ptr<ASTNode> parseUnary(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      // Unary cant have a left arg, so if we get one passed in we can skip straight to primary
+      if (!passedLeftArg && (match(Token::OPERATOR, Lexemes::NOT) || match(Token::OPERATOR, Lexemes::MINUS))) {
+        shared_ptr<ASTNode> un = make_shared<UnaryOperationNode>(currentToken.getLexeme(), parent);
+        un->setValue(parseUnary(un, passedLeftArg));
 
-                return parsePrimary(parent, passedLeftArg);
-            }
+        return un;
+      }
 
-            shared_ptr<ASTNode> parsePrimary(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                if (match(Token::IDENTIFIER)) {
-                    return parseFunctionInvocation(parent, passedLeftArg);
-                }
+      return parsePrimary(parent, passedLeftArg);
+    }
 
-                if (passedLeftArg) return passedLeftArg;
+    shared_ptr<ASTNode> parsePrimary(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      if (match(Token::IDENTIFIER)) {
+        return parseFunctionInvocation(parent, passedLeftArg);
+      }
 
-                if (match(Token::BOOLEAN) || match(Token::NUMBER) || match(Token::STRING)) {
-                    map<Token::Types, ASTNode::Types> tokenTypeToAstTypeMap = {
-                        { Token::NUMBER, ASTNode::NUMBER_LITERAL },
-                        { Token::BOOLEAN, ASTNode::BOOLEAN_LITERAL },
-                        { Token::STRING, ASTNode::STRING_LITERAL }
-                    };
+      if (passedLeftArg) return passedLeftArg;
 
-                    auto it = tokenTypeToAstTypeMap.find(currentToken.getType());
+      if (match(Token::BOOLEAN) || match(Token::NUMBER) || match(Token::STRING)) {
+        map<Token::Types, ASTNode::Types> tokenTypeToAstTypeMap = {
+          { Token::NUMBER, ASTNode::NUMBER_LITERAL },
+          { Token::BOOLEAN, ASTNode::BOOLEAN_LITERAL },
+          { Token::STRING, ASTNode::STRING_LITERAL }
+        };
 
-                    string value = currentToken.getLexeme();
+        auto it = tokenTypeToAstTypeMap.find(currentToken.getType());
 
-                    // Pulls the string out of quotation marks
-                    if (currentToken.getType() == Token::STRING) {
-                        value = value.substr(1, value.length() - 2);
-                    }
+        string value = currentToken.getLexeme();
 
-                    return make_shared<LiteralNode>(it->second, value, parent);
-                }
+        // Pulls the string out of quotation marks
+        if (currentToken.getType() == Token::STRING) {
+          value = value.substr(1, value.length() - 2);
+        }
 
-                if (match(Token::COLON)) {
-                    return parseSymbol(parent);
-                }
+        return make_shared<LiteralNode>(it->second, value, parent);
+      }
 
-                if (match(Token::BRACKET_OPEN)) {
-                    return parseList(parent);
-                }
+      if (match(Token::COLON)) {
+        return parseSymbol(parent);
+      }
 
-                if (match(Token::BRACE_OPEN)) {
-                    return parseDict(parent);
-                }
+      if (match(Token::BRACKET_OPEN)) {
+        return parseList(parent);
+      }
 
-                if (match(Token::PAREN_OPEN)) {
-                    return parseExpressionList(parent);
-                }
+      if (match(Token::BRACE_OPEN)) {
+        return parseDict(parent);
+      }
 
-                return nullptr;
-            }
+      if (match(Token::PAREN_OPEN)) {
+        return parseExpressionList(parent);
+      }
 
-            shared_ptr<ASTNode> parseExpressionList(shared_ptr<ASTNode> parent, bool forceList = false) {
-                shared_ptr<ASTNode> expr = parseFunctionDeclaration(parent);
+      return nullptr;
+    }
 
-                if (check(Token::COMMA) || !expr || forceList) {
-                    shared_ptr<ASTNodeList> nodeList = make_shared<ASTNodeList>(parent);
-                    vector<shared_ptr<ASTNode>> expressions;
+    shared_ptr<ASTNode> parseExpressionList(shared_ptr<ASTNode> parent, bool forceList = false) {
+      shared_ptr<ASTNode> expr = parseFunctionDeclaration(parent);
 
-                    if (expr) {
-                        expr->setParent(nodeList);
-                        expressions.push_back(expr);
-                    }
+      if (check(Token::COMMA) || !expr || forceList) {
+        shared_ptr<ASTNodeList> nodeList = make_shared<ASTNodeList>(parent);
+        vector<shared_ptr<ASTNode>> expressions;
 
-                    while (match(Token::COMMA)) {
-                        expressions.push_back(parseFunctionDeclaration(nodeList));
-                    }
+        if (expr) {
+          expr->setParent(nodeList);
+          expressions.push_back(expr);
+        }
 
-                    nodeList->setElements(expressions);
+        while (match(Token::COMMA)) {
+          expressions.push_back(parseFunctionDeclaration(nodeList));
+        }
 
-                    expr = nodeList;
-                }
+        nodeList->setElements(expressions);
 
-                match(Token::PAREN_CLOSE);
+        expr = nodeList;
+      }
 
-                return expr;
-            }
+      match(Token::PAREN_CLOSE);
 
-            shared_ptr<ASTNode> parseDict(shared_ptr<ASTNode> parent) {
-                pair<string, shared_ptr<ASTNode>> p = parseKvPair(parent);
-                shared_ptr<ASTNode> expr = p.second;
+      return expr;
+    }
 
-                if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::TUPLE) {
-                    vector<shared_ptr<ASTNode>> el;
+    shared_ptr<ASTNode> parseDict(shared_ptr<ASTNode> parent) {
+      pair<string, shared_ptr<ASTNode>> p = parseKvPair(parent);
+      shared_ptr<ASTNode> expr = p.second;
 
-                    if (expr->getLeft()) el.push_back(expr);
+      if (p.first == "kv" && expr && expr->getNodeType() == ASTNode::TUPLE) {
+        vector<shared_ptr<ASTNode>> el;
 
-                    while (match(Token::COMMA)) {
-                        el.push_back(parseKvPair(parent).second);
-                    }
+        if (expr->getLeft()) el.push_back(expr);
 
-                    expr = make_shared<DictionaryNode>(parent);
+        while (match(Token::COMMA)) {
+          el.push_back(parseKvPair(parent).second);
+        }
 
-                    for (auto e : el) {
-                        e->setParent(expr);
-                    }
+        expr = make_shared<DictionaryNode>(parent);
 
-                    dynamic_pointer_cast<DictionaryNode>(expr)->setElements(el);
+        for (auto e : el) {
+          e->setParent(expr);
+        }
 
-                    match(Token::BRACE_CLOSE);
-                }
+        dynamic_pointer_cast<DictionaryNode>(expr)->setElements(el);
 
-                return expr;
-            }
+        match(Token::BRACE_CLOSE);
+      }
 
-            pair<string, shared_ptr<ASTNode>> parseKvPair(shared_ptr<ASTNode> parent) {
-                // Because both flows of this function return a tuple, we need a type flag to indicate whether
-                // we generated the tuple with the intention of it being a kvPair or not. Otherwise it would
-                // be ambiguous and we would accidentally convert dicts with a single key-value pair into a tuple
-                string type = "tuple";
-                shared_ptr<ASTNode> expr = parseTuple(parent);
+      return expr;
+    }
 
-                if (match(Token::COLON)) {
-                    type = "kv";
-                    shared_ptr<ASTNode> left = expr;
+    pair<string, shared_ptr<ASTNode>> parseKvPair(shared_ptr<ASTNode> parent) {
+      // Because both flows of this function return a tuple, we need a type flag to indicate whether
+      // we generated the tuple with the intention of it being a kvPair or not. Otherwise it would
+      // be ambiguous and we would accidentally convert dicts with a single key-value pair into a tuple
+      string type = "tuple";
+      shared_ptr<ASTNode> expr = parseTuple(parent);
 
-                    if (left->getNodeType() == ASTNode::IDENTIFIER) {
-                        left = make_shared<SymbolNode>(dynamic_pointer_cast<IdentifierNode>(left)->getIdentifier(), expr);
-                    }
+      if (match(Token::COLON)) {
+        type = "kv";
+        shared_ptr<ASTNode> left = expr;
 
-                    expr = make_shared<TupleNode>(parent);
-                    left->setParent(expr);
-                
-                    expr->setLeft(left);
-                    expr->setRight(parseExpression(expr));
-                } else if (expr == nullptr) {
-                    // parseTuplen will return a nullptr if it just immediately encounters a BRACE_CLOSE. We can treat this
-                    // as a dict since a valid tuple must have 2 values in it.
-                    type = "kv";
-                    expr = make_shared<TupleNode>(parent);
-                }
+        if (left->getNodeType() == ASTNode::IDENTIFIER) {
+          left = make_shared<SymbolNode>(dynamic_pointer_cast<IdentifierNode>(left)->getIdentifier(), expr);
+        }
 
-                return make_pair(type, expr);
-            }
+        expr = make_shared<TupleNode>(parent);
+        left->setParent(expr);
+    
+        expr->setLeft(left);
+        expr->setRight(parseExpression(expr));
+      } else if (expr == nullptr) {
+        // parseTuplen will return a nullptr if it just immediately encounters a BRACE_CLOSE. We can treat this
+        // as a dict since a valid tuple must have 2 values in it.
+        type = "kv";
+        expr = make_shared<TupleNode>(parent);
+      }
 
-            shared_ptr<ASTNode> parseTuple(shared_ptr<ASTNode> parent) {
-                shared_ptr<ASTNode> expr;
+      return make_pair(type, expr);
+    }
 
-                if (match(Token::BRACE_CLOSE)) return nullptr;
+    shared_ptr<ASTNode> parseTuple(shared_ptr<ASTNode> parent) {
+      shared_ptr<ASTNode> expr;
 
-                try {
-                    expr = parseExpression(parent);
-                } catch (ParseError e) {
-                    if (e.getErrorParseType() == "symbol") remainingTokens->pop_front();
-                }
+      if (match(Token::BRACE_CLOSE)) return nullptr;
 
-                if (match(Token::COMMA)) {
-                    shared_ptr<ASTNode> first = expr;
+      try {
+        expr = parseExpression(parent);
+      } catch (ParseError e) {
+        if (e.getErrorParseType() == "symbol") remainingTokens->pop_front();
+      }
 
-                    expr = make_shared<TupleNode>(parent);
-                    first->setParent(expr);
-                    expr->setLeft(first);
+      if (match(Token::COMMA)) {
+        shared_ptr<ASTNode> first = expr;
 
-                    try {
-                        expr->setRight(parseExpression(expr));
-                    } catch (ParseError e) {
-                        if (e.getErrorParseType() == "symbol") remainingTokens->pop_front();
-                    }
+        expr = make_shared<TupleNode>(parent);
+        first->setParent(expr);
+        expr->setLeft(first);
 
+        try {
+          expr->setRight(parseExpression(expr));
+        } catch (ParseError e) {
+          if (e.getErrorParseType() == "symbol") remainingTokens->pop_front();
+        }
 
-                    if (!match(Token::BRACE_CLOSE)) {
-                        Theta::Compiler::getInstance().addException(
-                            make_shared<Theta::CompilationError>(
-                                "SyntaxError",
-                                "Expected closing brace after tuple definition",
-                                remainingTokens->front(),
-                                source,
-                                fileName
-                            )
-                        );
-                    }
-                }
+        if (!match(Token::BRACE_CLOSE)) {
+          Theta::Compiler::getInstance().addException(
+            make_shared<Theta::CompilationError>(
+              "SyntaxError",
+              "Expected closing brace after tuple definition",
+              remainingTokens->front(),
+              source,
+              fileName
+            )
+          );
+        }
+      }
 
-                return expr;
-            }
+      return expr;
+    }
 
-            shared_ptr<ASTNode> parseList(shared_ptr<ASTNode> parent) {
-                shared_ptr<ListNode> listNode = make_shared<ListNode>(parent);
-                vector<shared_ptr<ASTNode>> el;
+    shared_ptr<ASTNode> parseList(shared_ptr<ASTNode> parent) {
+      shared_ptr<ListNode> listNode = make_shared<ListNode>(parent);
+      vector<shared_ptr<ASTNode>> el;
 
-                if (!match(Token::BRACKET_CLOSE)) {
-                    el.push_back(parseExpression(listNode));
+      if (!match(Token::BRACKET_CLOSE)) {
+        el.push_back(parseExpression(listNode));
 
-                    while(match(Token::COMMA)) {
-                        el.push_back(parseExpression(listNode));
-                    }
+        while(match(Token::COMMA)) {
+          el.push_back(parseExpression(listNode));
+        }
 
-                    listNode->setElements(el);
+        listNode->setElements(el);
 
-                    match(Token::BRACKET_CLOSE);
-                }
+        match(Token::BRACKET_CLOSE);
+      }
 
-                return listNode;
-            }
+      return listNode;
+    }
 
-            shared_ptr<ASTNode> parseFunctionInvocation(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
-                shared_ptr<ASTNode> expr = parseIdentifier(parent);
+    shared_ptr<ASTNode> parseFunctionInvocation(shared_ptr<ASTNode> parent, shared_ptr<ASTNode> passedLeftArg = nullptr) {
+      shared_ptr<ASTNode> expr = parseIdentifier(parent);
 
-                if (match(Token::PAREN_OPEN)) {
-                    shared_ptr<FunctionInvocationNode> funcInvNode = make_shared<FunctionInvocationNode>(parent);
-                    expr->setParent(funcInvNode);
-                    funcInvNode->setIdentifier(expr);
-                    shared_ptr<ASTNodeList> arguments = dynamic_pointer_cast<ASTNodeList>(parseExpressionList(funcInvNode, true));
+      if (match(Token::PAREN_OPEN)) {
+        shared_ptr<FunctionInvocationNode> funcInvNode = make_shared<FunctionInvocationNode>(parent);
+        expr->setParent(funcInvNode);
+        funcInvNode->setIdentifier(expr);
+        shared_ptr<ASTNodeList> arguments = dynamic_pointer_cast<ASTNodeList>(parseExpressionList(funcInvNode, true));
 
-                    // This is used for pipeline operators pointing to function invocations. It takes the passed
-                    // left arg and sets it as the first argument to the function call
-                    if (passedLeftArg) {
-                        arguments->getElements().insert(arguments->getElements().begin(), passedLeftArg);
-                    }
+        // This is used for pipeline operators pointing to function invocations. It takes the passed
+        // left arg and sets it as the first argument to the function call
+        if (passedLeftArg) {
+          arguments->getElements().insert(arguments->getElements().begin(), passedLeftArg);
+        }
 
-                    funcInvNode->setParameters(arguments);
+        funcInvNode->setParameters(arguments);
 
-                    expr = funcInvNode;
-                }
+        expr = funcInvNode;
+      }
 
-                return expr;
-            }
+      return expr;
+    }
 
-            shared_ptr<ASTNode> parseIdentifier(shared_ptr<ASTNode> parent) {
-                validateIdentifier(currentToken);
+    shared_ptr<ASTNode> parseIdentifier(shared_ptr<ASTNode> parent) {
+      validateIdentifier(currentToken);
 
-                shared_ptr<ASTNode> ident = make_shared<IdentifierNode>(currentToken.getLexeme(), parent);
+      shared_ptr<ASTNode> ident = make_shared<IdentifierNode>(currentToken.getLexeme(), parent);
 
-                if (match(Token::OPERATOR, Lexemes::LT)) {
-                    ident->setValue(parseType(ident));
+      if (match(Token::OPERATOR, Lexemes::LT)) {
+        ident->setValue(parseType(ident));
 
-                    match(Token::OPERATOR, Lexemes::GT);
-                }
+        match(Token::OPERATOR, Lexemes::GT);
+      }
 
-                return ident;
-            }
+      return ident;
+    }
 
-            shared_ptr<ASTNode> parseType(shared_ptr<ASTNode> parent) {
-                match(Token::IDENTIFIER);
+    shared_ptr<ASTNode> parseType(shared_ptr<ASTNode> parent) {
+      match(Token::IDENTIFIER);
 
-                string typeName = currentToken.getLexeme();
-                shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(typeName, parent);
+      string typeName = currentToken.getLexeme();
+      shared_ptr<ASTNode> typ = make_shared<TypeDeclarationNode>(typeName, parent);
 
-                if (match(Token::OPERATOR, Lexemes::LT)) {
-                    shared_ptr<TypeDeclarationNode> typeDecl = dynamic_pointer_cast<TypeDeclarationNode>(typ);
-                    vector<shared_ptr<ASTNode>> types = { parseType(typeDecl) };
+      if (match(Token::OPERATOR, Lexemes::LT)) {
+        shared_ptr<TypeDeclarationNode> typeDecl = dynamic_pointer_cast<TypeDeclarationNode>(typ);
+        vector<shared_ptr<ASTNode>> types = { parseType(typeDecl) };
 
-                    while (match(Token::COMMA)) {
-                        types.push_back(parseType(typeDecl));
-                    }
+        while (match(Token::COMMA)) {
+          types.push_back(parseType(typeDecl));
+        }
 
-                    if (types.size() > 1) {
-                        typeDecl->setElements(types);
-                    } else {
-                        typeDecl->setValue(types.at(0));
-                    }
+        if (types.size() > 1) {
+          typeDecl->setElements(types);
+        } else {
+          typeDecl->setValue(types.at(0));
+        }
 
-                    match(Token::OPERATOR, Lexemes::GT);
-                }
+        match(Token::OPERATOR, Lexemes::GT);
+      }
 
-                return typ;
-            }
+      return typ;
+    }
 
-            shared_ptr<ASTNode> parseSymbol(shared_ptr<ASTNode> parent) {
-                if (match(Token::IDENTIFIER) || match(Token::NUMBER)) {
-                    if (currentToken.getType() == Token::IDENTIFIER) validateIdentifier(currentToken);
+    shared_ptr<ASTNode> parseSymbol(shared_ptr<ASTNode> parent) {
+      if (match(Token::IDENTIFIER) || match(Token::NUMBER)) {
+        if (currentToken.getType() == Token::IDENTIFIER) validateIdentifier(currentToken);
 
-                    return make_shared<SymbolNode>(currentToken.getLexeme(), parent);
-                }
+        return make_shared<SymbolNode>(currentToken.getLexeme(), parent);
+      }
 
-                Theta::Compiler::getInstance().addException(
-                    make_shared<Theta::CompilationError>(
-                        "SyntaxError",
-                        "Expected identifier as part of symbol declaration",
-                        remainingTokens->front(),
-                        source,
-                        fileName
-                    )
-                );
+      Theta::Compiler::getInstance().addException(
+        make_shared<Theta::CompilationError>(
+          "SyntaxError",
+          "Expected identifier as part of symbol declaration",
+          remainingTokens->front(),
+          source,
+          fileName
+        )
+      );
 
-                throw ParseError("symbol");
+      throw ParseError("symbol");
 
-                return nullptr;
-            }
+      return nullptr;
+    }
 
-            bool match(Token::Types type, string lexeme = "") {
-                if (check(type, lexeme)) {
-                    currentToken = remainingTokens->front();
-                    remainingTokens->pop_front();
-                    return true;
-                }
+    bool match(Token::Types type, string lexeme = "") {
+      if (check(type, lexeme)) {
+        currentToken = remainingTokens->front();
+        remainingTokens->pop_front();
+        return true;
+      }
 
-                return false;
-            }
+      return false;
+    }
 
-            bool check(Token::Types type, string lexeme = "") {
-                return remainingTokens->size() != 0 &&
-                    remainingTokens->front().getType() == type &&
-                    (lexeme != "" ? remainingTokens->front().getLexeme() == lexeme : true);
-            }
+    bool check(Token::Types type, string lexeme = "") {
+      return remainingTokens->size() != 0 &&
+        remainingTokens->front().getType() == type &&
+        (lexeme != "" ? remainingTokens->front().getLexeme() == lexeme : true);
+    }
 
-            /**
-             * @brief Validates an identifier token to ensure it conforms to language syntax rules.
-             *
-             * This method checks each character in the identifier's text to ensure it does not
-             * contain disallowed characters or start with a digit. If an invalid character or
-             * format is detected, a SyntaxError exception is thrown with details about the error.
-             *
-             * @param token The token representing the identifier to be validated.
-             * @throws SyntaxError If the identifier contains disallowed characters or starts with a digit.
-             */
-            void validateIdentifier(Token token) {
-                string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?,`~";
+    /**
+     * @brief Validates an identifier token to ensure it conforms to language syntax rules.
+     *
+     * This method checks each character in the identifier's text to ensure it does not
+     * contain disallowed characters or start with a digit. If an invalid character or
+     * format is detected, a SyntaxError exception is thrown with details about the error.
+     *
+     * @param token The token representing the identifier to be validated.
+     * @throws SyntaxError If the identifier contains disallowed characters or starts with a digit.
+     */
+    void validateIdentifier(Token token) {
+      string disallowedIdentifierChars = "!@#$%^&*()-=+/<>{}[]|?,`~";
 
-                for (int i = 0; i < token.getLexeme().length(); i++) {
-                    char identChar = tolower(token.getLexeme()[i]);
+      for (int i = 0; i < token.getLexeme().length(); i++) {
+        char identChar = tolower(token.getLexeme()[i]);
 
-                    bool isDisallowedChar = find(disallowedIdentifierChars.begin(), disallowedIdentifierChars.end(), identChar) != disallowedIdentifierChars.end();
-                    bool isStartsWithDigit = i == 0 && isdigit(identChar);
+        bool isDisallowedChar = find(disallowedIdentifierChars.begin(), disallowedIdentifierChars.end(), identChar) != disallowedIdentifierChars.end();
+        bool isStartsWithDigit = i == 0 && isdigit(identChar);
 
-                    if (isStartsWithDigit || isDisallowedChar) {
-                        Theta::Compiler::getInstance().addException(
-                            make_shared<Theta::CompilationError>(
-                                "SyntaxError",
-                                "Invalid identifier \"" + token.getLexeme() + "\"",
-                                token,
-                                source,
-                                fileName
-                            )
-                        );
-                    }
-                }
-            }
-    };
+        if (isStartsWithDigit || isDisallowedChar) {
+          Theta::Compiler::getInstance().addException(
+            make_shared<Theta::CompilationError>(
+              "SyntaxError",
+              "Invalid identifier \"" + token.getLexeme() + "\"",
+              token,
+              source,
+              fileName
+            )
+          );
+        }
+      }
+    }
+  };
 }

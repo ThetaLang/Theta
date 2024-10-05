@@ -7,8 +7,8 @@
 using namespace std;
 
 namespace Theta {
-    class ListNode : public ASTNodeList {
-        public:
-            ListNode(shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::LIST) {};
-    };
+  class ListNode : public ASTNodeList {
+  public:
+    ListNode(shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::LIST) {};
+  };
 }

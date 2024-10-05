@@ -9,74 +9,74 @@
 using namespace std;
 
 namespace Theta {
-    class TypeDeclarationNode : public ASTNodeList {
-        public:
-            string type;
+  class TypeDeclarationNode : public ASTNodeList {
+  public:
+    string type;
 
-            TypeDeclarationNode(string typ, shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::TYPE_DECLARATION), type(typ) {};
+    TypeDeclarationNode(string typ, shared_ptr<ASTNode> parent) : ASTNodeList(parent, ASTNode::TYPE_DECLARATION), type(typ) {};
 
-            string getType() { return type; }
+    string getType() { return type; }
 
-            void setType(string newType) { type = newType; }
+    void setType(string newType) { type = newType; }
 
-            string toString(bool bare = false) {
-                string typeString;
+    string toString(bool bare = false) {
+      string typeString;
 
-                if (!bare) typeString += "<";
+      if (!bare) typeString += "<";
 
-                typeString += type;
+      typeString += type;
 
-                if (value) {
-                    typeString += "<" + dynamic_pointer_cast<TypeDeclarationNode>(value)->toString(true) + ">";
-                } else if (left) {
-                    typeString += "<" + dynamic_pointer_cast<TypeDeclarationNode>(left)->toString(true) + ", ";
-                    typeString += dynamic_pointer_cast<TypeDeclarationNode>(right)->toString(true) + ">";
-                } else if (elements.size() > 0) {
-                    typeString += "<";
+      if (value) {
+        typeString += "<" + dynamic_pointer_cast<TypeDeclarationNode>(value)->toString(true) + ">";
+      } else if (left) {
+        typeString += "<" + dynamic_pointer_cast<TypeDeclarationNode>(left)->toString(true) + ", ";
+        typeString += dynamic_pointer_cast<TypeDeclarationNode>(right)->toString(true) + ">";
+      } else if (elements.size() > 0) {
+        typeString += "<";
 
-                    for (int i = 0; i < elements.size(); i++) {
-                        if (i > 0) typeString += ", ";
+        for (int i = 0; i < elements.size(); i++) {
+          if (i > 0) typeString += ", ";
 
-                        typeString += dynamic_pointer_cast<TypeDeclarationNode>(elements.at(i))->toString(true);
-                    }
+          typeString += dynamic_pointer_cast<TypeDeclarationNode>(elements.at(i))->toString(true);
+        }
 
-                    typeString += ">";
-                }
+        typeString += ">";
+      }
 
-                if (!bare) typeString += ">";
+      if (!bare) typeString += ">";
 
-                return typeString;
-            }
+      return typeString;
+    }
 
-            string toJSON() const override {
-                ostringstream oss;
+    string toJSON() const override {
+      ostringstream oss;
 
-                oss << "{";
-                oss << "\"type\": \"" << getNodeTypePretty() << "\"";
-                oss << ",\"declaredType\": \"" << type << "\"";
+      oss << "{";
+      oss << "\"type\": \"" << getNodeTypePretty() << "\"";
+      oss << ",\"declaredType\": \"" << type << "\"";
 
-                if (left) {
-                    oss << ",\"left\": " << left->toJSON();
-                    oss << ",\"right\": " << (right ? right->toJSON() : "null");
-                } else if (elements.size() > 0) {
-                    oss << ",\"elements\": [";
+      if (left) {
+        oss << ",\"left\": " << left->toJSON();
+        oss << ",\"right\": " << (right ? right->toJSON() : "null");
+      } else if (elements.size() > 0) {
+        oss << ",\"elements\": [";
 
-                    for (int i = 0; i < elements.size(); i++) {
-                        if (i > 0) {
-                            oss << ", ";
-                        }
+        for (int i = 0; i < elements.size(); i++) {
+          if (i > 0) {
+            oss << ", ";
+          }
 
-                        oss << elements.at(i)->toJSON();
-                    }
+          oss << elements.at(i)->toJSON();
+        }
 
-                    oss << "]";
-                } else {
-                    oss << ",\"value\": " << (value ? value->toJSON() : "null");
-                }
+        oss << "]";
+      } else {
+        oss << ",\"value\": " << (value ? value->toJSON() : "null");
+      }
 
-                oss << "}";
+      oss << "}";
 
-                return oss.str();
-            }
-    };
+      return oss.str();
+    }
+  };
 }
