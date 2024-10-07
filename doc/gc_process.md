@@ -1,80 +1,109 @@
+This document presents the design and implementation of a **copying garbage collector** for the Theta programming language. The garbage collector uses several key mechanisms to manage memory efficiently within WebAssembly’s constraints:
+- A **shadow stack** is used to track heap references across function calls, providing visibility where the WebAssembly stack is opaque.
+- A pre-allocated **8 KB offloading region** temporarily stores non-heap values during garbage collection (GC).
+- A **GC Epoch** system is employed to prevent redundant updates to function stack frames by ensuring each frame is updated only once per GC run.
 
-# Copying Garbage Collector for Theta (WebAssembly Target)
-
-## Overview
-
-This document outlines an optimized design and implementation of a **copying garbage collector** for the Theta programming language, which compiles to WebAssembly. Due to the opaque nature of WebAssembly's internal stack, we use a **shadow stack** to track heap references across function frames. This ensures that heap references are updated correctly during garbage collection (GC), even when multiple stack frames are involved. However, to reduce the overhead associated with this approach, we implement several optimizations.
+This approach balances performance, correctness, and WebAssembly's unique environment constraints. GC is triggered when the heap memory is half-full and runs at the next available function boundary to avoid interrupting mid-function execution.
 
 ## Key Concepts
 
-### WebAssembly Stack
-The WebAssembly stack is managed by the WebAssembly runtime, and developers have no direct control over it. Each function call creates a new stack frame, and function frames are isolated, meaning functions can only access their own stack frame. This poses challenges for managing heap references during GC.
-
 ### Shadow Stack
-The **shadow stack** is an in-memory data structure that mirrors the WebAssembly stack in terms of heap references. Each function that allocates or uses a heap reference pushes that reference onto the shadow stack, ensuring that the garbage collector can access all heap references across frames, even when WebAssembly stack frames are not directly accessible.
 
-## Optimized GC Process
+The **shadow stack** is a critical data structure used to track **heap references** across function calls. In WebAssembly, the stack is not directly accessible, making it difficult to inspect stack frames for heap references during GC. The shadow stack solves this problem by maintaining a parallel stack where **only heap references** are stored. Non-heap values, such as local variables or primitive data types, are not tracked in the shadow stack.
 
-### 1. Pre-Garbage Collection: Shadow Stack Tracking
-- During the execution of the program, heap references from each function are pushed onto both the **WebAssembly stack** (as local variables) and the **shadow stack** (for global tracking).
-- The shadow stack only tracks **heap references**, minimizing the number of push/pop operations.
-- **Escape analysis** is applied to determine if an object escapes its current function. Non-escaping objects are handled within their local frame and do not need to be pushed to the shadow stack.
+**Main Responsibilities of the Shadow Stack**:
+- **Track heap references**: Each time a function allocates or uses a heap object, the reference (pointer) to that object is pushed onto the shadow stack.
+- **Ensure correct updates**: When objects are moved during GC, the shadow stack ensures heap references are updated with their new addresses.
+- **Handle function calls/returns**: Heap references from a function’s stack frame are pushed onto the shadow stack when the function is entered, and popped when the function returns.
 
-### 2. GC Triggered During Execution
-- **Garbage collection** is triggered selectively at safe points, such as function boundaries (entry or exit) or based on memory usage thresholds.
-- When GC is triggered, the shadow stack is used to identify and update heap references across all stack frames, regardless of whether the references are from the current or previous function calls.
+**Why We Don’t Track Non-Heap Values**:
+- **Efficiency**: The WebAssembly stack handles non-heap values (such as integers, floats, and intermediate calculation results) efficiently. By excluding these values from the shadow stack, we reduce the memory and performance overhead of tracking stack frames.
 
-### 3. Heap Object Relocation
-- During GC, heap objects are moved from one memory region (the "from-space") to another (the "to-space"), and heap references in the shadow stack are updated with new memory addresses.
-- Since the shadow stack contains all live heap references from every function frame, it ensures that all references, even those from previous frames, are updated correctly.
+### Temporary Offloading Region
 
-### 4. Post-GC: Rehydrating the WebAssembly Stack
-- After garbage collection, if a function's WebAssembly stack frame contains outdated heap references, those references are updated based on the shadow stack.
-- **Lazy updates** are applied, meaning that WebAssembly stack frames are only updated when necessary (i.e., when heap references have changed).
-- The updated heap references from the shadow stack are pushed back onto the WebAssembly stack when the function returns or resumes execution.
+The **temporary offloading region** is a pre-allocated **8 KB** block of memory located at the **beginning of memory**. Its purpose is to handle **non-heap values** during garbage collection.
 
-### Example Flow
+**Key Use Cases**:
+1. **Offloading non-heap values**: When garbage collection is triggered, non-heap values in the WebAssembly stack (e.g., local variables, function arguments) are temporarily moved to the offloading region. This allows the WebAssembly stack to be cleared for garbage collection.
+2. **Rehydrating the WebAssembly stack**: Once GC completes, non-heap values stored in the offloading region are restored back onto the WebAssembly stack.
 
-#### Function A allocates memory:
-1. Function **A** allocates an object on the heap and stores the pointer in its WebAssembly stack frame:
-   ```wasm
-   (local $heap_ref i32)   ;; Local variable in A's frame, a pointer to a heap object
-   ```
-2. The pointer is also pushed onto the **shadow stack**:
-   ```wasm
-   (global.set $shadow_stack[i32])  ;; Shadow stack holds the reference
-   ```
+**Why We Use a Fixed 8 KB Region**:
+- **Worst-case scenario**: We pre-allocate a region large enough to handle the maximum expected stack frame size for any function. This avoids dynamic resizing during GC, simplifying memory management.
+- **Predictable performance**: The fixed region ensures that we avoid costly memory allocation operations during GC, which could otherwise introduce latency.
 
-#### Function A calls function B:
-1. Function **A** calls function **B**, which creates a new stack frame:
-   - Function **B** pushes its own heap references onto both the WebAssembly and shadow stacks.
+### GC Epoch System
 
-#### GC is triggered in function B:
-1. Garbage collection is triggered during **function B**'s execution.
-2. The garbage collector uses the **shadow stack** to update heap references for both **function A** and **function B**.
-3. Heap objects are moved, and the **shadow stack** is updated with new memory addresses for all live objects.
+The **GC Epoch** system ensures that stack frames are updated **exactly once per garbage collection cycle**, preventing redundant updates as functions return through the call stack. 
 
-#### Function B returns:
-1. When **function B** returns, **function A** resumes execution.
-2. If **function A**'s WebAssembly stack frame contains outdated heap references (due to GC), those references are updated using the **shadow stack**.
+**Key Responsibilities of the GC Epoch System**:
+- **Track the state of each stack frame relative to GC runs**: Every time GC is triggered, the system increments a global **GC Epoch counter**.
+- **Per-frame tracking**: Each function stack frame is assigned a **GC Epoch value**. This value indicates when the stack frame was last updated relative to the global GC Epoch.
+- **Efficient updates**: When a function returns, the stack frame is checked to see if its **GC Epoch** is **older** than the current global GC Epoch. If it is older, it means the frame hasn’t been updated since the last GC run, and its heap references need to be updated. If the frame’s epoch matches the current epoch, no updates are needed.
 
-### Optimizations
+**How the GC Epoch System Works**:
+1. **GC is triggered**: The global GC Epoch counter is incremented (e.g., from 1 to 2).
+2. **Heap relocation**: Objects are moved, and the shadow stack is updated with the new addresses.
+3. **Checking frames**: As functions return, each function’s stack frame is checked against the current GC Epoch. If its epoch is outdated, the frame is updated.
 
-#### 1. Escape Analysis
-- **Escape analysis** minimizes shadow stack operations by identifying objects that do not escape their current function. These objects are handled within the local stack frame without being pushed to the shadow stack.
+This system minimizes redundant updates when heap references are relocated multiple times during multiple GC cycles.
 
-#### 2. Lazy Stack Updates
-- WebAssembly stack frames are updated only when necessary (i.e., when heap objects have been moved during GC). This reduces the frequency of updates and improves performance.
+### Heap Object Relocation
 
-#### 3. Selective GC Triggering
-- GC is triggered at function boundaries or based on memory usage thresholds, reducing unnecessary garbage collection cycles.
+The **copying garbage collector** moves live heap objects from one memory region (the **from-space**) to another (the **to-space**). This process requires that all heap references (i.e., pointers) are updated to reflect the new addresses of the moved objects. The shadow stack plays a critical role in ensuring that all references are correctly updated.
 
-## Trade-offs
+**Steps in the Relocation Process**:
+1. **Identify live objects**: During GC, all live objects in the heap are identified by traversing the shadow stack.
+2. **Move objects**: Live objects are moved from from-space to to-space.
+3. **Update references**: The shadow stack is updated to point to the new addresses of the relocated objects.
+4. **Stack frame updates**: When functions return, their stack frames are checked for outdated references, and if necessary, they are updated with the new heap addresses.
 
-### Pros
-- **Correctness**: The shadow stack ensures that all heap references across all function frames are updated correctly during garbage collection.
-- **Optimized performance**: By applying escape analysis, lazy updates, and selective GC triggering, the overhead associated with maintaining the shadow stack and updating the WebAssembly stack is minimized.
+### Triggering Garbage Collection
 
-### Cons
-- **Overhead**: There is still some overhead associated with pushing/popping heap references onto the shadow stack and updating the WebAssembly stack.
-- **Complexity**: The implementation requires careful management of the shadow stack and synchronization with the WebAssembly stack, which adds complexity to the system.
+Garbage collection is triggered when **memory usage reaches 50%** of the allocated heap. However, to avoid disrupting function execution, GC does not run immediately. Instead, it is deferred to the **next function boundary** (either function entry or exit).
+
+**Why Trigger at Function Boundaries?**
+- **Minimized disruption**: By delaying garbage collection until a function boundary, we ensure that GC doesn’t interrupt ongoing operations or calculations within a function. This approach makes the system less prone to performance spikes and ensures smoother execution.
+
+**Triggering Conditions**:
+- **Memory usage reaches 50%**: When the allocated heap fills to half its size, a GC flag is set, indicating that the next function boundary should trigger garbage collection.
+
+### Updating and Rehydrating the WebAssembly Stack
+
+Once garbage collection completes, the WebAssembly stack is **rehydrated** with the updated heap references from the shadow stack and the non-heap values from the offloading region.
+
+**Rehydration Process**:
+1. **Heap references**: Updated heap references are restored to the WebAssembly stack from the shadow stack.
+2. **Non-heap values**: Non-heap values stored in the offloading region are restored to their original locations on the WebAssembly stack.
+3. **Resume execution**: After rehydration, execution resumes with the correct stack frame state.
+
+## Detailed Example: Function Call Flow with GC
+
+### Example Flow with Function A, B, and C
+
+#### 1. Initial Function Calls:
+- **Function A** allocates memory and stores a pointer to a heap object in its stack frame.
+- **Function B** is called by A, and it also allocates memory. Heap references are tracked in both **A** and **B**’s stack frames, which are pushed onto the shadow stack.
+
+#### 2. Function C is Called:
+- **Function B** calls **Function C**, which also allocates memory.
+- The heap reference from **Function C** is pushed to the shadow stack.
+
+#### 3. Garbage Collection is Triggered:
+- **Memory usage reaches 50%**: A flag is set to trigger GC, but it waits until the next function boundary.
+- **Function C** completes, and GC begins at the function exit boundary.
+- The global **GC Epoch** is incremented from **1 to 2**.
+
+#### 4. Heap Relocation:
+- Live heap objects are moved from **from-space** to **to-space**.
+- The shadow stack is updated with the new heap addresses.
+
+#### 5. Function C Returns to B:
+- **Function B**’s GC Epoch is **1** (outdated). Since the global GC Epoch is now **2**, **Function B**’s stack frame is updated with the new heap references, and its epoch is updated to **2**.
+
+#### 6. Function B Returns to A:
+- **Function A**’s GC Epoch is also **1**. Its frame is updated, and the epoch is set to **2**.
+
+#### 7. Rehydrating the WebAssembly Stack:
+- Heap references from the shadow stack are restored to the WebAssembly stack.
+- Non-heap values from the offloading region are restored to the WebAssembly stack.
+- Execution continues from **Function A** with the correct stack frame state.
