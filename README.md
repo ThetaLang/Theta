@@ -93,11 +93,9 @@ capsule DataStructures {
   git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
   export PATH="$PATH:/path/to/depot_tools"
   ```
-3. **Install Wasmer**
-  ```sh
-    curl https://get.wasmer.io -sSfL | WASMER_DIR=lib/wasmer sh
-  ```
-4. **Build the Project**:
+4. **Install Emscripten**
+    Follow the steps on the [emscripten website](https://emscripten.org/docs/getting_started/downloads.html) to install emscripten on your device. Make sure to add it to your `$PATH`.
+5. **Build the Project**:
   ```sh
   ./build.sh
   ```

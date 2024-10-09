@@ -18,6 +18,7 @@ set(V8_DIR ${CMAKE_SOURCE_DIR}/lib/v8)  # Path to V8 directory in your project
 # Collect all source files recursively from the src directory
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp")
 list(REMOVE_ITEM SRC_FILES "${CMAKE_SOURCE_DIR}/theta.cpp")
+list(FILTER SRC_FILES EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/src/gc/.*")
 
 # Add main source file separately
 set(MAIN_SRC "${CMAKE_SOURCE_DIR}/theta.cpp")
@@ -36,7 +37,22 @@ add_custom_target(copy_wat ALL
     COMMAND ${CMAKE_COMMAND} -E copy ${WAT_FILE_SRC} ${WAT_FILE_DEST}
     COMMENT "Copying WAT file to build directory"
 )
-add_dependencies(copy_wat theta)
+add_dependencies(theta copy_wat)
+
+find_program(EMCC_EXECUTABLE NAMES emcc)
+
+if (NOT EMCC_EXECUTABLE)
+  message(FATAL_ERROR "Emscripten (emcc) not found in PATH! Please make sure it is installed.")
+endif()
+
+add_custom_target(compile_theta_wasm_std
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/wasm
+    COMMAND emcc -O2 ${CMAKE_SOURCE_DIR}/src/gc/GarbageCollector.cpp -o ${CMAKE_BINARY_DIR}/wasm/gc.wasm -s WASM=1 -s SIDE_MODULE=1
+    COMMENT "Compiling Theta standard library to WebAssembly"
+)
+
+add_dependencies(compile_theta_wasm_std copy_wat)
+add_dependencies(theta compile_theta_wasm_std)
 
 # Add the readline library
 if (WIN32)
