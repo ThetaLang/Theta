@@ -39,16 +39,9 @@ add_custom_target(copy_wat ALL
 )
 add_dependencies(theta copy_wat)
 
-find_program(EMCC_EXECUTABLE NAMES emcc)
-
-if (NOT EMCC_EXECUTABLE)
-  message(FATAL_ERROR "Emscripten (emcc) not found in PATH! Please make sure it is installed.")
-endif()
-
 add_custom_target(compile_theta_wasm_std
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/wasm
-    COMMAND emcc -O2 ${CMAKE_SOURCE_DIR}/src/gc/GarbageCollector.cpp -o ${CMAKE_BINARY_DIR}/wasm/gc.wasm -s WASM=1 -s SIDE_MODULE=1
-    COMMENT "Compiling Theta standard library to WebAssembly"
+    COMMAND clang --target=wasm32 -nostdlib -O2 -Wl,--no-entry -Wl,--export-all -Wl,--allow-undefined -Wl,--initial-memory=1310720 -o ${CMAKE_BINARY_DIR}/wasm/gc.wasm ${CMAKE_SOURCE_DIR}/src/gc/GarbageCollector.cpp
+    COMMENT "Compiling Theta standard library to WebAssembly with clang"
 )
 
 add_dependencies(compile_theta_wasm_std copy_wat)
