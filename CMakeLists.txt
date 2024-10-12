@@ -5,6 +5,9 @@ project(Theta)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Add Emscripten include path to CMAKE_CXX_FLAGS for editor recognition of emscripten.h
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/absolute/path/to/emsdk/upstream/emscripten/system/include")
+
 # Include ExternalProject module
 include(ExternalProject)
 
@@ -39,9 +42,21 @@ add_custom_target(copy_wat ALL
 )
 add_dependencies(theta copy_wat)
 
+find_program(EMCC_EXECUTABLE NAMES emcc)
+
+if (NOT EMCC_EXECUTABLE)
+  message(FATAL_ERROR "Emscripten (emcc) not found in PATH! Please make sure it is installed.")
+else()
+  get_filename_component(EMSCRIPTEN_ROOT_PATH "${EMCC_EXECUTABLE}" DIRECTORY)
+endif()
+
+# Collect all source files recursively from the src/gc directory
+file(GLOB_RECURSE GC_SRC_FILES "${CMAKE_SOURCE_DIR}/src/gc/*.cpp")
+
+# Add custom target to compile the collected files to WebAssembly
 add_custom_target(compile_theta_wasm_std
-    COMMAND clang --target=wasm32 -nostdlib -O2 -Wl,--no-entry -Wl,--export-all -Wl,--allow-undefined -Wl,--initial-memory=1310720 -o ${CMAKE_BINARY_DIR}/wasm/gc.wasm ${CMAKE_SOURCE_DIR}/src/gc/GarbageCollector.cpp
-    COMMENT "Compiling Theta standard library to WebAssembly with clang"
+    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --no-entry -o ${CMAKE_BINARY_DIR}/wasm/gc.wasm ${GC_SRC_FILES}
+    COMMENT "Compiling Theta standard library to WebAssembly with emcc"
 )
 
 add_dependencies(compile_theta_wasm_std copy_wat)
@@ -65,7 +80,7 @@ else()
 endif()
 
 # Include directories for Binaryen, catch2, and V8
-include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${V8_DIR}/src/v8/include ${V8_DIR}/src/v8/third_party/wasm-api)
+include_directories(${SRC_DIR} ${CATCH2_DIR} ${BINARYEN_DIR}/src ${V8_DIR}/src/v8/include ${V8_DIR}/src/v8/third_party/wasm-api ${EMSCRIPTEN_ROOT_PATH}/system/include)
 
 # Add the V8 external project
 ExternalProject_Add(
