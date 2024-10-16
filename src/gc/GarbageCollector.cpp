@@ -32,6 +32,19 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
+  void __Theta_Lang_populateClosure(int32_t closureMemAddress, int32_t paramAddress) {
+    int32_t *arityAddr = reinterpret_cast<int32_t*>(closureMemAddress + 4);
+
+    int32_t arity = *arityAddr;
+
+    *arityAddr -= 1;
+    
+    int32_t *argAddress = arityAddr + arity; // Pointer arithmetic dictates that this will increase the address by arity * 4
+
+    *argAddress = paramAddress;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
   void runGC () {
     Theta::ShadowStack::getInstance().pushFrame(epoch);
     Theta::ShadowStack::getInstance().pushReference(allocationPointer);

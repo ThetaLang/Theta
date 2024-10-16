@@ -65,7 +65,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 50);
     }
@@ -77,7 +77,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 36);
     }
@@ -89,7 +89,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 5);
     }
@@ -101,7 +101,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 37);
     }
@@ -145,7 +145,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 10);
     }
@@ -157,7 +157,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == -35);
     }
@@ -169,7 +169,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == -3);
     }
@@ -181,7 +181,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         // Note: this is 40 because all numbers are currently being treated as integers instead of
         // being typecast to floats. Once we fix this, it'll be 40.44
@@ -201,7 +201,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 4);
     }
@@ -219,7 +219,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 10);
     }
@@ -235,7 +235,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 12);
     }
@@ -255,7 +255,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 2);
     }
@@ -269,7 +269,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.exportNames.size() >= 3);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 10);
     }
@@ -306,7 +306,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.exportNames.size() >= 3);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 500);
     }
@@ -326,7 +326,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.exportNames.size() >= 3);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 1005);
     }
@@ -340,7 +340,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 2);
+        REQUIRE(context.exportNames.size() >= 2);
         REQUIRE(context.result.kind() == wasm::I32);
         REQUIRE(context.result.i32() == 0);
     }
@@ -362,7 +362,7 @@ TEST_CASE_METHOD(CodeGenTest, "CodeGen") {
             }
         )");
 
-        REQUIRE(context.exportNames.size() == 3);
+        REQUIRE(context.exportNames.size() >= 3);
         REQUIRE(context.result.kind() == wasm::I64);
         REQUIRE(context.result.i64() == 55);
     }

@@ -32,16 +32,6 @@ add_subdirectory(${BINARYEN_DIR})
 # Add executable for the main program
 add_executable(theta ${SRC_FILES} ${MAIN_SRC})
 
-# Add a custom command to copy the WAT file
-set(WAT_FILE_SRC "${CMAKE_SOURCE_DIR}/src/wasm/ThetaLangCore.wat")
-set(WAT_FILE_DEST "${CMAKE_BINARY_DIR}/wasm")
-add_custom_target(copy_wat ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${WAT_FILE_DEST}
-    COMMAND ${CMAKE_COMMAND} -E copy ${WAT_FILE_SRC} ${WAT_FILE_DEST}
-    COMMENT "Copying WAT file to build directory"
-)
-add_dependencies(theta copy_wat)
-
 find_program(EMCC_EXECUTABLE NAMES emcc)
 
 if (NOT EMCC_EXECUTABLE)
@@ -54,13 +44,14 @@ endif()
 file(GLOB_RECURSE GC_SRC_FILES "${CMAKE_SOURCE_DIR}/src/gc/*.cpp")
 
 # Add custom target to compile the collected files to WebAssembly
-add_custom_target(compile_theta_wasm_std
-    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --no-entry -o ${CMAKE_BINARY_DIR}/wasm/gc.wasm ${GC_SRC_FILES}
-    COMMENT "Compiling Theta standard library to WebAssembly with emcc"
+set(WASM_DEST "${CMAKE_BINARY_DIR}/wasm")
+add_custom_target(compile_theta_wasm_core
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${WASM_DEST}
+    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --no-entry -o ${WASM_DEST}/ThetaLangCore.wasm ${GC_SRC_FILES}
+    COMMENT "Compiling Theta language core to WebAssembly with emcc"
 )
 
-add_dependencies(compile_theta_wasm_std copy_wat)
-add_dependencies(theta compile_theta_wasm_std)
+add_dependencies(theta compile_theta_wasm_core)
 
 # Add the readline library
 if (WIN32)

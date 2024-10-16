@@ -52,29 +52,14 @@ BinaryenModuleRef CodeGen::initializeWasmModule() {
   BinaryenModuleRef module = importCoreLangWasm();
 
   BinaryenModuleSetFeatures(module, BinaryenFeatureStrings());
-  BinaryenSetMemory(
-    module,
-    1, // IMPORTANT: Memory size is dictated in pages, NOT bytes, where each page is 64k
-    10,
-    "memory", // TODO: We don't actually want to export this -- just for now
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    false,
-    false,
-    MEMORY_NAME.c_str()
-  );
   
-  BinaryenAddTable(
-    module,
-    STRINGREF_TABLE.c_str(),
-    1000,
-    100000000,
-    BinaryenTypeStringref()
-  );
+//  BinaryenAddTable(
+//    module,
+//    STRINGREF_TABLE.c_str(),
+//    1000,
+//    100000000,
+//    BinaryenTypeStringref()
+//  );
 
   StandardLibrary::registerFunctions(module);
 
@@ -695,7 +680,10 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
       expressions.push_back(
         BinaryenCall(
           module,
-          "Theta.Function.populateClosure",
+          // Binaryen doesn't let us use names of function names from pre-generated modules directly,
+          // so we have to jump through a bit of a hoop to find the name that Binaryen mapped
+          // our function to.
+          getNamedFunction("__Theta_Lang_populateClosure", module),
           closureArgs,
           2,
           BinaryenTypeNone()
@@ -1298,7 +1286,7 @@ void CodeGen::registerModuleFunctions(BinaryenModuleRef &module) {
   BinaryenAddActiveElementSegment(
     module,
     FN_TABLE_NAME.c_str(),
-    "0",
+    "1",
     fnNames,
     functionNameToClosureTemplateMap.size(),
     BinaryenConst(module, BinaryenLiteralInt32(0))
@@ -1332,7 +1320,7 @@ int CodeGen::getByteSizeForType(BinaryenType type) {
 }
 
 BinaryenModuleRef CodeGen::importCoreLangWasm() {
-  ifstream file(Compiler::resolveAbsolutePath("wasm/ThetaLangCore.wat"), ios::binary);
+  ifstream file(Compiler::resolveAbsolutePath("wasm/ThetaLangCore.wasm"), ios::binary);
   if (!file.is_open()) {
     cerr << "Failed to open the file." << endl;
     return nullptr;
@@ -1346,9 +1334,9 @@ BinaryenModuleRef CodeGen::importCoreLangWasm() {
   }
 
   // Add a null terminator at the end
-  buffer.push_back('\0');
+  //buffer.push_back('\0');
 
-  BinaryenModuleRef module = BinaryenModuleParse(buffer.data());
+  BinaryenModuleRef module = BinaryenModuleRead(buffer.data(), buffer.size());
 
   file.close();
 
@@ -1367,6 +1355,20 @@ string CodeGen::generateFunctionHash(shared_ptr<FunctionDeclarationNode> functio
   stream << hashed;
 
   return stream.str();
+}
+
+const char* CodeGen::getNamedFunction(string name, BinaryenModuleRef &module) {
+  for (BinaryenIndex i = 0; i < BinaryenGetNumExports(module); ++i) {
+    BinaryenExportRef exportRef = BinaryenGetExportByIndex(module, i);
+  
+    if (BinaryenExportGetKind(exportRef) != BinaryenExternalFunction()) continue;
+
+    const char* exportName = BinaryenExportGetName(exportRef);
+
+    if (exportName == name) return BinaryenExportGetValue(exportRef);
+  }
+
+  throw new runtime_error("Could not find called function: " + name);
 }
 
 #pragma pop_macro("RETURN")

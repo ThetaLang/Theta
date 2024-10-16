@@ -146,5 +146,7 @@ namespace Theta {
     int getByteSizeForType(BinaryenType type);
 
     BinaryenModuleRef importCoreLangWasm();
+
+    const char* getNamedFunction(string name, BinaryenModuleRef &module);
   };
 }
