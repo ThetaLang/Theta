@@ -680,10 +680,7 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
       expressions.push_back(
         BinaryenCall(
           module,
-          // Binaryen doesn't let us use names of function names from pre-generated modules directly,
-          // so we have to jump through a bit of a hoop to find the name that Binaryen mapped
-          // our function to.
-          getNamedFunction("__Theta_Lang_populateClosure", module),
+          "__Theta_Lang_populateClosure",
           closureArgs,
           2,
           BinaryenTypeNone()
@@ -1355,20 +1352,6 @@ string CodeGen::generateFunctionHash(shared_ptr<FunctionDeclarationNode> functio
   stream << hashed;
 
   return stream.str();
-}
-
-const char* CodeGen::getNamedFunction(string name, BinaryenModuleRef &module) {
-  for (BinaryenIndex i = 0; i < BinaryenGetNumExports(module); ++i) {
-    BinaryenExportRef exportRef = BinaryenGetExportByIndex(module, i);
-  
-    if (BinaryenExportGetKind(exportRef) != BinaryenExternalFunction()) continue;
-
-    const char* exportName = BinaryenExportGetName(exportRef);
-
-    if (exportName == name) return BinaryenExportGetValue(exportRef);
-  }
-
-  throw new runtime_error("Could not find called function: " + name);
 }
 
 #pragma pop_macro("RETURN")

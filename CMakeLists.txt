@@ -47,7 +47,7 @@ file(GLOB_RECURSE GC_SRC_FILES "${CMAKE_SOURCE_DIR}/src/gc/*.cpp")
 set(WASM_DEST "${CMAKE_BINARY_DIR}/wasm")
 add_custom_target(compile_theta_wasm_core
     COMMAND ${CMAKE_COMMAND} -E make_directory ${WASM_DEST}
-    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --no-entry -o ${WASM_DEST}/ThetaLangCore.wasm ${GC_SRC_FILES}
+    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --profiling-funcs --no-entry -o ${WASM_DEST}/ThetaLangCore.wasm ${GC_SRC_FILES}
     COMMENT "Compiling Theta language core to WebAssembly with emcc"
 )
 
