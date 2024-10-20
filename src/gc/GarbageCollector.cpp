@@ -45,6 +45,17 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
+  int32_t __Theta_Lang_allocateMem(int32_t byteSize) {
+    int provisionedAddress = allocationPointer;
+
+    allocationPointer += byteSize;
+
+    // TODO: Track roots here
+
+    return provisionedAddress;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
   void runGC () {
     Theta::ShadowStack::getInstance().pushFrame(epoch);
     Theta::ShadowStack::getInstance().pushReference(allocationPointer);

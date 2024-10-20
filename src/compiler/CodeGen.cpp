@@ -1,3 +1,4 @@
+#include <complex>
 #include <iostream>
 #include <libgen.h>
 #include <limits.h>
@@ -325,16 +326,15 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
           byteSize,
           0,
           0,
-          BinaryenConst(module, BinaryenLiteralInt32(memoryOffset)),
+          generateAllocatorCall(byteSize, module),
           generatedValue,
           getBinaryenStorageTypeFromTypeDeclaration(paramType),
           MEMORY_NAME.c_str()
         )
       );
-      
+     
+      // TODO: Change this not to use memoryOffset and instead get the address
       argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
-  
-      memoryOffset += byteSize;
     }
   }
 
@@ -636,6 +636,14 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
       stringRefOffset += 1;
 
       expressions.push_back(
+        BinaryenLocalSet(
+          module,
+          34, // TODO: Same as below
+          BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress()))
+        )
+      );
+
+      expressions.push_back(
         BinaryenTableSet(
           module,
           STRINGREF_TABLE.c_str(),
@@ -647,7 +655,13 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
       addressToPopulate = Pointer<PointerType::Data>(memoryOffset);
       int argByteSize = getByteSizeForType(argType);
 
-      memoryOffset += argByteSize;
+      expressions.push_back(
+        BinaryenLocalSet(
+          module,
+          34, // TODO: This is a random number. Need to get a real one
+          generateAllocatorCall(argByteSize, module)
+        )
+      );
 
       expressions.push_back(
         BinaryenStore(
@@ -655,7 +669,7 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
           argByteSize,
           0,
           0,
-          BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress())),
+          BinaryenLocalGet(module, 34, BinaryenTypeInt32()), // TODO: used to be addressToPopulate
           generatedValue,
           getBinaryenStorageTypeFromTypeDeclaration(argType),
           MEMORY_NAME.c_str()
@@ -674,7 +688,11 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
           scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
           BinaryenTypeInt32()
         ),
-        BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress()))
+        BinaryenLocalGet(
+          module,
+          34, // TODO: Same as above
+          BinaryenTypeInt32()
+        )
       };
 
       expressions.push_back(
@@ -1119,6 +1137,20 @@ vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &c
   closure.setAddress(memLocation);
 
   return expressions;
+}
+
+BinaryenExpressionRef CodeGen::generateAllocatorCall(int byteSize, BinaryenModuleRef &module) {
+  BinaryenExpressionRef operands[1] = {
+    BinaryenConst(module, BinaryenLiteralInt32(byteSize))
+  };
+
+  return BinaryenCall(
+    module,
+    "__Theta_Lang_allocateMem",
+    operands,
+    1,
+    BinaryenTypeInt32()
+  );
 }
 
 BinaryenOp CodeGen::getBinaryenOpFromBinOpNode(shared_ptr<BinaryOperationNode> binOpNode) {

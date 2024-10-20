@@ -133,6 +133,8 @@ namespace Theta {
 
     vector<BinaryenExpressionRef> generateClosureMemoryStore(WasmClosure &closure, BinaryenModuleRef &module);
 
+    BinaryenExpressionRef generateAllocatorCall(int byteSize, BinaryenModuleRef &module);
+
     void collectClosureScope(
       shared_ptr<ASTNode> node,
       set<string> &identifiersToFind,
