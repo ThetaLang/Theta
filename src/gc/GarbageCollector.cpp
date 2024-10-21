@@ -17,6 +17,11 @@ int epoch = 1;
 
 extern "C" {
   EMSCRIPTEN_KEEPALIVE
+  int __Theta_Lang_getAllocationPointer() {
+    return allocationPointer;  
+  }
+
+  EMSCRIPTEN_KEEPALIVE
   void initializeThetaGC() {
     // We allocate 1 MB of space after the Clang heap to avoid collisions
     THETA_MEMORY_REGION_BASE = __heap_base + 1024 * 1024;
@@ -56,18 +61,6 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
-  void runGC () {
-    Theta::ShadowStack::getInstance().pushFrame(epoch);
-    Theta::ShadowStack::getInstance().pushReference(allocationPointer);
-  }
-
-  // This is just a test function for now
-  EMSCRIPTEN_KEEPALIVE
-  int32_t getLatestReference() {
-    return Theta::ShadowStack::getInstance().currentFrame().references.front().address;
-  }
-
-  EMSCRIPTEN_KEEPALIVE
   void* loadFromMemory(int address) {
     return (void*)(THETA_HEAP_BASE + address);
   }
@@ -96,5 +89,3 @@ extern "C" {
     *memoryLocation = value;
   }
 }
-
-

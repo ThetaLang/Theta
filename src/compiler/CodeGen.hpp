@@ -83,7 +83,7 @@ namespace Theta {
       BinaryenModuleRef &modul
     );
 
-    vector<Pointer<PointerType::Data>> generateFunctionInvocationArgMemoryInsertions(
+    int generateFunctionInvocationArgMemoryInsertions(
       shared_ptr<FunctionInvocationNode> funcInvNode,
       vector<BinaryenExpressionRef> &expressions,
       BinaryenModuleRef &module,

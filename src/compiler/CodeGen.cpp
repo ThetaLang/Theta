@@ -254,12 +254,14 @@ BinaryenExpressionRef CodeGen::generateClosureFunctionDeclaration(
 
   vector<BinaryenExpressionRef> expressions = storage.second;
 
-  BinaryenExpressionRef addressRefExpression = BinaryenConst(
-    module,
-    BinaryenLiteralInt32(storage.first.getPointer().getAddress())
+  BinaryenExpressionRef returnedValueExpression = returnValueFormatter(
+    BinaryenBinary(
+      module,
+      BinaryenSubInt32(),
+      BinaryenCall(module, "__Theta_Lang_getAllocationPointer", {}, 0, BinaryenTypeInt32()),
+      BinaryenConst(module, BinaryenLiteralInt32(storage.first.getTotalStorageSize()))
+    )
   );
-
-  BinaryenExpressionRef returnedValueExpression = returnValueFormatter(addressRefExpression);
 
   // Returns a reference to the closure memory address
   expressions.push_back(returnedValueExpression);
@@ -292,12 +294,14 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
   }
 
   vector<BinaryenExpressionRef> expressions;
-  vector<Pointer<PointerType::Data>> argPointers; 
 
   // Store the args into memory
+  int addedArgs = 0;
   for (auto param : simplifiedReference->getParameters()->getElements()) {
     string paramName = dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier();
 
+    // Only grab the parameters of the parent function to store into the closure, we don't have
+    // arguments for the lambda at this point
     if (originalParameters.find(paramName) != originalParameters.end()) continue;
 
     shared_ptr<ASTNode> paramValue = scope.lookup(paramName).value();
@@ -305,6 +309,14 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
 
     BinaryenExpressionRef generatedValue = generate(paramValue, module);
     if (paramType->getType() == DataTypes::STRING) {
+      // TODO: This breaks the stringref implementation, because we need to pass the
+      // stringref offset as a BinaryenConst that will get stored at the correct address
+      // in the closure, but we don't have an easy way to do that with this flow.
+      // A working version of this exists in generateFunctionInvocationArgMemoryInsertions
+      // but that only works because we're directly inserting only one thing at a time per
+      // arg and calling populateClosure.
+      // Doesn't really matter at the end of the day because we're moving away from stringref anyway
+
       expressions.push_back(
         BinaryenTableSet(
           module,
@@ -313,8 +325,6 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
           generatedValue
         )
       );
-
-      argPointers.push_back(Pointer<PointerType::Data>(stringRefOffset));
 
       stringRefOffset += 1;
     } else {
@@ -332,16 +342,15 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
           MEMORY_NAME.c_str()
         )
       );
-     
-      // TODO: Change this not to use memoryOffset and instead get the address
-      argPointers.push_back(Pointer<PointerType::Data>(memoryOffset));
     }
+
+    addedArgs++;
   }
 
   WasmClosure closure = WasmClosure(
     referencePtr,
     simplifiedReference->getParameters()->getElements().size(),
-    argPointers
+    addedArgs
   );
 
   // Store a closure pointing to the args that were stored in memory
@@ -616,52 +625,35 @@ BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInv
   return generateCallIndirectForNewClosure(funcInvNode, foundLocalReference.value(), scopeLookupIdentifier, module);
 }
 
-vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryInsertions(
+int CodeGen::generateFunctionInvocationArgMemoryInsertions(
   shared_ptr<FunctionInvocationNode> funcInvNode,
   vector<BinaryenExpressionRef> &expressions,
   BinaryenModuleRef &module,
   string refIdentifier
 ) {
-  vector<Pointer<PointerType::Data>> paramMemPointers;
+  int addedArgs = 0;
 
   // Store each passed argument into memory
   for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
     shared_ptr<TypeDeclarationNode> argType = dynamic_pointer_cast<TypeDeclarationNode>(arg->getResolvedType());
 
     BinaryenExpressionRef generatedValue = generate(arg, module);
-    Pointer<PointerType::Data> addressToPopulate;
+    BinaryenExpressionRef storageExpression;
     if (argType->getType() == DataTypes::STRING) {
-      addressToPopulate = Pointer<PointerType::Data>(stringRefOffset);
-
-      stringRefOffset += 1;
-
-      expressions.push_back(
-        BinaryenLocalSet(
-          module,
-          34, // TODO: Same as below
-          BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress()))
-        )
-      );
-
+      storageExpression = BinaryenConst(module, BinaryenLiteralInt32(stringRefOffset));
+      
       expressions.push_back(
         BinaryenTableSet(
           module,
           STRINGREF_TABLE.c_str(),
-          BinaryenConst(module, BinaryenLiteralInt32(addressToPopulate.getAddress())),
+          storageExpression,
           generatedValue
         )
       );
-    } else {
-      addressToPopulate = Pointer<PointerType::Data>(memoryOffset);
-      int argByteSize = getByteSizeForType(argType);
 
-      expressions.push_back(
-        BinaryenLocalSet(
-          module,
-          34, // TODO: This is a random number. Need to get a real one
-          generateAllocatorCall(argByteSize, module)
-        )
-      );
+      stringRefOffset += 1;
+    } else {
+      int argByteSize = getByteSizeForType(argType);
 
       expressions.push_back(
         BinaryenStore(
@@ -669,15 +661,20 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
           argByteSize,
           0,
           0,
-          BinaryenLocalGet(module, 34, BinaryenTypeInt32()), // TODO: used to be addressToPopulate
+          generateAllocatorCall(argByteSize, module),
           generatedValue,
           getBinaryenStorageTypeFromTypeDeclaration(argType),
           MEMORY_NAME.c_str()
         )
       );
-    }
 
-    paramMemPointers.push_back(addressToPopulate);
+      storageExpression = BinaryenBinary(
+        module,
+        BinaryenSubInt32(),
+        BinaryenCall(module, "__Theta_Lang_getAllocationPointer", {}, 0, BinaryenTypeInt32()),
+        BinaryenConst(module, BinaryenLiteralInt32(argByteSize))
+      );
+    }
 
     // If a refIdentifier was passed, that means we have an existing closure
     // in memory that we want to populate.
@@ -688,11 +685,7 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
           scope.lookup(refIdentifier).value()->getMappedBinaryenIndex(),
           BinaryenTypeInt32()
         ),
-        BinaryenLocalGet(
-          module,
-          34, // TODO: Same as above
-          BinaryenTypeInt32()
-        )
+        storageExpression
       };
 
       expressions.push_back(
@@ -707,7 +700,7 @@ vector<Pointer<PointerType::Data>> CodeGen::generateFunctionInvocationArgMemoryI
     }
   }
 
-  return paramMemPointers;
+  return addedArgs;
 }
 
 BinaryenExpressionRef CodeGen::generateCallIndirectForExistingClosure(
@@ -874,18 +867,25 @@ BinaryenExpressionRef CodeGen::generateCallIndirectForNewClosure(
     );
   } else {
     WasmClosure closure = WasmClosure::clone(closureTemplate);
-    vector<Pointer<PointerType::Data>> paramMemPointers = generateFunctionInvocationArgMemoryInsertions(
+    int addedArgs = generateFunctionInvocationArgMemoryInsertions(
       funcInvNode,
       expressions,
       module
     );
 
-    closure.addArgs(paramMemPointers);
+    closure.addArgs(addedArgs);
 
     vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
     copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
 
-    expressions.push_back(BinaryenConst(module, BinaryenLiteralInt32(closure.getPointer().getAddress())));
+    expressions.push_back(
+      BinaryenBinary(
+        module,
+        BinaryenSubInt32(),
+        BinaryenCall(module, "__Theta_Lang_getAllocationPointer", {}, 0, BinaryenTypeInt32()),
+        BinaryenConst(module, BinaryenLiteralInt32(closure.getTotalStorageSize()))
+      )
+    );
   }
   
   BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[expressions.size()];
@@ -1102,39 +1102,82 @@ void CodeGen::generateSource(shared_ptr<SourceNode> sourceNode, BinaryenModuleRe
 }
 
 vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &closure, BinaryenModuleRef &module) {
-  // At least 4 bytes for the fn_idx and 4 bytes for the arity. Then 4 bytes for each parameter the closure takes.
-  // We also multiply the remaining arity, since not all parameters may have been applied to the function
-  int totalMemSize = 8 + (closure.getArgPointers().size() * 4) + (closure.getArity() * 4);
-  int memLocation = memoryOffset;
-
-  memoryOffset += totalMemSize;
-
-  vector<int> closureDataSegments = { closure.getFunctionPointer().getAddress(), closure.getArity() };
-  for (int i = 0; i < closure.getArgPointers().size(); i++) {
-    closureDataSegments.push_back(closure.getArgPointers().at(i).getAddress());
-  }
-
   vector<BinaryenExpressionRef> expressions;
 
-  for (int i = 0; i < closureDataSegments.size(); i++) {
-    // Don't store uninitialized pointers
-    if (closureDataSegments.at(i) == -1) continue;
+  expressions.push_back(generateAllocatorCall(closure.getTotalStorageSize(), module));
+
+  BinaryenExpressionRef allocationPointerBeforeAllocation = BinaryenBinary(
+    module,
+    BinaryenSubInt32(),
+    BinaryenCall(
+      module,
+      "__Theta_Lang_getAllocationPointer",
+      {},
+      0,
+      BinaryenTypeInt32()
+    ),
+    BinaryenConst(module, BinaryenLiteralInt32(closure.getTotalStorageSize()))
+  );
+
+  expressions.push_back(
+    BinaryenStore(
+      module,
+      4,
+      0,
+      0,
+      allocationPointerBeforeAllocation,
+      BinaryenConst(module, BinaryenLiteralInt32(closure.getFunctionPointer().getAddress())),
+      BinaryenTypeInt32(),
+      MEMORY_NAME.c_str()
+    )
+  );
+
+  expressions.push_back(
+    BinaryenStore(
+      module,
+      4,
+      4,
+      0,
+      allocationPointerBeforeAllocation,
+      BinaryenConst(module, BinaryenLiteralInt32(closure.getArity())),
+      BinaryenTypeInt32(),
+      MEMORY_NAME.c_str()
+    )
+  );
+
+
+  for (int i = 0; i < closure.getArgCount(); i++) {
+    // Calculate the address of the argument we stored for the 
+    // closure
+    BinaryenExpressionRef argAddressExpr = BinaryenBinary(
+      module,
+      BinaryenSubInt32(),
+      BinaryenCall(
+        module,
+        "__Theta_Lang_getAllocationPointer",
+        {},
+        0,
+        BinaryenTypeInt32()
+      ),
+      BinaryenConst(
+        module,
+        BinaryenLiteralInt32(closure.getTotalStorageSize() + ((closure.getArgCount() - i) * 4))
+      )
+    );
 
     expressions.push_back(
       BinaryenStore(
         module,
         4,
-        i * 4,
+        8 + (i * 4),
         0,
-        BinaryenConst(module, BinaryenLiteralInt32(memLocation)),
-        BinaryenConst(module, BinaryenLiteralInt32(closureDataSegments.at(i))),
+        allocationPointerBeforeAllocation,
+        argAddressExpr,
         BinaryenTypeInt32(),
         MEMORY_NAME.c_str()
       )
     );
   }
-
-  closure.setAddress(memLocation);
 
   return expressions;
 }
