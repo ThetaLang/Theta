@@ -69,7 +69,6 @@ namespace Theta {
     string FN_TABLE_NAME = "ThetaFunctionRefs";
     string STRINGREF_TABLE = "ThetaStringRefs";
     string MEMORY_NAME = "0";
-    int memoryOffset = 0;
     int stringRefOffset = 1;
     unordered_map<string, WasmClosure> functionNameToClosureTemplateMap;
     string LOCAL_IDX_SCOPE_KEY = "ThetaLang.internal.localIdxCounter";
