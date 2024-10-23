@@ -15,24 +15,34 @@ namespace Theta {
     WasmClosure(
       Pointer<PointerType::Function> ptr,
       int initialArity,
-      int totalArgs
-    ) : fnPointer(ptr), arity(initialArity - totalArgs), argCount(totalArgs) {}
+      vector<int> argumentSizes
+    ) : fnPointer(ptr), arity(initialArity) {
+      argSizes.resize(arity);
+
+      for (int i = 0; i < argumentSizes.size(); i++) {
+        argSizes[arity - 1] = argumentSizes.at(i);
+
+        arity--;
+      }
+    }
 
     Pointer<PointerType::Function> getFunctionPointer() { return fnPointer; }
 
     int getArity() { return arity; }
 
-    int getArgCount() { return argCount; }
+    vector<int> getArgSizes() { return argSizes; }
 
-    void addArgs(int argsToAdd) {
-      argCount += argsToAdd;
-      arity -= argsToAdd;
+    void addArgs(vector<int> argSizesToAdd) {
+      for (auto argSize : argSizesToAdd) {
+        argSizes[arity - 1] = argSize;
+        arity--;
+      }
     }
 
     int getTotalStorageSize() {
       // At least 4 bytes for the fn_idx and 4 bytes for the arity. Then 4 bytes for each parameter the closure takes.
       // We also multiply the remaining arity, since not all parameters may have been applied to the function
-      return 8 + (argCount * 4) + (arity * 4);
+      return 8 + (argSizes.size() * 4) + (arity * 4);
     }
 
     string toJSON() {
@@ -41,7 +51,7 @@ namespace Theta {
       oss << "{";
       oss << "\"ptr\": \"" << to_string(fnPointer.getAddress()) << "\"";
       oss << ", \"arity\": " << to_string(arity);
-      oss << ", \"argCount\": " << to_string(argCount);
+      oss << ", \"argCount\": " << to_string(argSizes.size());
       oss << "}";
 
       return oss.str();
@@ -57,6 +67,6 @@ namespace Theta {
   private:
     Pointer<PointerType::Function> fnPointer;
     int arity;
-    int argCount;
+    vector<int> argSizes;
   };
 }

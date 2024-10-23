@@ -22,7 +22,7 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
-  void initializeThetaGC() {
+  void __Theta_Lang_initializeGC() {
     // We allocate 1 MB of space after the Clang heap to avoid collisions
     THETA_MEMORY_REGION_BASE = __heap_base + 1024 * 1024;
 
@@ -53,9 +53,14 @@ extern "C" {
   int32_t __Theta_Lang_allocateMem(int32_t byteSize) {
     int provisionedAddress = allocationPointer;
 
-    allocationPointer += byteSize;
 
-    // TODO: Track roots here
+    ShadowStack::getInstance().pushReference(
+      provisionedAddress,
+      byteSize,
+      RuntimeTypeId::I32
+    );
+  
+    allocationPointer += byteSize;
 
     return provisionedAddress;
   }

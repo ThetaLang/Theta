@@ -296,7 +296,7 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
   vector<BinaryenExpressionRef> expressions;
 
   // Store the args into memory
-  int addedArgs = 0;
+  vector<int> addedArgSizes;
   for (auto param : simplifiedReference->getParameters()->getElements()) {
     string paramName = dynamic_pointer_cast<IdentifierNode>(param)->getIdentifier();
 
@@ -342,15 +342,15 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
           MEMORY_NAME.c_str()
         )
       );
+        
+      addedArgSizes.push_back(byteSize);
     }
-
-    addedArgs++;
   }
 
   WasmClosure closure = WasmClosure(
     referencePtr,
     simplifiedReference->getParameters()->getElements().size(),
-    addedArgs
+    addedArgSizes
   );
 
   // Store a closure pointing to the args that were stored in memory
@@ -625,13 +625,13 @@ BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInv
   return generateCallIndirectForNewClosure(funcInvNode, foundLocalReference.value(), scopeLookupIdentifier, module);
 }
 
-int CodeGen::generateFunctionInvocationArgMemoryInsertions(
+vector<int> CodeGen::generateFunctionInvocationArgMemoryInsertions(
   shared_ptr<FunctionInvocationNode> funcInvNode,
   vector<BinaryenExpressionRef> &expressions,
   BinaryenModuleRef &module,
   string refIdentifier
 ) {
-  int addedArgs = 0;
+  vector<int> addedArgSizes;
 
   // Store each passed argument into memory
   for (shared_ptr<ASTNode> arg : funcInvNode->getParameters()->getElements()) {
@@ -674,6 +674,8 @@ int CodeGen::generateFunctionInvocationArgMemoryInsertions(
         BinaryenCall(module, "__Theta_Lang_getAllocationPointer", {}, 0, BinaryenTypeInt32()),
         BinaryenConst(module, BinaryenLiteralInt32(argByteSize))
       );
+
+      addedArgSizes.push_back(argByteSize);
     }
 
     // If a refIdentifier was passed, that means we have an existing closure
@@ -700,7 +702,7 @@ int CodeGen::generateFunctionInvocationArgMemoryInsertions(
     }
   }
 
-  return addedArgs;
+  return addedArgSizes;
 }
 
 BinaryenExpressionRef CodeGen::generateCallIndirectForExistingClosure(
@@ -867,13 +869,13 @@ BinaryenExpressionRef CodeGen::generateCallIndirectForNewClosure(
     );
   } else {
     WasmClosure closure = WasmClosure::clone(closureTemplate);
-    int addedArgs = generateFunctionInvocationArgMemoryInsertions(
+    vector<int> addedArgSizes = generateFunctionInvocationArgMemoryInsertions(
       funcInvNode,
       expressions,
       module
     );
 
-    closure.addArgs(addedArgs);
+    closure.addArgs(addedArgSizes);
 
     vector<BinaryenExpressionRef> storageExpressions = generateClosureMemoryStore(closure, module);
     copy(storageExpressions.begin(), storageExpressions.end(), back_inserter(expressions));
@@ -1145,8 +1147,16 @@ vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &c
     )
   );
 
+  int argAddressDistance = closure.getTotalStorageSize();
+  for (int argSize : closure.getArgSizes()) {
+    argAddressDistance += argSize; 
+  }
 
-  for (int i = 0; i < closure.getArgCount(); i++) {
+  for (int i = 0; i < closure.getArgSizes().size(); i++) {
+    // If the argSize at a given slot in the closure is 0, that means we havent
+    // populated it yet. Closure arguments are added from right to left
+    if (closure.getArgSizes().at(i) == 0) continue;
+
     // Calculate the address of the argument we stored for the 
     // closure
     BinaryenExpressionRef argAddressExpr = BinaryenBinary(
@@ -1161,7 +1171,7 @@ vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &c
       ),
       BinaryenConst(
         module,
-        BinaryenLiteralInt32(closure.getTotalStorageSize() + ((closure.getArgCount() - i) * 4))
+        BinaryenLiteralInt32(argAddressDistance) 
       )
     );
 
@@ -1177,6 +1187,8 @@ vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &c
         MEMORY_NAME.c_str()
       )
     );
+
+    argAddressDistance -= closure.getArgSizes().at(i);
   }
 
   return expressions;
