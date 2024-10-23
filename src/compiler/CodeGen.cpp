@@ -577,17 +577,36 @@ void CodeGen::generateFunctionDeclaration(
 }
 
 BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, BinaryenModuleRef &module) {
-  BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[blockNode->getElements().size()];
+  vector<BinaryenExpressionRef> extraExpressions;
+
+  // Ensure garbage collection handoff at function boundaries
+  if (blockNode->parent->getNodeType() == ASTNode::FUNCTION_DECLARATION) {
+    extraExpressions.push_back(
+      BinaryenCall(
+        module,
+        "__Theta_Lang_gcBoundary",
+        {},
+        0,
+        BinaryenTypeNone()
+      )
+    );
+  }
+
+  BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[blockNode->getElements().size() + extraExpressions.size()];
+
+  for (int i = 0; i < extraExpressions.size(); i++) {
+    blockExpressions[i] = extraExpressions.at(i);
+  }
 
   for (int i = 0; i < blockNode->getElements().size(); i++) {
-    blockExpressions[i] = generate(blockNode->getElements().at(i), module);
+    blockExpressions[i + extraExpressions.size()] = generate(blockNode->getElements().at(i), module);
   }
 
   return BinaryenBlock(
     module,
     NULL,
     blockExpressions,
-    blockNode->getElements().size(),
+    blockNode->getElements().size() + extraExpressions.size(),
     BinaryenTypeNone()
   );
 }

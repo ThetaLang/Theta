@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <emscripten.h>
 #include "ShadowStack.hpp"
+#include "emscripten/em_macros.h"
 // The start of the heap as determined by LLVM. This is also where
 // any malloc or memory used by the following code will be allocated
 extern "C" int __heap_base;
@@ -9,6 +10,7 @@ extern "C" int __heap_base;
 int THETA_MEMORY_REGION_INITIAL_SIZE = 1024 * 128; 
 int THETA_MEMORY_REGION_BASE;
 int THETA_HEAP_BASE;
+int THETA_GC_INITIALIZED = false;
 int newSpaceBoundary;
 int allocationPointer;
 
@@ -21,6 +23,8 @@ extern "C" {
     return allocationPointer;  
   }
 
+  // It's very important that this function gets called before anything else! If it doesn't
+  // memory weirdness will ensue and things wont work as expected 
   EMSCRIPTEN_KEEPALIVE
   void __Theta_Lang_initializeGC() {
     // We allocate 1 MB of space after the Clang heap to avoid collisions
@@ -50,9 +54,13 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
+  void __Theta_Lang_gcBoundary() {
+    if (!THETA_GC_INITIALIZED) __Theta_Lang_initializeGC();
+  }
+
+  EMSCRIPTEN_KEEPALIVE
   int32_t __Theta_Lang_allocateMem(int32_t byteSize) {
     int provisionedAddress = allocationPointer;
-
 
     ShadowStack::getInstance().pushReference(
       provisionedAddress,
