@@ -26,6 +26,7 @@
 #include "parser/ast/IdentifierNode.hpp"
 #include "parser/ast/TypeDeclarationNode.hpp"
 #include "cli/CLI.hpp"
+#include "gc/DataTypeId.hpp"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -336,7 +337,7 @@ pair<WasmClosure, vector<BinaryenExpressionRef>> CodeGen::generateAndStoreClosur
           byteSize,
           0,
           0,
-          generateAllocatorCall(byteSize, module),
+          generateAllocatorCall(byteSize, dataTypeIdFromTypeNode(paramType), module),
           generatedValue,
           getBinaryenStorageTypeFromTypeDeclaration(paramType),
           MEMORY_NAME.c_str()
@@ -680,7 +681,7 @@ vector<int> CodeGen::generateFunctionInvocationArgMemoryInsertions(
           argByteSize,
           0,
           0,
-          generateAllocatorCall(argByteSize, module),
+          generateAllocatorCall(argByteSize, dataTypeIdFromTypeNode(argType), module),
           generatedValue,
           getBinaryenStorageTypeFromTypeDeclaration(argType),
           MEMORY_NAME.c_str()
@@ -1125,7 +1126,7 @@ void CodeGen::generateSource(shared_ptr<SourceNode> sourceNode, BinaryenModuleRe
 vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &closure, BinaryenModuleRef &module) {
   vector<BinaryenExpressionRef> expressions;
 
-  expressions.push_back(generateAllocatorCall(closure.getTotalStorageSize(), module));
+  expressions.push_back(generateAllocatorCall(closure.getTotalStorageSize(), DataTypeId::CLOSURE, module));
 
   BinaryenExpressionRef allocationPointerBeforeAllocation = BinaryenBinary(
     module,
@@ -1213,16 +1214,17 @@ vector<BinaryenExpressionRef> CodeGen::generateClosureMemoryStore(WasmClosure &c
   return expressions;
 }
 
-BinaryenExpressionRef CodeGen::generateAllocatorCall(int byteSize, BinaryenModuleRef &module) {
-  BinaryenExpressionRef operands[1] = {
-    BinaryenConst(module, BinaryenLiteralInt32(byteSize))
+BinaryenExpressionRef CodeGen::generateAllocatorCall(int byteSize, int dataTypeId, BinaryenModuleRef &module) {
+  BinaryenExpressionRef operands[2] = {
+    BinaryenConst(module, BinaryenLiteralInt32(byteSize)),
+    BinaryenConst(module, BinaryenLiteralInt32(dataTypeId))
   };
 
   return BinaryenCall(
     module,
     "__Theta_Lang_allocateMem",
     operands,
-    1,
+    2,
     BinaryenTypeInt32()
   );
 }
@@ -1458,6 +1460,21 @@ string CodeGen::generateFunctionHash(shared_ptr<FunctionDeclarationNode> functio
   stream << hashed;
 
   return stream.str();
+}
+
+int CodeGen::dataTypeIdFromTypeNode(shared_ptr<TypeDeclarationNode> typeNode) {
+  string type = typeNode->getType();
+
+  if (type == DataTypes::BOOLEAN) return DataTypeId::I32;
+  if (type == DataTypes::NUMBER) return DataTypeId::I64;
+  if (type == DataTypes::STRING) return DataTypeId::STRING;
+  if (type == DataTypes::LIST) return DataTypeId::LIST;
+  if (type == DataTypes::DICT) return DataTypeId::DICT;
+  if (type == DataTypes::SYMBOL) return DataTypeId::SYMBOL;
+  if (type == DataTypes::TUPLE) return DataTypeId::TUPLE;
+  if (type == DataTypes::FUNCTION) return DataTypeId::FUNCTION;
+
+  throw runtime_error("No matching data type id for type: " + type);
 }
 
 #pragma pop_macro("RETURN")

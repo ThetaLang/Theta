@@ -1,14 +1,14 @@
 #pragma once
 
-#include "RuntimeTypeId.hpp"
+#include "DataTypeId.hpp"
 
 namespace Theta {
   struct HeapReference {
-    RuntimeTypeId typeId;
+    DataTypeId typeId;
     int size;
     int address;
     int previousAddress;
 
-    HeapReference(int addr, int bytes, RuntimeTypeId type) : address(addr), size(bytes), typeId(type) {}
+    HeapReference(int addr, int bytes, DataTypeId type) : address(addr), size(bytes), typeId(type) {}
   };
 }

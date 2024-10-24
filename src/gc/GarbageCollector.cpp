@@ -17,7 +17,10 @@ int allocationPointer;
 // The current GC epoch
 int epoch = 1;
 
+extern "C" void print(int32_t);
+
 extern "C" {
+
   EMSCRIPTEN_KEEPALIVE
   int __Theta_Lang_getAllocationPointer() {
     return allocationPointer;  
@@ -59,13 +62,13 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
-  int32_t __Theta_Lang_allocateMem(int32_t byteSize) {
+  int32_t __Theta_Lang_allocateMem(int32_t byteSize, int32_t dataTypeId) {
     int provisionedAddress = allocationPointer;
 
     ShadowStack::getInstance().pushReference(
       provisionedAddress,
       byteSize,
-      RuntimeTypeId::I32
+      static_cast<DataTypeId>(dataTypeId)
     );
   
     allocationPointer += byteSize;

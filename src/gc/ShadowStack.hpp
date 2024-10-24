@@ -22,7 +22,7 @@ namespace Theta {
       if (!frames.empty()) frames.pop_front();
     }
 
-    void pushReference(int address, int byteSize, RuntimeTypeId typeId) {
+    void pushReference(int address, int byteSize, DataTypeId typeId) {
       if (frames.empty()) return;
 
       frames.front().references.push_front(

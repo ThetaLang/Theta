@@ -22,6 +22,7 @@ set(V8_DIR ${CMAKE_SOURCE_DIR}/lib/v8)  # Path to V8 directory in your project
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp")
 list(REMOVE_ITEM SRC_FILES "${CMAKE_SOURCE_DIR}/theta.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/src/gc/.*")
+list(APPEND SRC_FILES "${CMAKE_SOURCE_DIR}/src/gc/DataTypeId.hpp")
 
 # Add main source file separately
 set(MAIN_SRC "${CMAKE_SOURCE_DIR}/theta.cpp")
@@ -47,7 +48,7 @@ file(GLOB_RECURSE GC_SRC_FILES "${CMAKE_SOURCE_DIR}/src/gc/*.cpp")
 set(WASM_DEST "${CMAKE_BINARY_DIR}/wasm")
 add_custom_target(compile_theta_wasm_core
     COMMAND ${CMAKE_COMMAND} -E make_directory ${WASM_DEST}
-    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --profiling-funcs --no-entry -o ${WASM_DEST}/ThetaLangCore.wasm ${GC_SRC_FILES}
+    COMMAND emcc -std=c++17 -O2 -s ENVIRONMENT=web -s STANDALONE_WASM=1 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s NO_FILESYSTEM=1 -s INITIAL_MEMORY=1310720 --profiling-funcs --no-entry -o ${WASM_DEST}/ThetaLangCore.wasm ${GC_SRC_FILES}
     COMMENT "Compiling Theta language core to WebAssembly with emcc"
 )
 

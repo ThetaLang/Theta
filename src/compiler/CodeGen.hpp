@@ -117,7 +117,7 @@ namespace Theta {
       shared_ptr<FunctionInvocationNode> ref
     );
 
-    void hoistCapsuleElements(vector<shared_ptr<ASTNode>> ielements);
+    void hoistCapsuleElements(vector<shared_ptr<ASTNode>> elements);
     void bindIdentifierToScope(shared_ptr<ASTNode> ast);
     void registerModuleFunctions(BinaryenModuleRef &module);
 
@@ -132,7 +132,7 @@ namespace Theta {
 
     vector<BinaryenExpressionRef> generateClosureMemoryStore(WasmClosure &closure, BinaryenModuleRef &module);
 
-    BinaryenExpressionRef generateAllocatorCall(int byteSize, BinaryenModuleRef &module);
+    BinaryenExpressionRef generateAllocatorCall(int byteSize, int dataTypeId, BinaryenModuleRef &module);
 
     void collectClosureScope(
       shared_ptr<ASTNode> node,
@@ -147,5 +147,7 @@ namespace Theta {
     int getByteSizeForType(BinaryenType type);
 
     BinaryenModuleRef importCoreLangWasm();
+
+    int dataTypeIdFromTypeNode(shared_ptr<TypeDeclarationNode> type);
   };
 }
