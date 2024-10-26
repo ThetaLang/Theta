@@ -34,6 +34,12 @@ namespace Theta {
       );
     }
 
+    void pushReference(HeapReference reference) {
+      if (frames.empty()) return;
+
+      frames.front().references.push_front(reference);
+    }
+
     void popReference() {
       if (frames.empty()) return;
 

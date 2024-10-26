@@ -2,6 +2,7 @@
 #include <emscripten.h>
 #include "ShadowStack.hpp"
 #include "emscripten/em_macros.h"
+#include "HeapReference.hpp"
 // The start of the heap as determined by LLVM. This is also where
 // any malloc or memory used by the following code will be allocated
 extern "C" int __heap_base;
@@ -56,9 +57,40 @@ extern "C" {
     *argAddress = paramAddress;
   }
 
-  EMSCRIPTEN_KEEPALIVE
   void __Theta_Lang_gcBoundary() {
+  }
+
+  // Called every time we execute a function, at the beginning of the function
+  EMSCRIPTEN_KEEPALIVE
+  void __Theta_Lang_pushFrame() {
     if (!THETA_GC_INITIALIZED) __Theta_Lang_initializeGC();
+
+    __Theta_Lang_gcBoundary();
+
+    ShadowStack::getInstance().pushFrame(epoch);
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  void __Theta_Lang_popFrame(int32_t returnedReferenceAddress) {
+    std::optional<HeapReference> returnedReference;
+  
+    // Find the returned reference by address (if any was returned)
+    if (returnedReferenceAddress != -1) {
+      for (const HeapReference &reference : ShadowStack::getInstance().currentFrame().references) {
+        if (reference.address == returnedReferenceAddress) {
+          returnedReference = std::optional<HeapReference>(reference);
+          break;
+        }
+      }
+    }
+
+    ShadowStack::getInstance().popFrame();
+
+    if (returnedReference) {
+      ShadowStack::getInstance().pushReference(returnedReference.value());
+    }
+
+    __Theta_Lang_gcBoundary();
   }
 
   EMSCRIPTEN_KEEPALIVE

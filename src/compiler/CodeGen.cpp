@@ -194,6 +194,7 @@ BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> ass
     dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()),
     module,
     [module, idxOfAssignment, isLastInBlock](const BinaryenExpressionRef &addressRefExpression) {
+      // TODO: Probably need to add a popFrame here
       if (isLastInBlock) return addressRefExpression;
 
       return BinaryenLocalSet(module, idxOfAssignment, addressRefExpression);
@@ -585,7 +586,7 @@ BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, 
     extraExpressions.push_back(
       BinaryenCall(
         module,
-        "__Theta_Lang_gcBoundary",
+        "__Theta_Lang_pushFrame",
         {},
         0,
         BinaryenTypeNone()
@@ -603,6 +604,9 @@ BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, 
     blockExpressions[i + extraExpressions.size()] = generate(blockNode->getElements().at(i), module);
   }
 
+  // TODO: Add a popFrame here but only if the last expression is not a return. Need to figure out if the last
+  // expression is a heap reference as well
+
   return BinaryenBlock(
     module,
     NULL,
@@ -613,6 +617,10 @@ BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, 
 }
 
 BinaryenExpressionRef CodeGen::generateReturn(shared_ptr<ReturnNode> returnNode, BinaryenModuleRef &module) {
+  cout << returnNode->toJSON() << endl;
+  
+  // TODO: Add a popFrame here. Need to figure out whether the returned value is a heap reference
+
   return BinaryenReturn(module, generate(returnNode->getValue(), module));
 }
 
