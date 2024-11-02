@@ -890,3 +890,16 @@ shared_ptr<TypeDeclarationNode> TypeChecker::getFunctionReturnType(shared_ptr<AS
   return dynamic_pointer_cast<TypeDeclarationNode>(dynamic_pointer_cast<TypeDeclarationNode>(fn->getResolvedType())->getElements().back());
 }
 
+const array<string, 5> TypeChecker::HEAP_REFERENCE_TYPES =  {
+  DataTypes::FUNCTION,
+  DataTypes::STRING,
+  DataTypes::LIST,
+  DataTypes::DICT,
+  DataTypes::TUPLE
+};
+
+bool TypeChecker::isHeapReferenceType(shared_ptr<ASTNode> typeNode) {
+  string type = dynamic_pointer_cast<TypeDeclarationNode>(typeNode)->getType();
+
+  return find(HEAP_REFERENCE_TYPES.begin(), HEAP_REFERENCE_TYPES.end(), type) != HEAP_REFERENCE_TYPES.end();
+}

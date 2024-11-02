@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include "compiler/DataTypes.hpp"
 #include "parser/ast/ASTNode.hpp"
 #include "parser/ast/AssignmentNode.hpp"
 #include "parser/ast/BinaryOperationNode.hpp"
@@ -63,9 +64,14 @@ namespace Theta {
 
     static shared_ptr<TypeDeclarationNode> getFunctionReturnType(shared_ptr<ASTNode> fn);
 
+    static bool isHeapReferenceType(shared_ptr<ASTNode> type);
+
   private:
     SymbolTableStack<shared_ptr<ASTNode>> identifierTable;
     SymbolTableStack<shared_ptr<ASTNode>> capsuleDeclarationsTable;
+
+
+    static const array<string, 5> HEAP_REFERENCE_TYPES;
     
     /**
      * @brief Performs type checking on a single AST node.

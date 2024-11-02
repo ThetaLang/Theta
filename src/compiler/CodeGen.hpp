@@ -149,5 +149,7 @@ namespace Theta {
     BinaryenModuleRef importCoreLangWasm();
 
     int dataTypeIdFromTypeNode(shared_ptr<TypeDeclarationNode> type);
+
+    pair<string, BinaryenType> getPopFrameMetaForType(shared_ptr<ASTNode> typeNode);
   };
 }

@@ -194,8 +194,20 @@ BinaryenExpressionRef CodeGen::generateAssignment(shared_ptr<AssignmentNode> ass
     dynamic_pointer_cast<FunctionDeclarationNode>(assignmentNode->getRight()),
     module,
     [module, idxOfAssignment, isLastInBlock](const BinaryenExpressionRef &addressRefExpression) {
-      // TODO: Probably need to add a popFrame here
-      if (isLastInBlock) return addressRefExpression;
+      if (isLastInBlock) {
+        BinaryenExpressionRef args[1] = { addressRefExpression };
+
+        // TODO: Double check if this popFrame is actually supposed to be here, or if just
+        // returning addressRefExpression directly is correct
+        return BinaryenCall(
+          module,
+          "__Theta_Lang_popFrameWithReference",
+          args,
+          1,
+          BinaryenTypeInt32()
+        );
+        //return addressRefExpression;
+      }
 
       return BinaryenLocalSet(module, idxOfAssignment, addressRefExpression);
     },
@@ -594,6 +606,12 @@ BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, 
     );
   }
 
+  shared_ptr<ASTNode> lastBlockExpressionNode = blockNode->getElements().at(blockNode->getElements().size() - 1);
+
+  bool needsPopFrame = 
+    blockNode->parent->getNodeType() == ASTNode::FUNCTION_DECLARATION &&
+    lastBlockExpressionNode->getNodeType() != ASTNode::RETURN;
+
   BinaryenExpressionRef* blockExpressions = new BinaryenExpressionRef[blockNode->getElements().size() + extraExpressions.size()];
 
   for (int i = 0; i < extraExpressions.size(); i++) {
@@ -601,11 +619,26 @@ BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, 
   }
 
   for (int i = 0; i < blockNode->getElements().size(); i++) {
-    blockExpressions[i + extraExpressions.size()] = generate(blockNode->getElements().at(i), module);
-  }
+    BinaryenExpressionRef expression = generate(blockNode->getElements().at(i), module); 
 
-  // TODO: Add a popFrame here but only if the last expression is not a return. Need to figure out if the last
-  // expression is a heap reference as well
+    // We only need to add this popFrame if the last thing isn't already a return type astnode, since those
+    // have their own popFrame call that gets generated.
+    if (i == blockNode->getElements().size() - 1 && needsPopFrame) {
+      BinaryenExpressionRef args[1] = { expression };
+
+      pair<string, BinaryenType> popFrameMeta = getPopFrameMetaForType(blockNode->getElements().at(i)->getResolvedType());
+
+      expression = BinaryenCall(
+        module,
+        popFrameMeta.first.c_str(),
+        args,
+        1,
+        popFrameMeta.second
+      );
+    }
+    
+    blockExpressions[i + extraExpressions.size()] = expression;
+  }
 
   return BinaryenBlock(
     module,
@@ -617,11 +650,24 @@ BinaryenExpressionRef CodeGen::generateBlock(shared_ptr<ASTNodeList> blockNode, 
 }
 
 BinaryenExpressionRef CodeGen::generateReturn(shared_ptr<ReturnNode> returnNode, BinaryenModuleRef &module) {
-  cout << returnNode->toJSON() << endl;
-  
-  // TODO: Add a popFrame here. Need to figure out whether the returned value is a heap reference
+  BinaryenExpressionRef returnValueExpression = generate(returnNode->getValue(), module);
 
-  return BinaryenReturn(module, generate(returnNode->getValue(), module));
+  BinaryenExpressionRef popFrameArgs[1] = {
+    returnValueExpression
+  };
+
+  pair<string, BinaryenType> popFrameMeta = getPopFrameMetaForType(returnNode->getResolvedType());
+
+  return BinaryenReturn(
+    module,
+    BinaryenCall(
+      module,
+      popFrameMeta.first.c_str(), // popFrame returns whatever was passed into it, so we dont need to re-return anything
+      popFrameArgs,
+      1,
+      popFrameMeta.second
+    )
+  );
 }
 
 BinaryenExpressionRef CodeGen::generateFunctionInvocation(shared_ptr<FunctionInvocationNode> funcInvNode, BinaryenModuleRef &module) {
@@ -1404,6 +1450,26 @@ void CodeGen::registerModuleFunctions(BinaryenModuleRef &module) {
     functionNameToClosureTemplateMap.size(),
     BinaryenConst(module, BinaryenLiteralInt32(0))
   );
+}
+
+pair<string, BinaryenType> CodeGen::getPopFrameMetaForType(shared_ptr<ASTNode> typeNode) {
+  string type = dynamic_pointer_cast<TypeDeclarationNode>(typeNode)->getType();
+
+  if (TypeChecker::isHeapReferenceType(typeNode)) {
+    return make_pair("__Theta_Lang_popFrameWithReference", BinaryenTypeInt32());
+  }
+
+  // TODO: At some point we'll need to use popFrameF32 and popFrameF64 for floats
+
+  if (type == DataTypes::NUMBER) {
+    return make_pair("__Theta_Lang_popFrameI64", BinaryenTypeInt64());
+  }
+
+  if (type == DataTypes::BOOLEAN) {
+    return make_pair("__Theta_Lang_popFrameI32", BinaryenTypeInt32());
+  }
+
+  throw runtime_error("No popFrame metadata found for type: " + type);
 }
 
 bool CodeGen::checkIsLastInBlock(shared_ptr<ASTNode> node) {

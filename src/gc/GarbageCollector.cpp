@@ -71,7 +71,7 @@ extern "C" {
   }
 
   EMSCRIPTEN_KEEPALIVE
-  void __Theta_Lang_popFrame(int32_t returnedReferenceAddress) {
+  int32_t __Theta_Lang_popFrameWithReference(int32_t returnedReferenceAddress) {
     std::optional<HeapReference> returnedReference;
   
     // Find the returned reference by address (if any was returned)
@@ -91,6 +91,36 @@ extern "C" {
     }
 
     __Theta_Lang_gcBoundary();
+
+    return returnedReferenceAddress;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  int32_t __Theta_Lang_popFrameI32(int32_t returnValue) {
+    __Theta_Lang_popFrameWithReference(-1);
+
+    return returnValue;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  int64_t __Theta_Lang_popFrameI64(int64_t returnValue) {
+    __Theta_Lang_popFrameWithReference(-1);
+
+    return returnValue;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  float __Theta_Lang_popFrameF32(float returnValue) {
+    __Theta_Lang_popFrameWithReference(-1);
+
+    return returnValue;
+  }
+
+  EMSCRIPTEN_KEEPALIVE
+  double __Theta_Lang_popFrameF64(double returnValue) {
+    __Theta_Lang_popFrameWithReference(-1);
+
+    return returnValue;
   }
 
   EMSCRIPTEN_KEEPALIVE
