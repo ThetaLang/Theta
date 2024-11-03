@@ -11,6 +11,8 @@ extern "C" int __heap_base;
 int THETA_MEMORY_REGION_INITIAL_SIZE = 1024 * 128; 
 int THETA_MEMORY_REGION_BASE;
 int THETA_HEAP_BASE;
+int THETA_HEAP_MIDPOINT;
+int THETA_HEAP_END;
 int THETA_GC_INITIALIZED = false;
 int newSpaceBoundary;
 int allocationPointer;
@@ -20,8 +22,20 @@ int epoch = 1;
 
 extern "C" void print(int32_t);
 
-extern "C" {
+void collectGarbage() {
+  allocationPointer = newSpaceBoundary == THETA_HEAP_MIDPOINT ? THETA_HEAP_MIDPOINT : THETA_HEAP_BASE;
+  newSpaceBoundary = newSpaceBoundary == THETA_HEAP_MIDPOINT ? THETA_HEAP_END : THETA_HEAP_MIDPOINT;
+  
+  // TODO: Implement copying GC
+}
 
+void checkHeapSpace(int32_t byteSize) {
+  if (allocationPointer + byteSize < newSpaceBoundary) return;
+
+  collectGarbage();
+}
+
+extern "C" {
   EMSCRIPTEN_KEEPALIVE
   int __Theta_Lang_getAllocationPointer() {
     return allocationPointer;  
@@ -37,9 +51,11 @@ extern "C" {
     // Our first 8kb are reserved for the temporary offloading region,
     // therefore the beginning of our usable heap should be placed after it
     THETA_HEAP_BASE = THETA_MEMORY_REGION_BASE + 8 * 1024;
+    THETA_HEAP_MIDPOINT = THETA_HEAP_BASE + THETA_MEMORY_REGION_INITIAL_SIZE / 2;
+    THETA_HEAP_END = THETA_MEMORY_REGION_BASE + THETA_MEMORY_REGION_INITIAL_SIZE;
     
     // New space will start with the left half of the Theta memory region
-    newSpaceBoundary = THETA_HEAP_BASE + THETA_MEMORY_REGION_INITIAL_SIZE / 2;
+    newSpaceBoundary = THETA_HEAP_MIDPOINT;
 
     allocationPointer = THETA_HEAP_BASE;
   }
@@ -57,15 +73,10 @@ extern "C" {
     *argAddress = paramAddress;
   }
 
-  void __Theta_Lang_gcBoundary() {
-  }
-
   // Called every time we execute a function, at the beginning of the function
   EMSCRIPTEN_KEEPALIVE
   void __Theta_Lang_pushFrame() {
     if (!THETA_GC_INITIALIZED) __Theta_Lang_initializeGC();
-
-    __Theta_Lang_gcBoundary();
 
     ShadowStack::getInstance().pushFrame(epoch);
   }
@@ -89,8 +100,6 @@ extern "C" {
     if (returnedReference) {
       ShadowStack::getInstance().pushReference(returnedReference.value());
     }
-
-    __Theta_Lang_gcBoundary();
 
     return returnedReferenceAddress;
   }
@@ -125,6 +134,8 @@ extern "C" {
 
   EMSCRIPTEN_KEEPALIVE
   int32_t __Theta_Lang_allocateMem(int32_t byteSize, int32_t dataTypeId) {
+    checkHeapSpace(byteSize);
+
     int provisionedAddress = allocationPointer;
 
     ShadowStack::getInstance().pushReference(
